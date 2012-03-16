@@ -48,19 +48,11 @@ CONFIG_CLEAN_VPATH_FILES =
 SOURCES =
 DIST_SOURCES =
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-<<<<<<< .mine
-ACLOCAL = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run aclocal-1.10
-AMTAR = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run tar
-AUTOCONF = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run autoconf
-AUTOHEADER = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run autoheader
-AUTOMAKE = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run automake-1.10
-=======
-ACLOCAL = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/missing --run aclocal-1.11
-AMTAR = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/missing --run tar
-AUTOCONF = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/missing --run autoconf
-AUTOHEADER = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/missing --run autoheader
-AUTOMAKE = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/missing --run automake-1.11
->>>>>>> .r1787
+ACLOCAL = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run aclocal-1.11
+AMTAR = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run tar
+AUTOCONF = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run autoconf
+AUTOHEADER = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run autoheader
+AUTOMAKE = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run automake-1.11
 AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -116,7 +108,7 @@ LIBOBJS =
 LIBS = -lm 
 LTLIBINTL = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Users/corypoojastrope/iSG/indel-seq-gen/trunk/missing --run makeinfo
+MAKEINFO = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/missing --run makeinfo
 MKDIR_P = .././install-sh -c -d
 NEXT_UNISTD_H = <unistd.h>
 OBJEXT = o
@@ -125,6 +117,7 @@ PACKAGE_BUGREPORT = corystrope@gmail.com
 PACKAGE_NAME = indel-seq-gen
 PACKAGE_STRING = indel-seq-gen 2.1.03
 PACKAGE_TARNAME = indel-seq-gen
+PACKAGE_URL = 
 PACKAGE_VERSION = 2.1.03
 PATH_SEPARATOR = :
 RANLIB = ranlib
@@ -138,10 +131,10 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = 
 VERSION = 2.1.03
-abs_builddir = /Users/corypoojastrope/iSG/indel-seq-gen/trunk/data
-abs_srcdir = /Users/corypoojastrope/iSG/indel-seq-gen/trunk/data
-abs_top_builddir = /Users/corypoojastrope/iSG/indel-seq-gen/trunk
-abs_top_srcdir = /Users/corypoojastrope/iSG/indel-seq-gen/trunk
+abs_builddir = /Users/cstrope/git/indel-Seq-Gen/data
+abs_srcdir = /Users/cstrope/git/indel-Seq-Gen/data
+abs_top_builddir = /Users/cstrope/git/indel-Seq-Gen
+abs_top_srcdir = /Users/cstrope/git/indel-Seq-Gen
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -165,11 +158,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-<<<<<<< .mine
-install_sh = $(SHELL) /Users/corypoojastrope/iSG/indel-seq-gen/trunk/install-sh
-=======
-install_sh = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/trunk/install-sh
->>>>>>> .r1787
+install_sh = ${SHELL} /Users/cstrope/git/indel-Seq-Gen/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

@@ -13,12 +13,21 @@ eigen.o: eigen.cpp /usr/include/stdio.h /usr/include/_types.h \
  /usr/include/libkern/i386/_OSByteOrder.h /usr/include/alloca.h \
  /usr/include/machine/types.h /usr/include/i386/types.h \
  /usr/include/time.h /usr/include/_structs.h /usr/include/math.h \
- /usr/include/architecture/i386/math.h eigen.h \
- /opt/local/include/gcc46/c++/vector \
- /opt/local/include/gcc46/c++/bits/stl_algobase.h \
+ /usr/include/architecture/i386/math.h \
+ /opt/local/include/gcc46/c++/iostream \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/cpu_defines.h \
+ /opt/local/include/gcc46/c++/ostream /opt/local/include/gcc46/c++/ios \
+ /opt/local/include/gcc46/c++/iosfwd \
+ /opt/local/include/gcc46/c++/bits/stringfwd.h \
+ /opt/local/include/gcc46/c++/bits/postypes.h \
+ /opt/local/include/gcc46/c++/cwchar /usr/include/wchar.h \
+ /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h \
+ /usr/include/_wctype.h /usr/include/ctype.h /usr/include/runetype.h \
+ /opt/local/include/gcc46/c++/exception \
+ /opt/local/include/gcc46/c++/bits/char_traits.h \
+ /opt/local/include/gcc46/c++/bits/stl_algobase.h \
  /opt/local/include/gcc46/c++/bits/functexcept.h \
  /opt/local/include/gcc46/c++/bits/exception_defines.h \
  /opt/local/include/gcc46/c++/bits/cpp_type_traits.h \
@@ -31,26 +40,6 @@ eigen.o: eigen.cpp /usr/include/stdio.h /usr/include/_types.h \
  /opt/local/include/gcc46/c++/bits/stl_iterator_base_funcs.h \
  /opt/local/include/gcc46/c++/bits/stl_iterator.h \
  /opt/local/include/gcc46/c++/debug/debug.h \
- /opt/local/include/gcc46/c++/bits/allocator.h \
- /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h \
- /opt/local/include/gcc46/c++/ext/new_allocator.h \
- /opt/local/include/gcc46/c++/new /opt/local/include/gcc46/c++/exception \
- /opt/local/include/gcc46/c++/bits/stl_construct.h \
- /opt/local/include/gcc46/c++/bits/stl_uninitialized.h \
- /opt/local/include/gcc46/c++/bits/stl_vector.h \
- /opt/local/include/gcc46/c++/initializer_list \
- /opt/local/include/gcc46/c++/bits/stl_bvector.h \
- /opt/local/include/gcc46/c++/bits/range_access.h \
- /opt/local/include/gcc46/c++/bits/vector.tcc \
- /opt/local/include/gcc46/c++/iostream \
- /opt/local/include/gcc46/c++/ostream /opt/local/include/gcc46/c++/ios \
- /opt/local/include/gcc46/c++/iosfwd \
- /opt/local/include/gcc46/c++/bits/stringfwd.h \
- /opt/local/include/gcc46/c++/bits/postypes.h \
- /opt/local/include/gcc46/c++/cwchar /usr/include/wchar.h \
- /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h \
- /usr/include/_wctype.h /usr/include/ctype.h /usr/include/runetype.h \
- /opt/local/include/gcc46/c++/bits/char_traits.h \
  /opt/local/include/gcc46/c++/bits/localefwd.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++locale.h \
  /opt/local/include/gcc46/c++/clocale /usr/include/locale.h \
@@ -65,11 +54,17 @@ eigen.o: eigen.cpp /usr/include/stdio.h /usr/include/_types.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/atomic_word.h \
  /opt/local/include/gcc46/c++/bits/locale_classes.h \
  /opt/local/include/gcc46/c++/string \
+ /opt/local/include/gcc46/c++/bits/allocator.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h \
+ /opt/local/include/gcc46/c++/ext/new_allocator.h \
+ /opt/local/include/gcc46/c++/new \
  /opt/local/include/gcc46/c++/bits/ostream_insert.h \
  /opt/local/include/gcc46/c++/bits/cxxabi_forced.h \
  /opt/local/include/gcc46/c++/bits/stl_function.h \
  /opt/local/include/gcc46/c++/backward/binders.h \
+ /opt/local/include/gcc46/c++/bits/range_access.h \
  /opt/local/include/gcc46/c++/bits/basic_string.h \
+ /opt/local/include/gcc46/c++/initializer_list \
  /opt/local/include/gcc46/c++/bits/basic_string.tcc \
  /opt/local/include/gcc46/c++/bits/locale_classes.tcc \
  /opt/local/include/gcc46/c++/streambuf \
@@ -84,7 +79,13 @@ eigen.o: eigen.cpp /usr/include/stdio.h /usr/include/_types.h \
  /opt/local/include/gcc46/c++/bits/basic_ios.tcc \
  /opt/local/include/gcc46/c++/bits/ostream.tcc \
  /opt/local/include/gcc46/c++/istream \
- /opt/local/include/gcc46/c++/bits/istream.tcc
+ /opt/local/include/gcc46/c++/bits/istream.tcc \
+ /opt/local/include/gcc46/c++/vector \
+ /opt/local/include/gcc46/c++/bits/stl_construct.h \
+ /opt/local/include/gcc46/c++/bits/stl_uninitialized.h \
+ /opt/local/include/gcc46/c++/bits/stl_vector.h \
+ /opt/local/include/gcc46/c++/bits/stl_bvector.h \
+ /opt/local/include/gcc46/c++/bits/vector.tcc eigen.h
 
 /usr/include/stdio.h:
 
@@ -148,17 +149,41 @@ eigen.o: eigen.cpp /usr/include/stdio.h /usr/include/_types.h \
 
 /usr/include/architecture/i386/math.h:
 
-eigen.h:
-
-/opt/local/include/gcc46/c++/vector:
-
-/opt/local/include/gcc46/c++/bits/stl_algobase.h:
+/opt/local/include/gcc46/c++/iostream:
 
 /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h:
 
 /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h:
 
 /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/cpu_defines.h:
+
+/opt/local/include/gcc46/c++/ostream:
+
+/opt/local/include/gcc46/c++/ios:
+
+/opt/local/include/gcc46/c++/iosfwd:
+
+/opt/local/include/gcc46/c++/bits/stringfwd.h:
+
+/opt/local/include/gcc46/c++/bits/postypes.h:
+
+/opt/local/include/gcc46/c++/cwchar:
+
+/usr/include/wchar.h:
+
+/opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h:
+
+/usr/include/_wctype.h:
+
+/usr/include/ctype.h:
+
+/usr/include/runetype.h:
+
+/opt/local/include/gcc46/c++/exception:
+
+/opt/local/include/gcc46/c++/bits/char_traits.h:
+
+/opt/local/include/gcc46/c++/bits/stl_algobase.h:
 
 /opt/local/include/gcc46/c++/bits/functexcept.h:
 
@@ -183,56 +208,6 @@ eigen.h:
 /opt/local/include/gcc46/c++/bits/stl_iterator.h:
 
 /opt/local/include/gcc46/c++/debug/debug.h:
-
-/opt/local/include/gcc46/c++/bits/allocator.h:
-
-/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h:
-
-/opt/local/include/gcc46/c++/ext/new_allocator.h:
-
-/opt/local/include/gcc46/c++/new:
-
-/opt/local/include/gcc46/c++/exception:
-
-/opt/local/include/gcc46/c++/bits/stl_construct.h:
-
-/opt/local/include/gcc46/c++/bits/stl_uninitialized.h:
-
-/opt/local/include/gcc46/c++/bits/stl_vector.h:
-
-/opt/local/include/gcc46/c++/initializer_list:
-
-/opt/local/include/gcc46/c++/bits/stl_bvector.h:
-
-/opt/local/include/gcc46/c++/bits/range_access.h:
-
-/opt/local/include/gcc46/c++/bits/vector.tcc:
-
-/opt/local/include/gcc46/c++/iostream:
-
-/opt/local/include/gcc46/c++/ostream:
-
-/opt/local/include/gcc46/c++/ios:
-
-/opt/local/include/gcc46/c++/iosfwd:
-
-/opt/local/include/gcc46/c++/bits/stringfwd.h:
-
-/opt/local/include/gcc46/c++/bits/postypes.h:
-
-/opt/local/include/gcc46/c++/cwchar:
-
-/usr/include/wchar.h:
-
-/opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h:
-
-/usr/include/_wctype.h:
-
-/usr/include/ctype.h:
-
-/usr/include/runetype.h:
-
-/opt/local/include/gcc46/c++/bits/char_traits.h:
 
 /opt/local/include/gcc46/c++/bits/localefwd.h:
 
@@ -276,6 +251,14 @@ eigen.h:
 
 /opt/local/include/gcc46/c++/string:
 
+/opt/local/include/gcc46/c++/bits/allocator.h:
+
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h:
+
+/opt/local/include/gcc46/c++/ext/new_allocator.h:
+
+/opt/local/include/gcc46/c++/new:
+
 /opt/local/include/gcc46/c++/bits/ostream_insert.h:
 
 /opt/local/include/gcc46/c++/bits/cxxabi_forced.h:
@@ -284,7 +267,11 @@ eigen.h:
 
 /opt/local/include/gcc46/c++/backward/binders.h:
 
+/opt/local/include/gcc46/c++/bits/range_access.h:
+
 /opt/local/include/gcc46/c++/bits/basic_string.h:
+
+/opt/local/include/gcc46/c++/initializer_list:
 
 /opt/local/include/gcc46/c++/bits/basic_string.tcc:
 
@@ -317,3 +304,17 @@ eigen.h:
 /opt/local/include/gcc46/c++/istream:
 
 /opt/local/include/gcc46/c++/bits/istream.tcc:
+
+/opt/local/include/gcc46/c++/vector:
+
+/opt/local/include/gcc46/c++/bits/stl_construct.h:
+
+/opt/local/include/gcc46/c++/bits/stl_uninitialized.h:
+
+/opt/local/include/gcc46/c++/bits/stl_vector.h:
+
+/opt/local/include/gcc46/c++/bits/stl_bvector.h:
+
+/opt/local/include/gcc46/c++/bits/vector.tcc:
+
+eigen.h:

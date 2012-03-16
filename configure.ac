@@ -3,8 +3,8 @@
 
 AC_PREREQ(2.61)
 # in order to change the version of iSG, change the 2.0 below to the next version number.
-AC_INIT(indel-seq-gen, 2.2.13, corystrope@gmail.com)
-AC_CONFIG_SRCDIR([src/model.cpp])
+AC_INIT(indel-seq-gen, 2.1.03, corystrope@gmail.com)
+AC_CONFIG_SRCDIR([src/aamodels.cpp])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_HEADER([config.h])
 

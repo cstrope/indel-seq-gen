@@ -103,24 +103,17 @@ motif.o: motif.cpp motif.h /opt/local/include/gcc46/c++/string \
  /opt/local/include/gcc46/c++/bits/sstream.tcc \
  /opt/local/include/gcc46/c++/list \
  /opt/local/include/gcc46/c++/bits/stl_list.h \
- /opt/local/include/gcc46/c++/bits/list.tcc gamma.h insert_freqs.h \
- /opt/local/include/gcc46/c++/cstdlib model.h eigen.h inTree.h \
+ /opt/local/include/gcc46/c++/bits/list.tcc aamodels.h eigen.h inClade.h \
+ tree.h /opt/local/include/gcc46/c++/limits gamma.h inTree.h \
  /opt/local/include/gcc46/c++/map \
  /opt/local/include/gcc46/c++/bits/stl_map.h \
  /opt/local/include/gcc46/c++/bits/stl_multimap.h \
- /opt/local/include/gcc46/c++/cmath inClade.h tree.h \
- /opt/local/include/gcc46/c++/limits twister.h seqGenOptions.h \
- ../config.h propose_path.h stats.h \
- /opt/local/include/gcc46/c++/algorithm \
- /opt/local/include/gcc46/c++/utility \
- /opt/local/include/gcc46/c++/bits/stl_relops.h \
- /opt/local/include/gcc46/c++/bits/stl_algo.h \
- /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
- /opt/local/include/gcc46/c++/bits/stl_heap.h treefile.h \
- forward_simulation.h trace.h random.h \
+ /opt/local/include/gcc46/c++/cstdlib /opt/local/include/gcc46/c++/cmath \
+ model.h nucmodels.h seqGenOptions.h ../config.h insert_freqs.h \
+ treefile.h twister.h random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- /usr/include/sys/types.h
+ /usr/include/sys/types.h trace.h
 
 motif.h:
 
@@ -404,15 +397,17 @@ evolve.h:
 
 /opt/local/include/gcc46/c++/bits/list.tcc:
 
-gamma.h:
-
-insert_freqs.h:
-
-/opt/local/include/gcc46/c++/cstdlib:
-
-model.h:
+aamodels.h:
 
 eigen.h:
+
+inClade.h:
+
+tree.h:
+
+/opt/local/include/gcc46/c++/limits:
+
+gamma.h:
 
 inTree.h:
 
@@ -422,41 +417,23 @@ inTree.h:
 
 /opt/local/include/gcc46/c++/bits/stl_multimap.h:
 
+/opt/local/include/gcc46/c++/cstdlib:
+
 /opt/local/include/gcc46/c++/cmath:
 
-inClade.h:
+model.h:
 
-tree.h:
-
-/opt/local/include/gcc46/c++/limits:
-
-twister.h:
+nucmodels.h:
 
 seqGenOptions.h:
 
 ../config.h:
 
-propose_path.h:
-
-stats.h:
-
-/opt/local/include/gcc46/c++/algorithm:
-
-/opt/local/include/gcc46/c++/utility:
-
-/opt/local/include/gcc46/c++/bits/stl_relops.h:
-
-/opt/local/include/gcc46/c++/bits/stl_algo.h:
-
-/opt/local/include/gcc46/c++/bits/algorithmfwd.h:
-
-/opt/local/include/gcc46/c++/bits/stl_heap.h:
+insert_freqs.h:
 
 treefile.h:
 
-forward_simulation.h:
-
-trace.h:
+twister.h:
 
 random.h:
 
@@ -465,3 +442,5 @@ random.h:
 /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h:
 
 /usr/include/sys/types.h:
+
+trace.h:

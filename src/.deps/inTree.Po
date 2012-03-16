@@ -99,26 +99,19 @@ inTree.o: inTree.cpp inTree.h /opt/local/include/gcc46/c++/string \
  /opt/local/include/gcc46/c++/sstream \
  /opt/local/include/gcc46/c++/bits/sstream.tcc \
  /opt/local/include/gcc46/c++/cstdlib /opt/local/include/gcc46/c++/cmath \
- /usr/include/math.h /usr/include/architecture/i386/math.h evolve.h \
- /opt/local/include/gcc46/c++/bitset /opt/local/include/gcc46/c++/iomanip \
- /opt/local/include/gcc46/c++/memory \
+ /usr/include/math.h /usr/include/architecture/i386/math.h aamodels.h \
+ eigen.h evolve.h /opt/local/include/gcc46/c++/bitset \
+ /opt/local/include/gcc46/c++/iomanip /opt/local/include/gcc46/c++/memory \
  /opt/local/include/gcc46/c++/bits/stl_tempbuf.h \
  /opt/local/include/gcc46/c++/bits/stl_raw_storage_iter.h \
  /opt/local/include/gcc46/c++/backward/auto_ptr.h gamma.h insert_freqs.h \
- model.h eigen.h tree.h /opt/local/include/gcc46/c++/limits motif.h \
- /opt/local/include/gcc46/c++/set \
+ model.h nucmodels.h motif.h /opt/local/include/gcc46/c++/set \
  /opt/local/include/gcc46/c++/bits/stl_set.h \
  /opt/local/include/gcc46/c++/bits/stl_multiset.h /usr/include/assert.h \
- random.h \
+ tree.h /opt/local/include/gcc46/c++/limits random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- trace.h treefile.h twister.h inClade.h seqGenOptions.h ../config.h \
- propose_path.h stats.h /opt/local/include/gcc46/c++/algorithm \
- /opt/local/include/gcc46/c++/utility \
- /opt/local/include/gcc46/c++/bits/stl_relops.h \
- /opt/local/include/gcc46/c++/bits/stl_algo.h \
- /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
- /opt/local/include/gcc46/c++/bits/stl_heap.h forward_simulation.h
+ trace.h treefile.h twister.h inClade.h seqGenOptions.h ../config.h
 
 inTree.h:
 
@@ -390,6 +383,10 @@ inTree.h:
 
 /usr/include/architecture/i386/math.h:
 
+aamodels.h:
+
+eigen.h:
+
 evolve.h:
 
 /opt/local/include/gcc46/c++/bitset:
@@ -410,11 +407,7 @@ insert_freqs.h:
 
 model.h:
 
-eigen.h:
-
-tree.h:
-
-/opt/local/include/gcc46/c++/limits:
+nucmodels.h:
 
 motif.h:
 
@@ -425,6 +418,10 @@ motif.h:
 /opt/local/include/gcc46/c++/bits/stl_multiset.h:
 
 /usr/include/assert.h:
+
+tree.h:
+
+/opt/local/include/gcc46/c++/limits:
 
 random.h:
 
@@ -443,21 +440,3 @@ inClade.h:
 seqGenOptions.h:
 
 ../config.h:
-
-propose_path.h:
-
-stats.h:
-
-/opt/local/include/gcc46/c++/algorithm:
-
-/opt/local/include/gcc46/c++/utility:
-
-/opt/local/include/gcc46/c++/bits/stl_relops.h:
-
-/opt/local/include/gcc46/c++/bits/stl_algo.h:
-
-/opt/local/include/gcc46/c++/bits/algorithmfwd.h:
-
-/opt/local/include/gcc46/c++/bits/stl_heap.h:
-
-forward_simulation.h:
