@@ -1,0 +1,2 @@
+[:exon(,,)]{9,0.031/0.01,codonLD}((Taxon1:0.3,Taxon2:0.14):0.5,(Taxon3:0.34, Taxon4:0.5):0.12);
+[:intron]#r,b1.2#{9,0.1,idLD}((Taxon1:0.3,Taxon2:0.14):0.5,(Taxon3:0.34, Taxon4:0.5):0.12);

@@ -1,0 +1,3 @@
+"Long Subseq"#i0.22,mPAM,faaf.freq#[40]{2,0.0002,idLD}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);
+"seq seq"[:input_MA(,,)]{7,0.033/0.011,inLD/delLD}(((Taxon2:0.2,Taxon:0.2):0.1,Taxon4:0.3):0.1,Taxon3:0.4);
+"Thioredoxin-like Sequence"[:CXXC_like]{5,0.0}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);

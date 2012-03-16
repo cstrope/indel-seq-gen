@@ -1,0 +1,7 @@
+[:lipocalin_ma(,,)]{5,0.1,idLD}
+(
+ (
+  (Taxon1:0.4,Taxon2:0.14
+  ):0.5,Taxon3:0.34
+ ):0.1, Taxon4:0.5
+);
