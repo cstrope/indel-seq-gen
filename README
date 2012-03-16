@@ -1,5 +1,24 @@
+iSG version 2.2.05 ()
+-----------------
+
+- Fixed an issue in which discrete category assignments to sites were random from ancestor to descendant
+
+- Modified global array representation.
+
+- Added nucleotide substition models: SYN, K80, K81, K81ne,  TVM, TVMeq, TIM, TIMeq, TN93, TN93eq, F81, and F84.
+
+- Added -P (--paleo) for a uniform fossil deposition process. Two parameters required: X,x  where X is the root node time in millions of years, and x is the number of years (in millions) per fossil deposition event.
+
+- Changed substitution routine to the uniformization method, with virtual events.
+
+- Changed gillespie routine to include substitutions (method 2 per INDELible).
+
 iSG version 2.1.03 (12-23-2010)
 -----------------
+
+- Fixed issues of not assigning invariable sites to random sequences from both the command line and the treefile in the #iXX# option.
+
+- Converted Gillespie model to also calculate waiting times for substitution events, not just indels.
 
 - Fixed issue under the Gillespie model. For substitutions, only subsets of sites are tested for transitions. This is especially an issue when stationary frequencies are changed between lineages.
 

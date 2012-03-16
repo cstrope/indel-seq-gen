@@ -26,7 +26,6 @@
 #define MULTIPLE_ALIGNMENT_ROOT 2
 #define DIST_CALC 0
 #define TIME_SCALE 1
-#define PREC_EPS 0.0001
 #define ROOT_FLAG -2
 #define SET 1
 #define CHECK 2
@@ -45,7 +44,6 @@
 #include <cstdlib>
 #include <list>
 #include <cmath>
-#include "aamodels.h"
 #include "evolve.h"
 #include "inClade.h"
 #include "model.h"
@@ -53,12 +51,16 @@
 #include "seqGenOptions.h"
 #include "tree.h"
 #include "treefile.h"
+#include "propose_path.h"
+#include "forward_simulation.h"
 
 using namespace std;
 
 // Forward definitions
 class inClade;
 class inMotif;
+class PathProposal;
+class ForwardSimulation;
 
 class inTree : private Counter<inTree>
 {
@@ -87,6 +89,8 @@ public:
 	string rootseq_by_partition;
 	string tree;
 	TTree *my_tree;
+	PathProposal *path;
+	ForwardSimulation *sim;
 	vector<string> input_MA;
 	vector<string> input_MA_motifs;
 	vector<string> motifs_by_partition;
@@ -98,15 +102,13 @@ public:
 	double SearchMinBranch(TNode *node, double curr_min);
 	void Print_Trace_Header(stringstream& header, vector<string> otu_names, seqGenOptions* options);
 	void Print_Branch(TNode *node, stringstream& header, vector<string>::iterator& taxon_names, int& num, seqGenOptions* options);
-	double DoNudge(TNode *node, double step_size, int simulation_type);
 	int  getRootSeq_and_Motif(int type, seqGenOptions *options);
 	inMotif *FindMotif(char marker);
 	inTree(const seqGenOptions *, int, inClade *);
-	void Read_MA(string filename, seqGenOptions *options);
-	string addFilePath(string suffix, string prefix);
-	string tree_only(string input);
-	void perform_checks(string, seqGenOptions *);
-	void NudgeBranches(double step_size, int simulation_type);
+	void Read_MA(string& filename, seqGenOptions *options);
+	string addFilePath(string& suffix, string& prefix);
+	string tree_only(string& input);
+	void perform_checks(string& str, seqGenOptions *);
 	void ConvertRootSequence(TTree *tree);
 	void TimeScale_Tree(double max_path, TNode *node);
 	void BranchScale_Tree(TNode *anc, TNode *des, double scale);
@@ -116,7 +118,7 @@ public:
 	void setPerturb(TNode *node, double perturb_value);
 	void Print_Time_Rel_Tree(ostream& out, bool writeAncestors);
 	void PrintSubtree(TTree *tree, TNode *node, ostream& out, bool writeAncestors, int *nodeNo, bool time_rel, bool scale);
-	void Print_Tree(ostream& out, bool scale);
+	void Print_Newick_Tree(ostream& out, bool scale);
 	void Setup_Tree(seqGenOptions *options);
 	void Define_Ancestors();
 	void Define_Bipartitions(vector<string>& names);
@@ -138,6 +140,10 @@ public:
 	void setMultiStateCharacters();
 	void apply_branchScales(double scalar);
 	double apply2Subtree(TNode *node, double scalar);
+	void printTree();
+	void printSubtree(TNode *node);
+	void nameAncestralNodes();
+	void nameAncestralNode(int *nodeno, TNode *node);
 
 	private:
 };

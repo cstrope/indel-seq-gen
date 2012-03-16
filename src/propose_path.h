@@ -67,8 +67,9 @@ public:
 	void setEventHistory(list<eventTrack*> *events,	string event_history_file);
 	void emulateToEndPoint(TTree *tree, TNode *anc, TNode *des, list<eventTrack*> *events);
 	void EmulateStep(TTree *tree, TNode *i_z, TNode *k_0, double t_0, double T, list<eventTrack*> *events);
-	list<eventTrack*>::iterator setSequenceAtTimePoint(TTree *tree, TNode *node, double to_time, list<eventTrack*> *events);
+	list<eventTrack*>::iterator setSequenceAtTimePoint(TTree *tree, TNode *node, double to_time, list<eventTrack*>::iterator et, list<eventTrack*> *events);
 	double select_next_dt(TNode *i_z, TNode *k_0, double current_dt, double lambda_T, double T, int *num_diff, bool isEndpoint);
+	double rasmus_select_next_dt(double lambda_T, double T);
 
 	void remove_site_events(int site_sampled);
 	void evolve_independent_path(TTree *tree, TNode *i_z, TNode *k_0, double t_0, double T, list<eventTrack*> *events, vector<Site>::iterator i_z_site, vector<Site>::iterator k_0_site, int event_site);

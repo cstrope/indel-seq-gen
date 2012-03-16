@@ -1,5 +1,13 @@
 #include "motif.h"
 
+extern vector<short> acgt;
+extern vector<int> acagatcgctgt;
+
+vector<int> chosenACGT (20, 0);
+vector<int> choseACGT (20, 0);
+vector<int> virtualACGT (20,0);
+vector<int> value_check (528,0);
+
 ////////////////////
 ////// SEQUENCE
 ////////////////////
@@ -19,7 +27,8 @@ void Sequence::init(
 	my_node = node;
 	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); 
 								it != evolutionaryAttributes.end(); 
-								it++) {
+								++it) 
+	{
 		//////////
 		/// Initialize items that cannot be done in the initialization list.
 		//////////
@@ -37,7 +46,8 @@ void Sequence::init(
 			(*it).setGamma(rndgamma(env->gammaShape) / env->gammaShape);
 			break;
 		case DiscreteGammaRates:
-			(*it).setCategories((int)(rndu()*env->numCats));
+			(*it).setCategory((int)(rndu()*env->numCats));
+			(*it).setGamma(0);		// Flag saying that categories are being used. //
 			break;
 		case CodonRates:
 			break;
@@ -52,19 +62,62 @@ void Sequence::init(
 	}
 }
 
-void Sequence::print_sequence()
+void 
+Sequence::ConvertRootSequence() 
 {
-	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); it++) {
-		cout << (*it).returnInvariableState();
+	int i = 0;
+	char this_state;
+	size_t putative_state;
+	string stateCharacters;
+	if(isNucModel) stateCharacters = "ACGT";
+	else stateCharacters = "ARNDCQEGHILKMFPSTWYV";
+
+	//////////
+	/// Put the root sequence into the evolving sequence structure.
+	//////////
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); ++it, i++) {
+		if ( (*it).returnState() == 'U' && isNucModel) (*it).setState('T');
+		this_state = (*it).returnState();
+		putative_state = stateCharacters.find(this_state);
+		if (putative_state > stateCharacters.size()) {
+			cerr << "Invalid character '" << this_state << "' at position " << i << " (" << putative_state << "/" << numStates << ")." << endl;
+			exit(EXIT_FAILURE);
+		}
+		(*it).setState(putative_state);
 	}
-	cout << endl;
-	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); it++) {
-		cout << stateCharacters[(*it).returnState()];
-	}
-	cout << endl;
 }
 
-void Sequence::setActiveProps(bool insertion)
+int 
+Sequence::compare_sequence (
+								Sequence *seq
+							   )
+{
+	int num_diff = 0;
+
+	vector<Site>::iterator jt = seq->evolutionaryAttributes.begin();
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); ++it, ++jt)
+		if ( (*it).returnState() != (*jt).returnState() ) 
+			num_diff++;
+
+	return num_diff;
+}
+
+void 
+Sequence::print_sequence( )
+{
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); ++it) {
+		if ((*it).isSet())
+			cerr << stateCharacters[(*it).returnState()];
+		else
+			cerr << "X";
+	}
+	cerr << endl;
+}
+
+void 
+Sequence::setActiveProps(
+						 bool insertion
+						)
 {
 	size_t current_site = 1;
 	varSite *right_motif_vS, *left_motif_vS, *on_motif_vS;
@@ -79,10 +132,11 @@ void Sequence::setActiveProps(bool insertion)
 		/// Set the first site
 		//////////
 		evolutionaryAttributes.front().motif.active_properties.setFirstMotifPos(my_node);
+		assert(my_node->anc != NULL);
 		vector<Site>::iterator anc_it = my_node->anc->seq_evo.begin()+1;
 		for (vector<Site>::iterator it = evolutionaryAttributes.begin()+1; 
 									it != evolutionaryAttributes.end(); 
-									it++, current_site++, anc_it++) {
+									++it, current_site++, ++anc_it) {
 			//////////
 			/// Set the active_properties for this site:
 			//////////
@@ -121,11 +175,11 @@ void Sequence::setActiveProps(bool insertion)
 		//////////
 		for (list<varSite*>::iterator it2 = my_node->variable_region_list.begin(); 
 									  it2 != my_node->variable_region_list.end(); 
-									  it2++) 
+									  ++it2) 
 		{
 			for (vector<Site>::iterator site_it = evolutionaryAttributes.begin(); 
 									  	site_it != evolutionaryAttributes.end(); 
-									  	site_it++) 
+									  	++site_it) 
 			{
 				// Each site should belong to 2 varSites: one for template, one for motif.
 				if ( (*site_it).motif.active_properties.indel->del->my_sequence_template_varSite == (*it2)) 
@@ -143,7 +197,7 @@ void Sequence::setActiveProps(bool insertion)
 		//////////
 		for (vector<Site>::iterator it = evolutionaryAttributes.begin(); 
 									it != evolutionaryAttributes.end(); 
-									it++) 
+									++it) 
 		{
 			(*it).motif.active_properties.subst = new Substitution();
 			(*it).motif.active_properties.indel = new Indel();
@@ -158,7 +212,7 @@ void Sequence::setActiveProps(bool insertion)
 			varSite *mstv = NULL, *mmv = NULL;
 			for (list<siteProperties*>::iterator jt  = (*it).motif.site_props.begin();
 												 jt != (*it).motif.site_props.end();
-												 jt++) 
+												 ++jt) 
 			{
 				if ((*jt)->indel.del->my_sequence_template_varSite) {
 					mstv = (*jt)->indel.del->my_sequence_template_varSite;
@@ -187,15 +241,225 @@ void Sequence::setActiveProps(bool insertion)
 
 			for (list<varSite*>::iterator it2 =  my_node->variable_region_list.begin(); 
 										  it2 != my_node->variable_region_list.end(); 
-									  	  it2++) 
+									  	  ++it2) 
 			{
-				if ( (*it).motif.active_properties.indel->del->my_sequence_template_varSite == (*it2))
-					(*it2)->add2Member((*it).motif.active_properties.indel->del);
+				if ( (*it).motif.active_properties.indel->del->my_sequence_template_varSite == (*it2)) {
+					cerr << "Sequence::setActiveProps: Adding new site to site with membership: ";
+				 	cerr << "st("
+			 		 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->min 
+			 		 << ","
+			 		 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->max
+			 		 << ")["
+					 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->member_set.size()
+					 << "] ";
+					if ((*it).motif.active_properties.indel->del->my_sequence_template_varSite->member_set.size()+1 > (*it).motif.active_properties.indel->del->my_sequence_template_varSite->max) {
+						(*it2)->add2Member((*it).motif.active_properties.indel->del);
+					} else {
+						(*it2)->add2Member((*it).motif.active_properties.indel->del);
+					}
+					cerr << "NOW: ";
+				 	cerr << "st("
+			 		 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->min 
+			 		 << ","
+			 		 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->max
+			 		 << ")["
+					 << (*it).motif.active_properties.indel->del->my_sequence_template_varSite->member_set.size()
+					 << "] ";
+				}
 				if ( (*it).motif.active_properties.indel->del->my_motif_varSite == (*it2))
 					(*it2)->add2Member((*it).motif.active_properties.indel->del);
 			}
 		}
 	}
+}
+
+double
+Sequence::forward_rate_away_from_sequence (
+										   Branch *branch,
+										   int event_site,
+										   int end_site
+										  )
+{
+	double forward_sum_away = 0;
+
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin()+event_site; 
+		 it != evolutionaryAttributes.begin()+end_site && it != evolutionaryAttributes.end(); 
+		 ++it
+		) 
+	{
+		forward_sum_away += (*it).forward_rate_away_from_site(branch);
+	}
+
+	Qidot_k__T__ = -1;	// Forward simulation doesn't do this.
+
+	return forward_sum_away;
+}
+
+
+////////////////////
+////// LIKELIHOOD
+////////////////////
+void Likelihood::calculateStateLikelihood (
+									  	   TNode *node,
+									  	   int category,		/// For pruning to infer rate category of site
+									  	   int position,
+									  	   double branch_length_scalar
+							   			  )
+{
+	size_t xi, xj;
+	vector<double> Li_branch1 (numStates,0);
+	vector<double> Li_branch2 (numStates,0);
+	vector<double>::iterator it, jt, my;
+	TNode *which_bifurcation;
+	
+	//////////
+	/// BRANCH 1
+	//////////
+	which_bifurcation = node->branch1;
+
+//	node->branch->rates->setPij(
+//								node->seq_evo.at(position), 
+//								node->branch->length1 * branch_length_scalar, 
+//								node->nodeEnv->rateHetero
+//							   );
+	//
+	// Cycle over all values of current sequence
+	xi = 0;
+	for (it = Li_xi_.begin(); it != Li_xi_.end(); ++it, xi++) {
+		xj = 0;
+		// Then over all values of next sequence
+		for (jt = which_bifurcation->seq_evo.at(position).L_i.Li_xi_.begin(); jt != which_bifurcation->seq_evo.at(position).L_i.Li_xi_.end(); ++jt, xj++) {
+			Li_branch1.at(xi)
+//			+= node->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			+= which_bifurcation->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			   * (*jt);
+		}
+
+		/// Set the 1st term of the likelihood eq.
+		(*it) = Li_branch1.at(xi);
+	}
+
+	//////////
+	/// BRANCH 2
+	//////////
+	which_bifurcation = node->branch2;
+//	node->branch->rates->setPij(
+//								node->seq_evo.at(position), 
+//								node->branch->length2 * branch_length_scalar, 
+//								node->nodeEnv->rateHetero
+//							   );
+	//
+	// Cycle over all values of current sequence
+	xi = 0;
+	for (it = Li_xi_.begin(); it != Li_xi_.end(); ++it, xi++) {
+		xj = 0;
+		// Then over all values of next sequence
+		for (jt = which_bifurcation->seq_evo.at(position).L_i.Li_xi_.begin(); jt != which_bifurcation->seq_evo.at(position).L_i.Li_xi_.end(); ++jt, xj++) {
+			Li_branch2.at(xi)
+//			+= node->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			+= which_bifurcation->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			   * (*jt);
+		}
+
+		/// Multiply the first term (set in `BRANCH 1' loop) by the likelihood eq. 2nd term.
+		(*it) *= Li_branch2.at(xi);
+	}
+}
+
+vector<double> Likelihood::calculateCatLikelihood (
+									  			   TNode *node,
+									  			   int category,		/// For pruning to infer rate category of site
+									  			   int position,
+									  			   vector<double> b1_Li,
+									  			   vector<double> b2_Li
+							   				      )
+{
+	size_t xi, xj;
+	vector<double> Li_branch1 (numStates,0);
+	vector<double> Li_branch2 (numStates,0);
+	vector<double>::iterator jt, my;
+	vector<double> my_Li (numStates,0);
+
+	//////////
+	// Calculate the likelihood of the observed data given the category and the model:
+	// Calculate P( X_1,X_2,X_3 | C=j,\theta )
+	//             = ·_i P( X_1,X_2,X_3,X_R=i | C=j,\theta )
+	// 			   = ·_i P( X_1,X_2,X_3 | X_R=i,C=j,\theta ) x P( X_R=i | C=j,\theta )
+	// 			   = ·_i P( X_1,X_2,X_3 | X_R=i,C=j,\theta ) x ¹_i
+	//
+	// BRANCH 1
+	//
+//cerr << "Node: " << node->printBipartition() << " BL: " << node->branch->length1 << " " << node->branch->length2 << endl;
+//cerr << "Before (branch1): " << endl;
+//cerr << "node->branch->rates->setPij(," << node->branch->length1*1 << ",)" << endl;
+//node->branch1->branch->rates->printPij();
+//	node->branch->rates->setPij(
+//	node->branch1->branch->rates->setPij(
+//								node->seq_evo.at(position), 
+//								node->branch->length1 * 1, 
+//								node->nodeEnv->rateHetero
+//							   );
+//cerr << "After (branch1): " << endl;
+//node->branch1->branch->rates->printPij();
+	xi = 0;
+	for (my = my_Li.begin(); my != my_Li.end(); xi++, my++) {
+		xj = 0;
+		// Then over all values of next sequence
+		for (jt = b1_Li.begin(); jt != b1_Li.end(); ++jt, xj++) {
+			Li_branch1.at(xi)
+//			+= node->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			+= node->branch1->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			   * (*jt);
+		}
+
+		/// Set the 1st term of the likelihood eq.
+		(*my) = Li_branch1.at(xi);
+	}
+	//
+	// BRANCH 2
+	//
+//cerr << "Before (branch2): " << endl;
+//node->branch2->branch->rates->printPij();
+//	node->branch->rates->setPij(
+//	node->branch2->branch->rates->setPij(
+//								node->seq_evo.at(position), 
+//								node->branch->length2 * 1, 
+//								node->nodeEnv->rateHetero
+//							   );
+//cerr << "After (branch2): " << endl;
+//node->branch->rates->printPij();
+//node->branch2->branch->rates->printPij();
+//cerr << endl << endl;
+	xi = 0;
+	for (my = my_Li.begin(); my != my_Li.end(); xi++, my++) {
+		xj = 0;
+		// Then over all values of next sequence
+		for (jt = b2_Li.begin(); jt != b2_Li.end(); ++jt, xj++) {
+			Li_branch2.at(xi)
+//			+= node->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			+= node->branch2->branch->rates->Pij.at(category).at(from(xi)+to(xj)) 
+			   * (*jt);
+		}
+
+		/// Multiply the first term (set in `BRANCH 1' loop) by the likelihood eq. 2nd term.
+		(*my) *= Li_branch2.at(xi);
+	}
+
+	//cerr << "          Category: " << category << "    " << endl;
+	//cerr << "b1:  ";
+	//for(jt = b1_Li.begin(); jt != b1_Li.end(); ++jt)
+	//	cerr << "  " << (*jt);
+	//cerr << endl;
+	//cerr << "b2:  ";
+	//for(jt = b2_Li.begin(); jt != b2_Li.end(); ++jt)
+	//	cerr << "  " << (*jt);
+	//cerr << endl << "my:  ";
+	//for (my = my_Li.begin(); my != my_Li.end(); my++) {
+	//	cerr << (*my) << " "; 
+	//}
+	//cerr << endl;
+
+	return my_Li;
 }
 
 
@@ -227,6 +491,245 @@ void Site::InitializeMotif(
 	}
 }
 
+void Site::setSiteRateAway (
+							double site_width,
+							double gamma,
+							RateMatrix *rates
+						   )
+{
+	int base = 0;
+	double sum_rate_away = 0;
+
+	site_rate_away.assign(numStates,0);
+	if (e_QijDt.empty()) e_QijDt.assign(numStates_squared,0);
+
+	//////////
+	/// Set uniformization bin:
+	//////////
+	//  For each i­j, Pij = (Qij*gamma)/bin_max
+	//  For i=j       Pii = 1-\sum_{i­j}Pij
+	// where bin_max = max{Qii}*max{gamma_j}*BUFFER, where gamma_j is the maximum gamma value over
+	// the entire sequence.
+	sum_rate_away = base = 0;
+	for (vector<double>::iterator it = site_rate_away.begin(); it != site_rate_away.end(); ++it, base++)
+		if (state != base) {
+			(*it) = (rates->Qij[state*numStates+base] * gamma) / site_width;
+			sum_rate_away += (*it);
+		}
+	site_rate_away.at(state) = 1 - sum_rate_away;
+	//
+	//////////
+
+	//////////
+	/// Have Qij values for each individual transition. Make bin additive.
+	//////////
+	for (vector<double>::iterator it = site_rate_away.begin()+1; it != site_rate_away.end(); ++it)
+		(*it) += (*(it-1));
+}
+
+double Site::setSiteRateAway(
+							 vector<double>& Qij,
+							 RateMatrix *rates
+						    ) 
+{
+	short base = 0;
+	double Pij, prev_Pij = 0;
+
+	//////////
+	/// Initialize the site_rate_away.
+	/// * Assign drops all elements previously assigned to site_rate_away, and replaces it with
+	///   the specified elements.
+	//////////
+	site_rate_away.assign(numStates,0);
+	if (e_QijDt.empty()) e_QijDt.assign(numStates_squared,0);
+
+	//////////
+	/// Calculate the rate away for a site.
+	//////////
+	for (vector<double>::iterator it = site_rate_away.begin(); it != site_rate_away.end(); ++it, base++) {
+		if (state == base) Pij = 0;
+		else Pij = Qij[state*numStates+base];
+		(*it) = prev_Pij + Pij * rates->catRate.at(returnCategory());
+		prev_Pij = (*it);
+	}
+	//
+	//////////
+
+	//cerr << "Category rate: " << rates->catRate.at(returnCategory()) << endl;
+	//for (vector<double>::iterator it = site_rate_away.begin(); it != site_rate_away.end(); ++it)
+	//	cerr << "  " << (*it);
+	//cerr << "    " << site_rate_away.back() << endl;
+
+	return site_rate_away.back();
+}
+
+bool Site::doSubstitution (
+						   double value, 
+						   int step_type, 
+						   TNode *node, 
+						   int *codon_position, 
+						   string& event
+						  )
+{
+	int base = 0, newState = -1;
+	bool set_state = false;
+	char from = stateCharacters.at(state), to;
+
+	if (motif.active_properties.subst->siteInvariable()) return false; // Substituion failed.
+	for (vector<double>::iterator it = site_rate_away.begin(); it != site_rate_away.end(); ++it, base++) {
+		if (value < (*it)) {
+			newState = base;
+			break;
+		}
+	}
+
+	if (newState == -1) {																					//XOUT
+		cerr << "Site::doSubstitution: Failed to find acceptable state! " << endl;							//XOUT
+		cerr << "  key: " << value << endl << "  rate away from site: " << site_rate_away.back() << endl;	//XOUT
+		exit(EXIT_FAILURE);																					//XOUT
+	}																										//XOUT
+	
+	//////////
+	/// Make sure that site can accept state.
+	//////////
+	if ( !(motif.active_properties.subst->substitution_bitstring.test(state)) )
+		set_state = true;
+	else if (motif.active_properties.subst->substitution_bitstring.test(newState) )
+		set_state = true;
+	else return false;
+	
+	if (set_state) {
+		if (step_type == UNIFORMIZATION) {
+			if (newState == state) { 
+				virtual_events++; 
+				acagatcgctgt.at(state*4+state)++;
+				virtualACGT.at(state)++;
+				return false;
+			} else {
+				//////////
+				/// If codon rates, then set the position. Decision as to whether the position is
+				/// a stop codon or not is done in substitute.
+				//////////
+				acagatcgctgt.at(state*4+newState)++;
+				chosenACGT.at(state)++;
+				if (node->nodeEnv->rateHetero == CodonRates) *codon_position = newState;
+				else state = newState;
+				choseACGT.at(state)++;
+				to = stateCharacters.at(newState);
+				event.push_back(from); event.push_back(to);
+				actual_events++;
+				setSiteRateAway(
+								node->rate_away_site_width,
+								(
+								 (gammaRates)
+								 ? gammaRates
+								 : node->branch->rates->catRate.at(returnCategory())
+								),
+								node->branch->rates
+							   );
+				acgt.at(newState)++;
+				numSubstAway++;
+			}
+		} else {
+			if (node->nodeEnv->rateHetero == CodonRates) *codon_position = newState;
+			else {
+				state = newState;
+			}
+			to = stateCharacters.at(newState);
+			event.push_back(from); 
+			event.push_back(to);
+			numSubstAway++;
+		}
+	} else return false;
+	return true;
+}
+
+bool siteDependencies::isDependentInteraction()
+{
+	return 0;
+}
+
+void Site::printSiteRateAway()
+{
+	size_t base = 0;
+	for (vector<double>::iterator it = site_rate_away.begin(); it != site_rate_away.end(); ++it, base++) {
+		cerr << stateCharacters.at(base) << "->";
+		if (base == state) cerr << "v";
+		cerr << (*it) << " ";
+	}
+}
+
+bool Site::isDefinedByUser ( void )
+{
+	size_t newState = 0;
+	//////////
+	/// If this is defined by user at input, then there will be a 1 in one location, with all else
+	/// zeroes.
+	//////////
+	// One issue that needs to be taken care of is: If Category 0 matrix is I, then the site will
+	// appear to be defined by the user, and will act accordingly. This is an issue in calculate-
+	// RateAwayFromEndpointSequence(), since the state will be set as a -1. The purpose of newState
+	// is to do exactly that.
+	//////////
+	bool a_one = false;
+	for (vector<double>::iterator it = L_i.Li_xi_.begin(); it != L_i.Li_xi_.end(); ++it, newState++) {
+		if ( (*it) == 1 ) {
+			a_one = true;
+			//setState(newState);
+		} else if ( (*it) != 0 ) return false;
+	}
+	if ( a_one ) return true;
+	else {
+		cerr << "Site::isDefinedByUser()" << endl
+			 << "  sum (L_i.Li_xi_) is either greater than 1 or something really strange is going on."
+			 << endl;
+		for (vector<double>::iterator it = L_i.Li_xi_.begin(); it != L_i.Li_xi_.end(); ++it, newState++) {
+			cerr << (*it) << "  ";
+		}
+		cerr << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+double
+Site::forward_rate_away_from_site(
+								  Branch *branch
+						   		 )
+{
+	short i;
+	bool profile=false;
+	double Qij;
+	double forward_sum_away = 0;
+
+	i = returnState();
+	forward_rate_away.assign(numStates, 0);
+	for (int j = 0; j < numStates; j++) {
+		Qij = 0;
+		if (order_3_markov) Qij = site_rate_away.at(j); 
+		else Qij = branch->rates->Qij.at(from(i)+to(j));
+		Qij *= branch->rates->catRate.at(returnCategory());
+		if ( j != i ) {
+			forward_rate_away.at(j) = Qij;
+			forward_sum_away += Qij;
+		} else forward_rate_away.at(j) = 0;
+	}
+
+	if (order_3_markov) {
+		for (vector<double>::iterator jt = site_rate_away.begin()+1; jt != site_rate_away.end(); ++jt) 
+			(*jt) += (*(jt-1));
+	} else {
+		vector<double>::iterator jt, it = forward_rate_away.begin();
+		site_rate_away.assign(numStates, 0);
+		it = forward_rate_away.begin();
+		jt = site_rate_away.begin();
+		(*jt) = (*it);
+		++jt; ++it;
+		for (; jt != site_rate_away.end(); ++jt, ++it) (*jt) = (*(jt-1))+(*it);
+	}
+	
+	return forward_sum_away;
+}
+
 
 ////////////////////
 ////// INMOTIF
@@ -242,14 +745,16 @@ void inMotif::report()
 	cerr << "  name =        " << name << endl;
 	cerr << "  marker =      " << marker << endl;
 	cerr << "  bipartition = "; 
-	for(vector<bool>::iterator it = bipartition.begin(); it != bipartition.end(); it++)
+	for(vector<bool>::iterator it = bipartition.begin(); it != bipartition.end(); ++it)
 		cerr << (*it);
 	cerr << endl;
 	cerr << "  regex =       " << regex << endl;
 	cerr << "  sitemap =     " << sitemap << endl;
 }
 
-vector<siteProperties*> inMotif::enumerateRegEx(TNode *node)
+vector<siteProperties*> inMotif::enumerateRegEx(
+												TNode *node
+											   )
 {
 	size_t found, found2, found3;
 	string site;
@@ -270,7 +775,7 @@ vector<siteProperties*> inMotif::enumerateRegEx(TNode *node)
 	for (int i = 0; i < numStates; i++) my_stateCharacters += stateCharacters.at(i);
 	return_sites.clear();
 
-	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); it++) {
+	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); ++it) {
 		site.clear();
 		switch ((*it).at(0)) {
 		case '[':
@@ -321,7 +826,7 @@ vector<siteProperties*> inMotif::enumerateRegEx(TNode *node)
 				exit(EXIT_FAILURE);
 			}
 			
-			for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); it2++) {
+			for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); ++it2) {
 				found = reverse_sites.find((*it2));
 				if (found == string::npos) site += (*it2);
 			}
@@ -403,7 +908,7 @@ vector<siteProperties*> inMotif::enumerateRegEx(TNode *node)
 	vector<siteProperties*>::iterator it = new_site_props.begin();
 	for (list<string>::iterator it3 = return_sites.begin(); 
 								it3 != return_sites.end(); 
-								it3++, it++) 
+								++it3, ++it) 
 	{
 		bitset<20> regex_site;
 		regex_site.set();
@@ -427,7 +932,7 @@ void inMotif::removeLastPosition()
 	string fixed_regex = "";
 	regex_sites = split(regex, "-");
 	regex_sites.pop_back();
-	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); it++) {
+	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); ++it) {
 		fixed_regex += (*it);
 		fixed_regex += "-";
 	}
@@ -470,7 +975,7 @@ list<siteRegEx*> inMotif::parseRegEx()
 	return_sites.clear();
 	return_list.clear();
 
-	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); it++) {
+	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end(); ++it) {
 		site.clear();
 		switch ((*it).at(0)) {
 		case '[':
@@ -517,7 +1022,7 @@ list<siteRegEx*> inMotif::parseRegEx()
 				exit(EXIT_FAILURE);
 			}
 			
-			for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); it2++) {
+			for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); ++it2) {
 				found = reverse_sites.find((*it2));
 				if (found == string::npos) site += (*it2);
 			}
@@ -581,7 +1086,7 @@ list<siteRegEx*> inMotif::parseRegEx()
 	}
 
 	// Set bit string.
-	for (list<string>::iterator it3 = return_sites.begin(); it3 != return_sites.end(); it3++) {
+	for (list<string>::iterator it3 = return_sites.begin(); it3 != return_sites.end(); ++it3) {
 		bitset<20> regex_site;
 		regex_site.set();
 		for (string::iterator it4 = (*it3).begin(); it4 != (*it3).end(); it4++) {
@@ -594,7 +1099,9 @@ list<siteRegEx*> inMotif::parseRegEx()
 	return return_list;
 }
 
-bitset<20> inMotif::getRegExValues(size_t which_site)
+bitset<20> inMotif::getRegExValues(
+								   size_t which_site
+								  )
 {
 	list<string> regex_sites;
 	string my_stateCharacters;
@@ -612,7 +1119,7 @@ bitset<20> inMotif::getRegExValues(size_t which_site)
 	for (int i = 0; i < numStates; i++) my_stateCharacters += stateCharacters.at(i);
 	return_values.reset();
 
-	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end() && !done; it++) {
+	for (list<string>::iterator it = regex_sites.begin(); it != regex_sites.end() && !done; ++it) {
 		site.clear();
 		switch ((*it).at(0)) {
 		case '[':
@@ -631,7 +1138,7 @@ bitset<20> inMotif::getRegExValues(size_t which_site)
 					exit(EXIT_FAILURE);
 				} else {
 					// Set return_values
-					for (string::iterator sit = site.begin(); sit != site.end(); sit++) {
+					for (string::iterator sit = site.begin(); sit != site.end(); ++sit) {
 						found = my_stateCharacters.find_first_of(*sit);
 						return_values.set(found);
 					}
@@ -653,11 +1160,11 @@ bitset<20> inMotif::getRegExValues(size_t which_site)
 					cerr << "Unrecognized character in motif regular expression: " << (*it) << endl;
 					exit(EXIT_FAILURE);
 				}
-				for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); it2++) {
+				for (string::iterator it2 = my_stateCharacters.begin(); it2 != my_stateCharacters.end(); ++it2) {
 					found = reverse_sites.find((*it2));
 					if (found == string::npos) site += (*it2);
 				}
-				for (string::iterator sit = site.begin(); sit != site.end(); sit++) {
+				for (string::iterator sit = site.begin(); sit != site.end(); ++sit) {
 					found = my_stateCharacters.find_first_of(*it);
 					return_values.set(found);
 				}
@@ -728,22 +1235,30 @@ motifSite::motifSite()
 	site_props.clear();
 }
 
-void motifSite::copy(motifSite* site2copy) 
+void motifSite::copy(
+					 motifSite* site2copy
+					) 
 {
 	site_props.clear();
-	for (list<siteProperties*>::iterator it = site2copy->site_props.begin(); it != site2copy->site_props.end(); it++) {
+	for (list<siteProperties*>::iterator it = site2copy->site_props.begin(); it != site2copy->site_props.end(); ++it) {
 		site_props.push_back(new siteProperties(*it,this));
 		if (site_props.back()->indel.del == NULL)
 			site_props.back()->indel.createObjects();
 	}
 }
 
-void motifSite::setNode(TNode *node)
+void motifSite::setNode(
+					    TNode *node
+					   )
 {
 	my_node = node;
 }
 
-void motifSite::Site_deleteMerge(motifSite *prev, motifSite *next, bool deletion)
+void motifSite::Site_deleteMerge(
+								 motifSite *prev, 
+								 motifSite *next, 
+								 bool deletion
+								)
 {
 	///////////
 	/// Briefly, variables are as such (with respect to this):
@@ -782,9 +1297,11 @@ void motifSite::Site_deleteMerge(motifSite *prev, motifSite *next, bool deletion
 	deleteSiteObjects(deletion);
 }
 
-void motifSite::deleteSiteObjects(bool deletion)
+void motifSite::deleteSiteObjects(
+								  bool deletion
+								 )
 {
-	for (list<siteProperties*>::iterator it2 = site_props.begin(); it2 != site_props.end(); it2++) {
+	for (list<siteProperties*>::iterator it2 = site_props.begin(); it2 != site_props.end(); ++it2) {
 		if (deletion)
 			delete (*it2)->indel.R_ins_;
 		delete (*it2)->indel.del;
@@ -803,7 +1320,9 @@ void motifSite::deleteSiteObjects(bool deletion)
 ////////////////////
 ////// ACTIVEPROPERTIES
 ////////////////////
-void activeProperties::setFirstMotifPos(TNode *node)
+void activeProperties::setFirstMotifPos(
+									    TNode *node
+									   )
 {
 	//////////
 	/// Beginning should be a (1,1) varSite.
@@ -869,7 +1388,7 @@ void activeProperties::set_properties(
 	/// Find the template.
 	//////////
 	list<siteProperties*>::iterator anc_it = anc_site_props.begin();
-	for (list<siteProperties*>::iterator it = site_props.begin(); it != site_props.end(); it++, anc_it++) {
+	for (list<siteProperties*>::iterator it = site_props.begin(); it != site_props.end(); ++it, ++anc_it) {
 		if ( (*it)->fromTemplate != NULL) {	
 			relationship = testRelation ((*it)->fromTemplate->bipartition, node->bipartition);
 			if (relationship == EXACT) {
@@ -926,7 +1445,7 @@ void activeProperties::set_properties(
 	/// Find the motif
 	//////////
 	list<siteProperties*>::iterator motif_anc_it = anc_site_props.begin();
-	for (list<siteProperties*>::iterator it = site_props.begin(); it != site_props.end(); it++, motif_anc_it++) {
+	for (list<siteProperties*>::iterator it = site_props.begin(); it != site_props.end(); ++it, ++motif_anc_it) {
 		if ( (*it)->fromMotif != NULL) {		// is a motif.
 			relationship = testRelation ((*it)->fromMotif->bipartition, node->bipartition);
 			if (relationship == EXACT) {
@@ -1161,7 +1680,12 @@ void activeProperties::report()
 ////////////////////
 ////// SITE PROPERTIES
 ////////////////////
-siteProperties::siteProperties(vector<siteProperties*> prev_site, varSite *memberOfSite, inMotif *infromMotif, bool isTemplate) 
+siteProperties::siteProperties(
+							   vector<siteProperties*> prev_site, 
+							   varSite *memberOfSite, 
+							   inMotif *infromMotif, 
+							   bool isTemplate
+							  ) 
 			   : subst (Substitution()),
 			     indel(Indel(prev_site)),
 				 fromMotif
@@ -1193,7 +1717,14 @@ siteProperties::siteProperties(vector<siteProperties*> prev_site, varSite *membe
 	indel.del->setMembership(memberOfSite, isTemplate);
 }
 
-void siteProperties::copy(siteProperties *stuff, short which, short type, motifSite *prev, siteProperties *anc, bool last_site)
+void siteProperties::copy(
+						  siteProperties *stuff, 
+						  short which, 
+						  short type, 
+						  motifSite *prev, 
+						  siteProperties *anc, 
+						  bool last_site
+						 )
 {
 	bitset<20> general;
 	general.set();
@@ -1244,7 +1775,9 @@ void siteProperties::copy(siteProperties *stuff, short which, short type, motifS
 ////////////////////
 ////// Indel
 ////////////////////
-Indel::Indel(vector<siteProperties*> prev_site) 
+Indel::Indel(
+			 vector<siteProperties*> prev_site
+			) 
 	:  L_ins_
 		(
 		  (
@@ -1258,14 +1791,21 @@ Indel::Indel(vector<siteProperties*> prev_site)
 { }
 
 // Should not auto-create insertion and deletions?
-Indel::Indel(varSite *in_template_varSite, varSite *in_motif_varSite)
+Indel::Indel(
+			 varSite *in_template_varSite, 
+			 varSite *in_motif_varSite
+			)
 	:  L_ins_ (new Insertion(in_template_varSite, in_motif_varSite)),
 	   R_ins_ (new Insertion(in_template_varSite, in_motif_varSite)),
 	   del    (new Deletion(in_template_varSite, in_motif_varSite))
 { }
 
 // same?
-Indel::Indel(Indel *site2copy, motifSite *anc, bool isTemplate)
+Indel::Indel(
+			 Indel *site2copy, 
+			 motifSite *anc, 
+			 bool isTemplate
+			)
 	:  L_ins_ (new Insertion(site2copy->L_ins_, anc, isTemplate, NULL)),
 	   R_ins_ (new Insertion(site2copy->R_ins_, anc, isTemplate, NULL)),
 	   del    (new Deletion(site2copy->del, anc, isTemplate))
@@ -1284,7 +1824,14 @@ void Indel::createObjects()
 	del = new Deletion();
 }
 
-void Indel::copy(Indel *site2copy, motifSite *prev_site, bool isTemplate, bool last_site, bool isDescendant, Indel *anc_indel)
+void Indel::copy(
+				 Indel *site2copy, 
+				 motifSite *prev_site, 
+				 bool isTemplate, 
+				 bool last_site, 
+				 bool isDescendant, 
+				 Indel *anc_indel
+				)
 {
 	Insertion *anc_L_ins_ = NULL, *anc_R_ins_ = NULL;
 	Deletion  *anc_del    = NULL;
@@ -1407,7 +1954,12 @@ void Indel::set(
 ////////////////////
 ////// Insertion
 ////////////////////
-Insertion::Insertion(Insertion *site2copy, motifSite *anc, bool isTemplate, Insertion *anc_copy)
+Insertion::Insertion(
+					 Insertion *site2copy, 
+					 motifSite *anc, 
+					 bool isTemplate, 
+					 Insertion *anc_copy
+					)
 {
 	// Copying ancestral, pointing to current struct.
 	if (isTemplate) {
@@ -1456,7 +2008,12 @@ Insertion::Insertion(Insertion *site2copy, motifSite *anc, bool isTemplate, Inse
 	}
 }
 
-void Insertion::copy(Insertion *site2copy, bool isTemplate, bool isDescendant, Insertion *anc_copy)
+void Insertion::copy(
+					 Insertion *site2copy, 
+					 bool isTemplate, 
+					 bool isDescendant, 
+					 Insertion *anc_copy
+					)
 {
 	if (isTemplate) {
 		if (site2copy->my_sequence_template_varSite_left == NULL) return;
@@ -1503,7 +2060,9 @@ void Insertion::copy(Insertion *site2copy, bool isTemplate, bool isDescendant, I
 /// This version of copy is utilized when an insertion is made (i.e., during the evolution run, 
 /// rather than the evolutionary setup).
 //////////
-void Insertion::copy(Insertion *site2copy)
+void Insertion::copy(
+					 Insertion *site2copy
+					)
 {
 	my_sequence_template_varSite_left 
 	= site2copy->my_sequence_template_varSite_left;
@@ -1517,7 +2076,11 @@ void Insertion::copy(Insertion *site2copy)
 	on_site_motif_varSite = site2copy->on_site_motif_varSite;
 }
 
-void Insertion::setMembership(varSite *memberOfSite, bool isTemplate, size_t side)
+void Insertion::setMembership(
+							  varSite *memberOfSite, 
+							  bool isTemplate, 
+							  size_t side
+							 )
 {
 	if (isTemplate) {
 		if (side == LEFT) my_sequence_template_varSite_left = memberOfSite;
@@ -1530,16 +2093,23 @@ void Insertion::setMembership(varSite *memberOfSite, bool isTemplate, size_t sid
 	}
 }
 
-bool Insertion::insertionAllowed(int size)
+bool Insertion::insertionAllowed(
+								 int size
+								)
 {
+	bool profile=false;
 
-//	cerr << "INSERTION_STATS: (insert size = " << size << ")" << endl;
-//	cerr << "  osst: " << on_site_sequence_template_varSite->min << " " << on_site_sequence_template_varSite->max << " " << on_site_sequence_template_varSite->member_set.size() << endl;
-//	cerr << "  osm:  " << on_site_motif_varSite->min << " " << on_site_motif_varSite->max << " " << on_site_motif_varSite->member_set.size() << endl;
-//	cerr << "  mstl: " << my_sequence_template_varSite_left->min << " " << my_sequence_template_varSite_left->max << " " << my_sequence_template_varSite_left->member_set.size() << endl;
-//	cerr << "  mstr: " << my_sequence_template_varSite_right->min << " " << my_sequence_template_varSite_right->max << " " << my_sequence_template_varSite_right->member_set.size() << endl;
-//	cerr << "  mml:  " << my_motif_varSite_left->min << " " << my_motif_varSite_left->max << " " << my_motif_varSite_left->member_set.size() << endl;
-//	cerr << "  mmr:  " << my_motif_varSite_right->min << " " << my_motif_varSite_right->max << " " << my_motif_varSite_right->member_set.size() << endl;
+	if (profile) {
+	//	cerr << "Insertion::insertionAllowed: INSERTION_STATS: (insert size = " << size << ")" << endl;
+	//	if (on_site_sequence_template_varSite != NULL)
+	//		cerr << "Insertion::insertionAllowed:   osst: " << on_site_sequence_template_varSite->min << " " << on_site_sequence_template_varSite->max << " " << on_site_sequence_template_varSite->member_set.size() << endl;
+	//	if (on_site_motif_varSite != NULL)
+	//		cerr << "Insertion::insertionAllowed:   osm:  " << on_site_motif_varSite->min << " " << on_site_motif_varSite->max << " " << on_site_motif_varSite->member_set.size() << endl;
+	//	cerr << "Insertion::insertionAllowed:   mstl: " << my_sequence_template_varSite_left->min << " " << my_sequence_template_varSite_left->max << " " << my_sequence_template_varSite_left->member_set.size() << endl;
+	//	cerr << "Insertion::insertionAllowed:   mstr: " << my_sequence_template_varSite_right->min << " " << my_sequence_template_varSite_right->max << " " << my_sequence_template_varSite_right->member_set.size() << endl;
+	//	cerr << "Insertion::insertionAllowed:   mml:  " << my_motif_varSite_left->min << " " << my_motif_varSite_left->max << " " << my_motif_varSite_left->member_set.size() << endl;
+	//	cerr << "Insertion::insertionAllowed:   mmr:  " << my_motif_varSite_right->min << " " << my_motif_varSite_right->max << " " << my_motif_varSite_right->member_set.size() << endl;
+	}
 
 	//////////
 	/// on_site_xxx set only if the minimum in the motif or sequence template is zero.
@@ -1555,7 +2125,7 @@ bool Insertion::insertionAllowed(int size)
 			 on_site_motif_varSite->insertion(size)
 		   ) 
 		{
-//			cerr << "1true" << endl;
+			if (profile) cerr << "1true" << endl;
 			return true;
 		}
 	}
@@ -1574,7 +2144,7 @@ bool Insertion::insertionAllowed(int size)
 		     )
 		   ) 
 		{
-//			cerr << "2true" << endl;
+			if (profile) cerr << "2true" << endl;
 			return true;
 		}
 	} 
@@ -1593,7 +2163,7 @@ bool Insertion::insertionAllowed(int size)
 			 )
 		   ) 
 		{
-//			cerr << "3true" << endl;
+			if (profile) cerr << "3true" << endl;
 			return true;
 		}
 	}
@@ -1603,19 +2173,19 @@ bool Insertion::insertionAllowed(int size)
 	// Left:
 	if ( my_sequence_template_varSite_left->insertion(size)
 		 && my_motif_varSite_left->insertion(size) ) {
-//		 cerr << "4true" << endl;
+		 if (profile) cerr << "4true" << endl;
 		 return true;
 	}
 	//
 	// Right:
 	if ( my_sequence_template_varSite_right->insertion(size) 
 		 && my_motif_varSite_right->insertion(size) ) {
-//		 cerr << "5true" << endl;
+		 if (profile) cerr << "5true" << endl;
 		 return true;
 	}
 	//
 	// No insert can be fit in this site.
-//	cerr << "false" << endl;
+	if (profile) cerr << "false" << endl;
 	return false;
 	//
 	//////////
@@ -1697,25 +2267,30 @@ void Deletion::copy(
 	}
 }
 
-void Deletion::setMembership(varSite *memberOfSite, bool isTemplate)
+void Deletion::setMembership(
+							 varSite *memberOfSite, 
+							 bool isTemplate
+							)
 {
 	if (isTemplate) my_sequence_template_varSite = memberOfSite;
 	else my_motif_varSite = memberOfSite;
 }
 
-bool Deletion::deletionAllowed(int size)
+bool Deletion::deletionAllowed(
+							   int size
+							  )
 {
 
-//	cerr << "deletionAllowed size = " << size;
-//	cerr << "  mstv: " << my_sequence_template_varSite->min << " " << my_sequence_template_varSite->max << " " << my_sequence_template_varSite->member_set.size();
-//	cerr << "  mmv:  " << my_motif_varSite->min << " " << my_motif_varSite->max << " " << my_motif_varSite->member_set.size() << "       ";
+	//cerr << "deletionAllowed size = " << size;
+	//cerr << "  mstv: " << my_sequence_template_varSite->min << " " << my_sequence_template_varSite->max << " [" << my_sequence_template_varSite->member_set.size();
+	//cerr << "]  mmv:  " << my_motif_varSite->min << " " << my_motif_varSite->max << " [" << my_motif_varSite->member_set.size() << "]       ";
 
 	if ( my_sequence_template_varSite->deletion(size) && my_motif_varSite->deletion(size) ) {
-//		cerr << "true" << endl;
+		//cerr << "true" << endl;
 		return true;
 	}
 
-//	cerr << "false" << endl;
+	//cerr << "false" << endl;
 	return false;
 }
 
@@ -1753,13 +2328,17 @@ bool Substitution::siteInvariable()
 	else return false;
 }
 
-void Substitution::setInvariable(char residue)
+void Substitution::setInvariable(
+								 char residue
+								)
 {
 	substitution_bitstring.reset();
 	substitution_bitstring.set(residue);
 }
 
-void Substitution::copy(Substitution *site2copy)
+void Substitution::copy(
+						Substitution *site2copy
+					   )
 {
 	substitution_bitstring.set();
 	substitution_bitstring &= site2copy->substitution_bitstring;
@@ -1774,7 +2353,9 @@ string Substitution::report_bitset()
 	return report;
 }
 
-void Substitution::setSiteBits(bitset<20> bitstring)
+void Substitution::setSiteBits(
+							   bitset<20> bitstring
+							  )
 {
 	substitution_bitstring.set();
 	substitution_bitstring &= bitstring;
@@ -1784,25 +2365,33 @@ void Substitution::setSiteBits(bitset<20> bitstring)
 ////////////////////
 /////// VAR SITE
 ////////////////////
-void varSite::add2Member (Deletion *newMember)
+void varSite::add2Member (
+						  Deletion *newMember
+						 )
 {
 	//cerr << "Adding member: " << newMember << endl;
 	member_set.insert(newMember);
 }
 
-void varSite::removeFromMember (Deletion *thisMember)
+void varSite::removeFromMember (
+								Deletion *thisMember
+							   )
 {
 	member_set.erase(thisMember);
 }
 
-bool varSite::insertion(int size)
+bool varSite::insertion(
+					    int size
+					   )
 {
 	if (member_set.size() + size > max) return false; 
 	if (max < member_set.size() + size) return false;
 	return true;
 }
 
-bool varSite::deletion(int size)
+bool varSite::deletion(
+					   int size
+					  )
 {
 	if (min == max) return false;
 	if (min > member_set.size() - size) return false;
@@ -1819,14 +2408,16 @@ bool varSite::isUnconstrained()
 void varSite::print_members()
 {
 	cerr << "Members (set): " << member_set.size() << "   " << min << " " << max << endl;
-	for (set<Deletion*>::iterator it = member_set.begin(); it != member_set.end(); it++) {
+	for (set<Deletion*>::iterator it = member_set.begin(); it != member_set.end(); ++it) {
 		cerr << (*it) << endl;
 	}
 
 
 }
 
-varSite *varSite::set_on_site_ptr(varSite *prev_site)
+varSite *varSite::set_on_site_ptr(
+								  varSite *prev_site
+								 )
 {
 	//////////
 	/// * on site -> (if either site == 0) ? set : NULL

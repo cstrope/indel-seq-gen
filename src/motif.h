@@ -30,13 +30,14 @@
 #include "evolve.h"
 #include "inTree.h"
 #include "tree.h"
-//#include "treefile.h"
+#include "model.h"
 
 using namespace std;
 
 class siteProperties;
 class activeProperties;
 class varSite;
+class inTree;
 class inMotif;
 class inClade;
 class motifSite;
@@ -46,9 +47,13 @@ class Deletion;
 class siteConstraints;
 class Indel;
 class TNode;
+class RateMatrix;
+class Site;
+class siteDependencies;
+class Likelihood;
+class Dependency;
 
-extern vector<int> num_siteProperty_copies;
-extern vector<int> motifSite_setActiveProps;
+extern int actual_events, virtual_events;
 
 class inMotif : private Counter<inMotif>
 {
@@ -68,7 +73,7 @@ public:
 		  sitemap (""),
 		  sequence_template (false)
 	{ bipartition.clear(); }
-	inMotif(string prosite_name, string prosite_regex, size_t num_tips) 
+	inMotif(string& prosite_name, string& prosite_regex, size_t num_tips) 
 		: name (prosite_name),
 		  marker ('*'),
 		  regex (prosite_regex),
@@ -335,15 +340,66 @@ public:
 	void Print_Nulls();
 };
 
+class Likelihood : private Counter<Branch>
+{
+public:
+	using Counter<Branch>::howMany;
+	vector<double> Li_xi_;			// Vector holding the likelihoods of each character.
+	bool touched;
+
+	Likelihood ()
+		: touched (false)
+	{ Li_xi_.assign(numStates, 0); }
+	//////////
+	/// Why 2 functions? 
+	//////////
+	// State likelihoods are calculated once only, and are active throughout the simulation, so they
+	// set the Site likelihood variable, thus requiring a void return value:
+	void calculateStateLikelihood(
+								  TNode *node, 
+								  int category, 
+								  int sequence_position,
+								  double branch_length_scalar
+								 );
+	//
+	// whereas the likelihood for each category must be calculated, which will be used to infer the
+	// category that the Site belongs to, and afterwards, will be unnecessary. Thus, it will use
+	// only a temporary variable, so the conditional likelihood variable is returned.
+	vector<double> calculateCatLikelihood(
+										  TNode *node, 
+										  int category, 
+										  int sequence_position,
+										  vector<double> b1_Li,
+										  vector<double> b2_Li
+										 );
+	//
+	//////////
+};
+
 class Site : private Counter<Site>
 {
+public:
+	vector<double> site_rate_away;
+	vector<double> forward_rate_away;	/// Qij^D
+	vector<double> e_QijDt;				/// Qij for Pij^\tilde{D}
+	vector<double> Pjk0;				/// Numerator
+	double Pik0;						/// Denominator
+	double Pr_selected_for_substitution;
+	int numSubstAway;
+	list<siteDependencies*> interactions;
+	Likelihood L_i;
+	bool calcTauIJ;
+
 protected:
-	short state;
-	short value;
-	short phenotype;
-	short invariable_state;
-	short categories;
-	double gammaRates;
+	short 	state;
+	short 	value;
+	short 	phenotype;
+	short 	invariable_state;
+	short 	gamma_category;
+	double 	gammaRates;
+	double 	rij;
+	int		lookup_table_sequence_index;
+	int		lookup_table_environment_index;
 	
 public:
 	using Counter<Site>::howMany;
@@ -354,28 +410,64 @@ public:
 		  value(-1), 
 		  phenotype(-1), 
 		  invariable_state(0), 
-		  categories(0), 
-		  gammaRates(0)
+		  gamma_category(0), 
+		  gammaRates(1),
+		  Pik0(0),
+		  calcTauIJ(true),
+		  Pr_selected_for_substitution(1),
+		  lookup_table_sequence_index(-1),
+		  lookup_table_environment_index(-1),
+		  numSubstAway(0)
 	{ }
+	void setrij(double r) { rij = r; }
+	void  	set_lookup_table_sequence_index(int value) { lookup_table_sequence_index = value; }
+	void  	set_lookup_table_environment_index(int value) { lookup_table_environment_index = value; }
+	double 	returnrij() { return rij; }
+	int  	return_lookup_table_sequence_index() { return lookup_table_sequence_index; }
+	int  	return_lookup_table_environment_index() { return lookup_table_environment_index; }
 	void setState(short newState) { state = newState; }
+	void setCategory(short newCat) { gamma_category = newCat; }
 	void setInvariableState(short newState) { invariable_state = newState; }
 	void copyInvariableState(Site copy_site) { invariable_state = copy_site.invariable_state; }
 	void setGamma(double gamma_rate) { gammaRates = gamma_rate; }
-	void setCategories(short category) { categories = category; }
 	void InitializeMotif(motifSite *site_type, varSite *template_varSite, varSite *motif_varSite);
 	void push_siteProps(siteProperties *site_prop) { motif.site_props.push_back(site_prop); }
+	void setSiteRateAway(double max_site_width, double gamma, RateMatrix *rates);
+	void printSiteRateAway();
+	bool doSubstitution(double value, int step_type, TNode *node, int *codon_position, string& event);
+	bool isSet() { return ( (state >= 0 && state < numStates) ? true : false ); }
+	bool isDefinedByUser();
+	double setSiteRateAway(vector<double>& Qij, RateMatrix *rates);
 	double returnGamma() { return gammaRates; }
-	short returnCategories() { return categories; }
+	short returnCategory() { return gamma_category; }
 	short returnState() { return state; }
 	short returnInvariableState() { return invariable_state; }
+	long double return_epc_ij()
+	{ 
+		return site_rate_away.at(state) - ( (state == 0) ? 0 : site_rate_away.at(state-1) );
+	}
+	double forward_rate_away_from_site(Branch *branch);
+};
+
+class siteDependencies : private Counter<siteDependencies>
+{
+public:
+	list<Site*> interact_sites;
+
+	siteDependencies() { }
+
+	bool isDependentInteraction();
 };
 
 class Sequence : public Site, private Counter<Sequence>
 {
 public:
 	using Counter<Sequence>::howMany;
-	vector<Site> evolutionaryAttributes;
-	TNode *my_node;
+	vector<Site> 	evolutionaryAttributes;
+	TNode 			*my_node;
+	double 			Qidot;
+	double 			Qidot_k__T__;
+	double 			Rij;
 
 	//////////
 	/// Constructors
@@ -385,14 +477,20 @@ public:
 			 TNode *node
 			) 
 		: evolutionaryAttributes( anc->evolutionaryAttributes ),
-		  my_node(node)
+		  my_node(node),
+		  Qidot(0.0),
+		  Qidot_k__T__(0.0),
+		  Rij (0.0)
 	{ }
 	Sequence(
 			 TNode *node, 
 			 int seqLength
 			)
 		: evolutionaryAttributes(seqLength, Site()), 
-		  my_node(node)
+		  my_node(node),
+		  Qidot(0.0),
+		  Qidot_k__T__(0.0),
+		  Rij (0.0)
 	{ }
 
 	void init(
@@ -403,8 +501,14 @@ public:
 			  varSite* template_varSite = NULL, 
 			  varSite *motif_varSite = NULL
 			 );
+
+ 	void setRij(double R) { Qidot = Rij = R; }
+	double returnRij() { return Rij; }
 	void print_sequence();
 	void setActiveProps(bool insertion = false);
+	void ConvertRootSequence();
+	int	 compare_sequence(Sequence *sequence_to_compare);	// Returns the # of differing positions.
+	double forward_rate_away_from_sequence(Branch *branch, int event_site, int end_site);
 };
 
 class siteProperties : private Counter<siteProperties>

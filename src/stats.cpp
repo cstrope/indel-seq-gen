@@ -361,13 +361,14 @@ Statistics::MCMC::resample_subpath(
 //		;						// second interval
 		
 		// Interval 123 combined
-//		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
-//		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }
+		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
+		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }
 	}
 
 	list<eventTrack*>::iterator xf = proposed->epc_events.begin(); xf++;
 	list<eventTrack*>::reverse_iterator xb = proposed->epc_events.rbegin(); xb++;
 	cout << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
+	cerr << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
 
 	// Set up nodes
 	i_B = tree->copyNode(i_0);
@@ -378,8 +379,32 @@ Statistics::MCMC::resample_subpath(
 	/// Set path pointers in sequence time.
 	//////////
 	//// 3-8-2012: SPEED THIS UP!!!! e_E CAN BE SET starting FROM E_B.
-	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, &(proposed->epc_events));
-	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, &(proposed->epc_events));
+	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
+	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
+
+	TNode *i_E2;
+	list<eventTrack*>::iterator e_E2;
+	i_E2 = tree->copyNode(i_B);
+	e_E2 = proposed->setSequenceAtTimePoint(tree, i_E2, t_E, e_B, &(proposed->epc_events));
+
+	vector<Site>::iterator at, bt;
+	at = i_E->seq_evo.begin();
+	bt = i_E2->seq_evo.begin();
+	bool states_differ = false;
+	int sequence_site = 0;
+	for (; at != i_E->seq_evo.end(); ++at, ++bt, ++sequence_site) {
+		if ((*at).returnState() != (*bt).returnState()) {
+			cerr << "States differ between sequences at site " << sequence_site << "." << endl;
+			states_differ = true;
+		}
+	}
+	if (e_E != e_E2) { cerr << "two approaches not equivalent." << endl; }
+	if (states_differ) {
+		cerr << i_E->printSequence(true) << endl;
+		cerr << i_E2->printSequence(true) << endl;
+		exit(0);
+	}
+
 	if ( e_E == proposed->epc_events.end() ) post_subpath_event_time = T;
 	else { e_E++; post_subpath_event_time = (*e_E)->eventTime; e_E--; }
 
@@ -493,13 +518,13 @@ Statistics::MCMC::resample_subpath(
 
 		// Get the beginning and end events for both the current and proposed paths.
 		work->resetSequence(i_B);
-		current_start = current->setSequenceAtTimePoint(tree, i_B, t_B, &(current->epc_events));
+		current_start = current->setSequenceAtTimePoint(tree, i_B, t_B, current->epc_events.begin(), &(current->epc_events));
 		work->resetSequence(i_E);
-		current_end = current->setSequenceAtTimePoint(tree, i_E, t_E, &(current->epc_events));
+		current_end = current->setSequenceAtTimePoint(tree, i_E, t_E, current->epc_events.begin(), &(current->epc_events));
 		work->resetSequence(i_B);
-		proposed_start = proposed->setSequenceAtTimePoint(tree, i_B, t_B, &(proposed->epc_events));
+		proposed_start = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
 		work->resetSequence(i_E);
-		proposed_end = proposed->setSequenceAtTimePoint(tree, i_E, t_E, &(proposed->epc_events));
+		proposed_end = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
 
 		//cerr << "Time resimulated: " << t_B << "..." << t_E << endl;
 		//cerr << "current_event start iterator eventTime:  " << (*current_start)->eventTime << endl;

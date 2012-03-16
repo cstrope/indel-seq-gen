@@ -347,6 +347,7 @@ PathProposal::evolve_independent_path(
 	short state_x0, state_xT;
 	state_x0 = (*i_z_site).returnState();
 	state_xT = (*k_0_site).returnState();
+	double t0_pr = t_0;
 
 	cerr << "Proposal from site " << event_site << ": " << stateCharacters.at((*i_z_site).returnState()) << " to " << stateCharacters.at((*k_0_site).returnState()) << endl;
 
@@ -355,8 +356,8 @@ PathProposal::evolve_independent_path(
 
 		// If there is a rejection by the end of the branch, reset the state to it's original.
 		(*i_z_site).setState(state_x0);
+		t0_pr = t_0;
 
-/*
 		// Evolve path using Nielsen's method.
 		// If there is a difference between the start and end states, need to use special case to make sure
 		// there is a change
@@ -364,14 +365,17 @@ PathProposal::evolve_independent_path(
 			// To determine the first change, we calculate the probability of a change occurring at time 
 			// t1, normalized by the probability of that a change will occur in time less than T:
 			// f(t1|t1<T) = \frac{Q_{X(0).}\exp{-Q_{X(0)t_1}} {1-\exp{-Q_{X(0).}T}}
-			proposed->evolve_first_event();
+			lambda_T = i_z_site->forward_rate_away_from_site(i_z->branch);
+			t0_pr = rasmus_select_next_dt(lambda_T, T);
+
+			cerr << "t0_pr = " << t0_pr << " from branch length " << T << endl;
 		}
-*/
+
 		for (list<eventTrack*>::iterator it = proposal_events.begin(); it != proposal_events.end(); ++it)
 			delete (*it);
 		proposal_events.clear();
 		lambda_T = i_z_site->forward_rate_away_from_site(i_z->branch);
-		next_dt = select_next_dt(i_z, k_0, t_0, lambda_T, T, &devnull, false);
+		next_dt = select_next_dt(i_z, k_0, t0_pr, lambda_T, T, &devnull, false);
 		devnull++;
 		for (double dt = next_dt; dt <= T; dt = next_dt) {
 			success = false;
@@ -443,6 +447,23 @@ PathProposal::evolve_independent_path(
 		(*events).push_back(*it);
 	sortEventsByTime(events);
 	cerr << "  " << proposalNo << " proposals before success." << endl;
+}
+
+double
+PathProposal::rasmus_select_next_dt(
+									double lambda_T,
+									double T
+								   )
+{
+	double next_dt, exp_mean;
+
+	// Simulation of the first substitution for the Nielsen method when A != E.
+	// t_1 = -\log(1-U(1-\exp{-q_AT})/q_A
+	// where q_A is the rate away from the ancestral state A, U~Uniform(0,1), and T is the branch length.
+	
+	next_dt = -log(1-rndu()*(1-exp(-lambda_T*T)))/lambda_T;
+
+	return next_dt;
 }
 
 void 
@@ -638,13 +659,20 @@ PathProposal::emulateForwardSimulation (
 
 list<eventTrack*>::iterator 
 PathProposal::setSequenceAtTimePoint(
-									   	  						 TTree *tree,
-									   	  						 TNode *node,
-									   	  						 double to_time,
-									   	  						 list<eventTrack*> *events
-									  	 						)
+									 TTree *tree,
+									 TNode *node,
+									 double to_time,
+									 list<eventTrack*>::iterator et,
+									 list<eventTrack*> *events
+									)
 {
-	list<eventTrack*>::iterator et = (*events).begin();
+
+	if ( (*et)->ID == -1 && (*et)->eventTime > to_time ) { 	// Not likely to be a great solution if there are more than 1 branch.
+		et = (*events).end(); 	// Sets et 1 event past the last event.
+		et--; 					// Set to last event.
+		cerr << "Returning immediately from setSequenceAtTimePoint." << endl; 
+		return et; 
+	}
 
 	while ( (*et)->ID == -1 ) ++et;
 	while ( et != (*events).end() && ((*et)->eventTime < to_time)) {	// Check if et is at end, short-circuit and avoid seg fault.

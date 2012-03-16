@@ -117,6 +117,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 RANLIB = @RANLIB@
@@ -177,7 +178,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-EXTRA_DIST = lipocalin lipocalin.spec lipocalin.tree lipocalin_ma lipocalin_ma.spec lipocalin_ma.tree simple_nuc.tree mid_nuc_noncoding.tree mid_nuc_coding.tree idLD codonLD exon_intron.tree exon intron exon_intron_lineage.spec exon_intron_lineage.tree pse.freq 
+EXTRA_DIST = 
 all: all-am
 
 .SUFFIXES:

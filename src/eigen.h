@@ -16,10 +16,16 @@
 #ifndef _EIGEN_H_
 #define _EIGEN_H_
 
+using namespace std;
+
+#include <vector>
+#include <iostream>
+
+int vabyx (double a, vector<double>& x, int n);
 int abyx (double a, double x[], int n);
 int xtoy (double x[], double y[], int n);
 int matinv( double x[], int n, int m, double space[]);
 int eigen(int job, double A[], int n, double rr[], double ri[],
           double vr[], double vi[], double w[]);
 
-#endif /* _EIGEN_H_ */
+#endif

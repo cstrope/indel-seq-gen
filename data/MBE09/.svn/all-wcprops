@@ -1,47 +1,47 @@
 K 25
 svn:wc:ra_dav:version-url
-V 53
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09
+V 70
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09
 END
 exon_intron_lineage.spec
 K 25
 svn:wc:ra_dav:version-url
-V 78
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/exon_intron_lineage.spec
+V 95
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/exon_intron_lineage.spec
 END
 codonLD
 K 25
 svn:wc:ra_dav:version-url
-V 61
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/codonLD
+V 78
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/codonLD
 END
 pse.freq
 K 25
 svn:wc:ra_dav:version-url
-V 62
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/pse.freq
+V 79
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/pse.freq
 END
 exon_intron_lineage.tree
 K 25
 svn:wc:ra_dav:version-url
-V 78
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/exon_intron_lineage.tree
+V 95
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/exon_intron_lineage.tree
 END
 exon
 K 25
 svn:wc:ra_dav:version-url
-V 58
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/exon
+V 75
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/exon
 END
 intron
 K 25
 svn:wc:ra_dav:version-url
-V 60
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/intron
+V 77
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/intron
 END
 idLD
 K 25
 svn:wc:ra_dav:version-url
-V 58
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/MBE09/idLD
+V 75
+/svn/code/indel-seq-gen/!svn/ver/1471/branches/codon_models/data/MBE09/idLD
 END
