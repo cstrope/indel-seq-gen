@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/code/indel-seq-gen/!svn/ver/2142/branches/codon_models/data/verify/tree_branch/code_change
+END
+epc.gnu
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/code/indel-seq-gen/!svn/ver/2072/branches/codon_models/data/verify/tree_branch/code_change/epc.gnu
+END
+test.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/code/indel-seq-gen/!svn/ver/2072/branches/codon_models/data/verify/tree_branch/code_change/test.cpp
+END
+mcmc-driver.pl
+K 25
+svn:wc:ra_dav:version-url
+V 110
+/svn/code/indel-seq-gen/!svn/ver/2147/branches/codon_models/data/verify/tree_branch/code_change/mcmc-driver.pl
+END
+fwd.gnu
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svn/code/indel-seq-gen/!svn/ver/2072/branches/codon_models/data/verify/tree_branch/code_change/fwd.gnu
+END
+isg-test-one
+K 25
+svn:wc:ra_dav:version-url
+V 108
+/svn/code/indel-seq-gen/!svn/ver/2142/branches/codon_models/data/verify/tree_branch/code_change/isg-test-one
+END

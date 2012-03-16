@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/code/indel-seq-gen/!svn/ver/2142/branches/codon_models/data/verify
+END
+test.scale_tree
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/code/indel-seq-gen/!svn/ver/1751/branches/codon_models/data/verify/test.scale_tree
+END
+indel-seq-gen
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/code/indel-seq-gen/!svn/ver/1855/branches/codon_models/data/verify/indel-seq-gen
+END
+path_proposal.trace
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/code/indel-seq-gen/!svn/ver/1855/branches/codon_models/data/verify/path_proposal.trace
+END
+simple_endpoint.ctl
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/code/indel-seq-gen/!svn/ver/1751/branches/codon_models/data/verify/simple_endpoint.ctl
+END
+test.trace
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/code/indel-seq-gen/!svn/ver/1751/branches/codon_models/data/verify/test.trace
+END
+test_subst.tree
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/code/indel-seq-gen/!svn/ver/1751/branches/codon_models/data/verify/test_subst.tree
+END
+verify.pl
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/code/indel-seq-gen/!svn/ver/1855/branches/codon_models/data/verify/verify.pl
+END
