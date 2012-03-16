@@ -1,0 +1,4 @@
+# Compiled src
+*.o
+Makefile.am
+Makefile.in
