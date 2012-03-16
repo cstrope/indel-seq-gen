@@ -1,5 +1,131 @@
-3-15-2012:
-indel-Seq-Gen v2.2+
-Cory Strope
-Latest working version 2.1.03
+iSG version 2.2.05 ()
+-----------------
 
+- Fixed an issue in which discrete category assignments to sites were random from ancestor to descendant
+
+- Modified global array representation.
+
+- Added nucleotide substition models: SYN, K80, K81, K81ne,  TVM, TVMeq, TIM, TIMeq, TN93, TN93eq, F81, and F84.
+
+- Added -P (--paleo) for a uniform fossil deposition process. Two parameters required: X,x  where X is the root node time in millions of years, and x is the number of years (in millions) per fossil deposition event.
+
+- Changed substitution routine to the uniformization method, with virtual events.
+
+- Changed gillespie routine to include substitutions (method 2 per INDELible).
+
+iSG version 2.1.03 (12-23-2010)
+-----------------
+
+- Fixed issues of not assigning invariable sites to random sequences from both the command line and the treefile in the #iXX# option.
+
+- Converted Gillespie model to also calculate waiting times for substitution events, not just indels.
+
+- Fixed issue under the Gillespie model. For substitutions, only subsets of sites are tested for transitions. This is especially an issue when stationary frequencies are changed between lineages.
+
+- Small error checking change to inTree for lineage file input.
+
+- Added checks so that an input root sequence with not enough characters to fill the template or motif constraints will have a random sequence added so that the minimum requirements are met.
+
+- Bug fix: Fixed issues with template constraints not being upheld.
+
+iSG version 2.1.02 (12-20-2010)
+-----------------
+
+- Bug fix: Out-of-bounds exception fixed for root sequence inputs that begin with a '-'. 
+
+- Bug fix: Fixed issue with motif sites that were not inheriting the substitution constraints from their ancestral sequences. 
+
+
+iSG version 2.1.01 (10-8-2010)
+-----------------
+
+- Bug fix: Moved the creation of the Sequence structure (and corresponding Site structures) until after all '.' in the template are removed from the input root sequence. This fixes a segmentation fault issue.
+
+- Added new functionality to the branch scaling option (-b <float>). If the value is negative, iSG scales the tree so that the average root to tip path lengths are equal to the input value, i.e., -b -5 will average the path lengths of all root-to-tip paths, and scale all branches so that the average root-to-tip path length is equal to 5 substitutions per site.
+
+- Fixed issue with the output in the .anc_tree file when branch lengths are scaled (both globally and on partitions).
+
+- Fixed problem in which an input MSA caused iSG to spin.
+
+- Added more informative message when frequency file contains a trailing comma (iSG thinks that there are 21 frequencies, even if there are not).
+
+- Added warning when a simulation produces all empty columns. If the trace file is not being created, iSG removes the empty columns from the output.
+
+- Changed the separator for indel length distribution files in the guide tree file from '/' to ':' to allow for the indel length distribution files to be absolute paths.
+
+
+iSG version 2.0.8 (5-5-2010)
+-----------------
+
+- Added error-checking for indel specifications in tree- and lineage-files.
+
+- Added an error check for unrooted trees. If an unrooted tree is entered, iSG exits with an error message indicating the location of the trifurcation found.
+
+- Added an option (-T --perturbTree <double>) that randomly rescales each branch length by the factor [1/<double>:<double>], where <double> is the input value. Perturbation of branches is different for each simulation run for multi-set simulations.
+
+- Fixed a bug that prevents the first position in a partition to be invariable when specified in the quaternary invariable array (array values '1' and '3').
+
+- Fixed an error in which lineages adjusted only when a motif with the same subtree name existed. 
+
+- Fixed a segmentation fault-causing error in runs where both (i) random sequences without PROSITE motifs and (ii) input root sequences with motifs were specified.
+
+
+iSG version 2.0.7 (4-27-2010)
+-----------------
+
+- Added option "ran" for the indel fill model (option -u).
+
+- Corrected the MSA length for phylip output.
+
+
+iSG version 2.0.6 (4-16-2010)
+-----------------
+
+- The number of characters per line (option '-s' on command line) fixed for NEXUS format.
+
+- Changed sequence file output (.seq) to always outputs sequences in FASTA format, regardless of the command line option (-o --output).
+
+- Fixed a segmentation fault that appeared when the insertion and deletion probabilities were specified, but the length distribution was left empty (specifies that the Chang & Benner length dist files should be used). (4-13-2010)
+
+
+iSG version 2.0.5 (4-6-10):
+------------------
+
+- Made example files and manual consistent.
+
+- Fixed Phylip and Nexus output formats
+
+- Added support for both big endian and little endian architectures.
+
+- Added checks for the existance of files specified in the -k option (lineage files). 
+
+ISG version 2.0.4:
+------------------
+
+- Fixed problem reporting time relative indel events greater than 1 in the Gillespie implementation.
+
+- Added command-line variable that allows users to flag which post-simulation files to output. (.root, .seq, .ma, .anc_tree, .trace, .verb)
+
+
+ISG version 2.0.3:
+------------------
+
+- Fixed bug that did not repress stop codons from appearing in coding sequences. (Thanks, WS)
+
+- Output the original guide tree to the end of the .trace file. Needed for GUI.
+
+- The Chang and Benner model of indel creation has no meaningful representation in the Gillespie formulation of indel creation. Set the C&B model using Gillespie to be the same as iSGv1.0. Since the indel rate is 50/50, this should not change much in the end result. Fixed a problem with Chang and Benner model for des and trs that caused under-gapping. (Thanks, WS)
+
+- Removed support for the .verb file.
+
+- Extensive updates to the user manual.
+
+- Hyper-substitution issue when using the Chang and Benner indel model fixed. (Thanks, WS)
+
+- Fixed an issue with seg. faulting when a x(0,y) places a dash at the end of the sequence.
+
+- Added PROSITE motif library to use with the random sequence option. Option '-1' with a floating point number (0,1] activates the motif placement, where the number entered is the maximum proportion of the root sequence that will be covered by a motif. iSG randomly chooses with replacement motifs from the library, and places them randomly on the sequence, as long as the total proportion of motif-covered sites is not larger than the desired proportion. As long as the desired proportion is not met, iSG will continue to place motifs, subject to the constraint that 20 randomly chosen motifs cannot be placed because of the root sequence motif proportion restriction.
+
+- Added support for PROSITE motif positions of the form "[...](#)" and "{...}(#)".
+
+- Added Gillespie representation of indel formation, using option "-j gil". Sequence runs using the Gillespie algorithm are analogous to the TRS simulation scheme, but are much faster.

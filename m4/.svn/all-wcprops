@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 45
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4
+END
+gnulib-cache.m4
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/gnulib-cache.m4
+END
+include_next.m4
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/include_next.m4
+END
+getopt.m4
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/getopt.m4
+END
+gnulib-common.m4
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/gnulib-common.m4
+END
+gnulib-tool.m4
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/gnulib-tool.m4
+END
+gnulib-comp.m4
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/gnulib-comp.m4
+END
+unistd_h.m4
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/code/indel-seq-gen/!svn/ver/953/trunk/m4/unistd_h.m4
+END

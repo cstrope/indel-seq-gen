@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/code/indel-seq-gen/!svn/ver/1578/trunk/doc
+END
+comment.sty
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/code/indel-seq-gen/!svn/ver/1346/trunk/doc/comment.sty
+END
+allbibs.bib
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/code/indel-seq-gen/!svn/ver/952/trunk/doc/allbibs.bib
+END
+threeparttable.sty
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/code/indel-seq-gen/!svn/ver/1337/trunk/doc/threeparttable.sty
+END
+iSGv2_manual.tex
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/code/indel-seq-gen/!svn/ver/1578/trunk/doc/iSGv2_manual.tex
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/code/indel-seq-gen/!svn/ver/952/trunk/doc/Makefile.am
+END
+manual.tex
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/code/indel-seq-gen/!svn/ver/952/trunk/doc/manual.tex
+END
+threeparttablex.sty
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/code/indel-seq-gen/!svn/ver/1337/trunk/doc/threeparttablex.sty
+END
+environ.sty
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/code/indel-seq-gen/!svn/ver/1337/trunk/doc/environ.sty
+END

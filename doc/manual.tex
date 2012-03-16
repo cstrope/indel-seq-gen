@@ -1,0 +1,703 @@
+\documentclass[10pt]{article}
+\usepackage{longtable}
+
+\setlength{\topmargin}{0.0cm}
+\setlength{\textheight}{21.5cm}
+\setlength{\oddsidemargin}{0cm} 
+\setlength{\textwidth}{16.5cm}
+\setlength{\columnsep}{0.6cm}
+
+\begin{document}
+
+\title{indel-Seq-Gen v1.0 Manual}
+\author{Cory L. Strope\thanks{Corresponding Author, University of Nebraska, email: 
+cstrope@cse.unl.edu}, Computer Science and Engineering,\\
+        Stephen D. Scott, Computer Science and Engineering,\\
+        Etsuko N. Moriyama, School of Biological Sciences and Plant Science Initiative\\~\\
+	University of Nebraska -- Lincoln
+}
+
+\maketitle
+
+\tableofcontents
+\newpage
+\listoftables
+\listoffigures
+\newpage
+\section{Acknowledgments}
+
+We would like to thank the authors of Seq-Gen, Drs. Andrew Rambaut and Nick Grassly, the simulation code on which indel-Seq-Gen uses a highly modified version. As such, when citing indel-Seq-Gen, please note that Seq-Gen~\cite{Rambaut97} should also be cited.  The bibtex citation is:
+
+\begin{verbatim}
+
+@ARTICLE{Rambaut97,
+        AUTHOR = "A. Rambaut and N.C. Grassly",
+        TITLE = "{Seq-Gen}: an application for the {Monte Carlo} simulation of 
+{DNA} sequence evolution along phylogenetic trees",
+        JOURNAL = "{CABIOS}",
+        VOLUME = 13,
+        NUMBER = 3,
+        YEAR = 1997,
+        PAGES = "235-238"       }
+
+\end{verbatim}
+
+\newpage
+
+\section{Overview}
+
+indel-Seq-Gen is a tool to simulate the evolutionary events of highly diverged DNA and protein sequences.  Long-term evolution often include dynamic changes such as
+insertions and deletions (indels), but some subsequences, such as domains and
+motifs, retain their original sequences and structures better than less functionally important regions.  indel-Seq-Gen allows for the simulation of many different evolutionary patterns over different regions of a sequence, in the end outputting the ``true'' multiple alignment of the sequences.  indel-Seq-Gen also has the unique feature of being able to input a multiple alignment for the root sequence, which can be used to create different but related ancestral sequences in each run.  These features can be used in many evolutionary studies, such as to test the accuracy of multiple alignment methods, phylogenetic methods, evolutionary hypotheses, ancestral sequence reconstruction methods, and superfamily classification methods.
+
+\section{Getting Started}
+
+indel-Seq-Gen is freely downloadable at {\tt http://bioinfolab.unl.edu/$\sim$cstrope/iSG/}.  
+indel-Seq-Gen has been tested on RedHat Linux, SuSE Linux, IRIX, CentOS, and MacOS X (versions 10.2.8, 10.3.9, 10.4.7, and Leopard).  You will need {\tt g++} compiler if the provided executables do not run on your system.
+
+After downloading {\tt indel-Seq-Gen} files, there are a couple of steps that need to be
+performed to reflect the difference between your system and the system {\tt indel-Seq-Gen} was created on:
+
+\begin{enumerate}
+
+\item {\it If you download the {\tt iSG\_source.tar.gz} source archive:}  Open the archive by typing the two commands:
+ \begin{itemize}
+ \item[] {\tt gunzip iSG\_source.tar.gz}, and then
+ \item[] {\tt tar -xvf iSG\_source.tar}
+ \end{itemize}
+This creates a directory {\tt iSG} with all of the files.  Go to this directory. Create
+indel-Seq-Gen by typing ``{\tt make}''. 
+\end{enumerate}
+
+For other {\tt .tar.gz} archives, such as the precompiled (executable) programs for Linux and Mac OS X, you can open the archive using the above two commands by replacing the {\tt iSG\_source.tar.gz} with the appropriate archive name.  If you are using the Linux precompiled program, you can see if the program works on your system by typing
+``{\tt indel-Seq-Gen -h}'' and see if it outputs the option lists.  If you receive any error message or if you cannot find {\tt indel-Seq-Gen} file, you will need to download the {\tt iSG\_source.tar.gz} file and compile the program for your system using the commands above.
+
+If you are using a Mac OSX precompiled program, first change the name of {\tt
+indel-Seq-Gen-OSX10.4.7} or {\tt indel-Seq-Gen-OSX10.2.8} to {\tt indel-Seq-Gen} by typing:  
+\verb+mv indel-Seq-Gen-OSX10.*.* indel-Seq-Gen+ for the correct version, then you can test to see if your program works as above.
+
+After performing these steps, {\tt indel-Seq-Gen} is ready to run!
+
+\section{Global Options}
+
+To run indel-Seq-Gen from the command prompt, type the following line:
+
+\begin{verbatim}
+./indel-Seq-Gen -m <matrix> [-options] < tree_file > outfile
+\end{verbatim} 
+
+\noindent The ``tree\_file'' above is the ``spec'' file, which is described in
+Section~\ref{sec:options}. ``{\tt $>$ outfile}'' is to save all the messages {\tt
+indel-Seq-Gen} generates in the file. If ``{\tt $>$ outfile}'' is not added to the command, everything will be simply displayed on the screen (but not saved in any file).\\~\\
+
+{\tt indel-Seq-Gen} has many options. We suggest that you first run the example shown in
+Section~\ref{sec:example}.  All necessary files are included in the provided {\tt iSG}
+directory.  If you get any error message and the program does not run, please make sure if you followed the steps explained in the previous section. If you still cannot run the program, please contact us. The contact information is found in the first page.
+
+
+\begin{longtable}{p{0.40in}llp{3in}}
+\caption{Global options (entered at the command line) and their effects for the indel-Seq-Gen run.  Subsequence options (described in the next Section) will override the global options if there are conflicts. For input type \{\it list\}, do not use spaces to separate list items.}\\
+\hline
+Option & Long Option & Type & Effect \\
+\hline
+\endfirsthead
+\caption[]{(continued)}\\
+\hline 
+Option & Long Option & Type & Effect \\
+\hline
+\\
+\endhead
+\hline
+\\
+\multicolumn{4}{l}{{\it Continued on next page...}}
+\endfoot
+\endlastfoot
+\\
+-a & {\tt --}alpha & \{\it float\} & Shape (alpha) for gamma rate heterogeneity.\\
+\\
+-b & {\tt --}option\_width & \{\it int\} & The number of residues per line on the multiple 
+											alignment output [default = 60]. \\
+\\
+-c & {\tt --}codon\_rates & \{\it list\} & \#1, \#2, \#3 = rates for codon position heterogeneity.
+											Example: -c 0.15,0.05,0.8 \\
+\\
+-d & {\tt --}tree\_scale & \{\it +float\} & Total tree scale, multiplies each branch length by 
+											scale / tree length [default = tree length].\\
+\\
+-e & {\tt --}outfile & \{\it string\} & Filename for output. Files $<$filename$>$.root, 
+										$<$filename$>$.seq, and $<$filename$>$.ma will be created
+										holding the root sequences, sequence files, 
+										and multiple alignments from the run.\\
+\\
+-f & {\tt --}frequencies & \{\it list\} & amino acid (20, ARNDCQEGHILKMFPSTWYV) or nucleotide 
+											(4, ACGT) frequencies, 
+											separated by commas, or e to use equal frequencies 
+											(0.05 or 0.25 for each state, respectively) 
+											[default = use frequencies based on the substitution 
+											matrix]. Example: -f 0.2,0.2,0.3,0.3 for 20\% A and
+											20\% C.\\
+\\
+-g & {\tt --}num\_gamma\_cats & \{\it int\} & Number of categories for the discrete
+												gamma-distribution rate
+												heterogeneity. Must be between 2 and 32
+												[default = none]. \\
+\\
+-h & {\tt --}help & & Output the usage instructions\\
+\\
+-i & {\tt --}invar & \{\it float\} & Proportion of invariable sites [default = none].\\
+\\
+-l & {\tt --}length & \{\it int\} & Sequence length.  If root sequences are from multiple 
+									alignment files (i.e., it is possible that root sequence size 
+									can fluctuate, see Section~\ref{sec:root}), 
+									this is still necessary, but does not have to be exact.\\
+\\
+-m & {\tt --}matrix & \{\it string\} & Substitution matrix: HKY, F84, GTR for nucleotides, PAM, 
+										JTT, MTREV, GENERAL for amino acids. \\
+\\
+-n & {\tt --}num\_runs & \{\it int\} & The number of datasets to simulate for each tree 
+										[default = 1].\\
+\\
+-o & {\tt --}outfile\_format & \{\it char\} & Output format: either Phylip (p), NEXUS (n), or 
+												FASTA (f) [default = Phylip]. \\
+\\
+-q & {\tt --}quiet & & Quiet mode: only the root sequence, resultant sequences, and multiple 
+							alignment are printed.\\
+\\
+-r & {\tt --}rel\_rates & \{\it list\} & Six comma-separated numbers specifying general rate matrix.\\
+\\
+-s & {\tt --}branch\_scale & \{\it float\} & Branch scale factor [default = 1.0].\\
+\\
+-t & {\tt --}tstv & \{\it float\} & Transition-transversion ratio. \\
+\\
+-u & {\tt --}indel\_fill & \{\it string\} & Indel fill model, based on neighbor 
+											effects~\cite{Xia02}: xia = original 
+											from~\cite{Xia02}, built on the E. coli K-12 
+											proteins, sp = swiss-prot, ran = no neighbor effect 
+											[default = ran]. \\
+\\
+-w & {\tt --}write\_anc & & Write ancestral sequences. \\
+\\
+-z & {\tt --}rng\_seed & \{\it int\} & Manually set the random number seed.\\
+\\
+\hline
+\label{tab:global}
+\end{longtable}
+
+\section{Subsequence Options}
+\label{sec:options}
+
+Specifications for each subsequence are given in the ``spec'' file.  
+Figure~\ref{fig:complex_tree} shows the format of the file. Specifications for each
+subsequence are separated by `;'. An example ``spec'' file is the file ``{\tt tree\_file}'' included in the iSG directory.
+
+Subsequence options allow the user to create domain-specific effects on a subsequence by 
+overriding the global parameters that are set as in Table~\ref{tab:global}.  These options are shown in Table~\ref{tab:options}.
+
+\begin{small}
+
+\begin{longtable}{rp{5.5cm}p{7cm}}
+\caption{{\normalsize Subsequence options.}}
+\endfirsthead
+\caption[]{{\normalsize (continued)}}\\
+\hline 
+\multicolumn{1}{|r}{{\normalsize Options}} & \multicolumn{1}{c}{{\normalsize Command Styles}} & \multicolumn{1}{c|}{\normalsize Description} \\
+\hline
+\\
+\endhead
+\hline\\
+{\it \normalsize Continued on next page...}
+\endfoot
+\endlastfoot
+\hline
+\multicolumn{1}{|r}{\normalsize Options} & \multicolumn{1}{c}{\normalsize Command Styles} & \multicolumn{1}{c|}{\normalsize Description} \\
+\hline
+\\
+{\it label}   & ``Subsequence Label'' & This option, when present, will label the 
+boundaries of the subsequence in the multiple alignment in the {\tt *.verb} file with the name 
+given. \\
+\\
+{\it subseq}  & \parbox[t]{5.4cm}{
+  \#i$<$\% invariable$>$,\\
+  b$<$branch scale$>$,\\
+  f$<$AA frequency file$>$,\\
+  m$<$substitution matrix$>$,\\
+  r\#
+} & These options modify (b) or replace (i,f,m,r) the global options given at the command 
+line. Option b will modify the default branch length scale by the value given. Option r is a flag that specifies that no rates are used for this partition. This is helpful for specifying introns in coding region sequences, as shown in~\ref{sec:coding_region}. Multiple options should be separated by commas.\\
+\\
+{\it rootseq} & \parbox[t]{5.4cm}{
+  $\mathtt{[}$:$<$root\_sequence\_file$>\mathtt{]}$ or \\
+  $\mathtt{[}$:$<$root\_sequence\_file$>$, \#$\mathtt{]}$ or \\
+  $\mathtt{[}$:$<$mult\_align\_file$>(1,2,3)\mathtt{]}$ or \\
+  $\mathtt{[}$:$<$mult\_align\_file$>(1,2,3)$, \#$\mathtt{]}$ or \\
+  $\mathtt{[}$length$\mathtt{]}$ or \\
+  $\mathtt{[}$length, \#$\mathtt{]}$
+} & This option specifies the root sequence parameters.  The first two formats specify 
+the root sequence file. The third and fourth format specify the multiple alignment file, where `1' 
+is the range of the multiple alignment to use, `2' is the number of sequences to select from 
+the alignment, and `3' is the method of creating the consensus root sequence. For further 
+details, see Section~\ref{sec:root}. The last two formats, a numeric value (not preceded by `:'), 
+is to generate a random sequence of the given length and use as the root sequence. When using 
+the options with `\#', relative rates will be assigned to each partition. Using the `\#' option 
+should be done only when the trees for each partition are the same.\\
+\\
+{\it indel}   & \parbox[t]{5.4cm}{
+  Format:\\
+  \begin{tabular}{p{0.05cm}l}
+  \multicolumn{2}{l}{\{\#$_1$, \#$_2$\textit{, $<$file$_1\!>$/$<$file$_2\!>$}\}}\\
+  \multicolumn{2}{l}{\#$_1$: Max indel size} \\
+  \multicolumn{2}{l}{\#$_2$: Indel probability distribution}\\
+   & {\small If \#$_2$ = 0: Use Chang \& Benner}\\
+   & {\small If \#$_2 > 0$: P(ins)=P(del)=\#$_2$} \\
+   & {\small If \#$_2$/\#$_3$: P(ins)=\#$_2$, P(del)=\#$_3$}\\
+  \end{tabular} 
+} & \parbox[t]{7cm}{These options specify the different indel models and parameters.  Only 
+\#$_1$ and \#$_2$ are required. $<$file$_1$$>$/$<$file$_2$$>$ can be used to specify the two 
+file names, which provide the user defined insertion length distribution (file$_1$) and 
+deletion length distribution (file$_2$). If no distribution file is provided, the 
+distributions given by Chang and Benner (2004) will be used\footnote{For the moment, both DNA and
+protein. Future versions may include a DNA-specific model}.  If only one distribution file is 
+given, it will be used for both insertions and deletions.
+}\\ 
+\\ 
+tree          & Newick Format & The rooted (or unrooted) evolutionary tree 
+for this subsequence.  For all subsequences, their trees must have the same number of taxa, 
+with each taxon named the same in all trees.  The branching pattern  as well as branch 
+lengths, however, may vary. Branch lengths are assumed to be the expected number of 
+substitutions per site.\\ 
+\hline 
+\label{tab:options}
+\end{longtable}
+
+\end{small}
+
+\section{Root Sequence Input}
+\label{sec:root}
+
+The root sequence is specified by the square brackets ({\tt [ ]}) in the spec file.  
+
+There are three options for root sequence input:
+\begin{enumerate}
+\item Specifying a length of root sequence. indel-Seq-Gen will randomly generate a root 
+sequence of the specified length.  For example {\tt [40]} calls for a root sequence of length 
+40 characterss.
+\item Root sequence input.
+\item Multiple alignment input.
+\end{enumerate}
+
+Make sure that the input file is in the same directory when using an input file (options 2 
+and 3).
+
+\subsection{Root Sequence Input}
+
+This option specifies that the user has a root sequence in a file for a partition.  
+
+Spec file:
+\begin{verbatim}
+[:<rootseq_file>]
+\end{verbatim}
+
+Format:
+\begin{verbatim}
+<length of sequence>
+<invariable array>
+<sequence>
+\end{verbatim}
+
+Figure~\ref{fig:trx} gives an example of a root sequence for conserving a Thioredoxin-fold 
+protein sequence motif.
+
+\begin{figure}[btph]
+ \centering
+  \begin{tabular}{|l|}
+  \hline
+  \texttt{20} \\
+  \texttt{00003223100000000000 } \\
+  \texttt{LARDCVLCSTWVTIALACLK } \\
+  \hline
+  \end{tabular}
+\caption{Thioredoxin-fold proteins have a characteristic ``CXXC'' motif that is conserved for all proteins in the family.  This root sequence input requires the CXXC motif to remain constant for all sequences created through the use of the invariable array (described later), listed above the root sequence. The serine in position 9 will also be held invariable, though insertions are allowed to occur between itself and the previous cysteine.  Finally, the length of the root sequence is given by the first line. Note that this sequence is not truly a Trx-fold sequence, but an example to show the usage of the invariable array.}
+\label{fig:trx}
+\end{figure}
+
+\subsection{Multiple Alignment Input}
+
+This option specifies that the user has a multiple alignment of their sequence set, and 
+wants a root sequence created from the multiple alignment. 
+
+Spec file:
+\begin{verbatim}
+[:<ma_file>(1,2,3)]
+\end{verbatim}
+
+Options 1, 2, and 3 stand for:
+\begin{enumerate}
+\item The range of the multiple alignment to use, where the format is {\it beginning}{\tt 
+:}{\it end}.  An input of {\tt 21:67} specifies the range from the 21st to the 67th spot 
+(inclusive) of the input multiple alignment.  Default for this option is the entire range of the multiple alignment. 
+\item The number of sequences to choose from the multiple alignment.  indel-Seq-Gen randomly with replacement selects the specified number of sequences from the multiple alignment. Default for this option is to use all sequences.
+\item Method for collapsing the multiple alignment into a root sequence, either random 
+{\tt `r'} or consensus {\tt `c'}.  Consensus is a majority-rule method, using a coin flip to break ties.  Random uses a weighted coin toss based on the character composition at the site to choose the representative character, except for invariable positions, which will be chosen by consensus. For an example of the weighted coin toss, look at the first column in Figure~\ref{fig:input_MA} in which all sequences emit an amino acid, column 6.  In this 
+column, there are 2 T's, 1 V, and 1 C.  A weighted coin toss on this column will be a T 50\% of the time, a V 25\% of the time, and a C 25\% of the time. The default for this option is consensus.
+\end{enumerate}
+
+When specifying the multiple alignment in the spec file, a blank field specifies that the default entry for the field is desired.  For example, \verb+[:input_MA(,,r)]+ indicates that the entire range and all sequences from {\tt input\_MA} will be used, but that the character that will represent the column will be chosen by a weighted coin toss based on the characters that appear in that column.  Note that the size of the root sequence can fluctuate between simulation runs.  For example, using the option \verb+[:input_MA(,1,)]+ will randomly choose a single sequence to create root sequence, thus the sequence that 
+indel-Seq-Gen chooses will be the length of the root sequence for that subsequence.\\
+
+Format:
+\begin{verbatim}
+<invariable array>
+<sequence 1>
+<sequence 2>
+ .      .
+ .      . 
+ .      .
+<sequence n>
+\end{verbatim}
+
+Figure~\ref{fig:input_MA} is an example of an input multiple alignment of the SET-C region of the SET-domain family. Note that the `-' is the only character that will be accepted for the gap character. Irregular characters (``YRUN'' in nucleotides, ``BZJX'' in amino acids) cause each character for which they stand for to be counted as the 1 over the number of characters they represent (e.g., `B' increments both `N' and `D' by 0.5).
+
+\begin{figure}[Htbp]
+\centering
+\begin{tabular}{l}
+\verb+       0000000000000000000000000000000100322300010000+\\
+\verb+Taxon1 -----TKEDF-----TSDQTNPIGQDSATRLILKGEELTCNYKLFD+\\
+\verb+Taxon2 RNSCNVVPKIVQVNGDFRIRFTALRD-----IKAGEELFFNYGENF+\\
+\verb+Taxon3 -----TGVSNNQFGG---YDFVALGD-----IEVGEELTWDYETTE+\\
+\verb+Taxon4 -----CELVQLTEFS---LGVVAICN-----IEAGEELSFDYAWEA+\\
+\end{tabular}
+\caption{{\bf input\_MA}: An example of a 4 sequence multiple alignment from the 
+SET-domain family of sequences.  The GXXL motif is conserved, as well as the tyrosine and 
+isoleucine.}
+\label{fig:input_MA}
+\end{figure}
+
+\subsection{Invariable Array}
+
+The invariable array in indel-Seq-Gen is a quaternary array that specifies how a region is 
+allowed to evolve, and is specified in the root sequence input. Table~\ref{tab:invariable} 
+shows the effect of each numerical entry in the invariable array, and Figure~\ref{fig:placement} shows an example of how the algorithm finds possible positions for indels based on the invariable array.
+
+\begin{table}[Htbp]
+\caption{Representation of positions in the invariable array, and effects on the sequence.
+Invariable sites (1 and 3) block both deletion and substitution of the corresponding position in the sequence array.  No-indel sites (2 and 3) block deletion of the sequence array, but also block insertion events from occurring between consecutive no-indel positions (between 2-2, 2-3, 3-2, and 3-3) in the invariable array.}
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\# & Effects \\
+\hline
+0 & None \\
+1 & Invariable \\
+2 & No-indel \\
+3 & Invariable + No-indel  \\
+\hline
+\end{tabular}
+\label{tab:invariable}
+\end{table}
+
+\begin{figure}[Htbp]
+\begin{verbatim}
+Accepting Positions:
+
+  Invariable Array:       0 0 1 2 3 0
+  Insertion (any size):  1 1 1 1 0 1 1
+
+  Invariable Array:       0 0 1 2 3 0
+  Deletion (size 1):      1 1 0 0 0 1
+  Deletion (size 2):      1 0 0 0 0 0
+  Deletion (size 3):      0 0 0 0 0 0
+
+\end{verbatim}
+\caption{The invariable array and accepting positions for insertion and deletion 
+events. For insertions, the accepting positions (denoted by `1' and `0' above) are located in between consecutive positions in the invariable array, while deletion accepting positions correspond exactly those in the invariable array.  In the accepting positions, the site with `1' is allowed to have indels. In the rare case that an accepting position cannot be found (as in the size 3 deletion example above), indel-Seq-Gen will output an error, but continue the simulation run.}
+\label{fig:placement}
+\end{figure}
+
+\section{Other Input Files}
+
+\subsection{Character Frequencies {\tt \#f{\it freq\_file}\#}}
+
+Protein and nucleotide subsequences often evolve under different functional constraints, causing them to display different character frequencies. For this, a file containing 20 amino acid frequencies (order: ARNDCQEGHILKMFPSTWYV) or 4 nucleotide frequencies (order: ACGT) separated by commas can be entered for each subsequence with the option: 
+\verb+#f<freq_file>#+.  Values from the input file are read and normalized to create a 
+distribution, where the number of values is specified by the maximum indel size of the 
+subsequence. For an example, see the file {\tt aaf.freq} included with all iSG {\tt .tar.gz} archive downloads.
+
+\subsection{Indel Probabilities {\tt \{\#$_1$,\#$_2$,{\it indel\_file(s)}\}}}
+
+Insertion and deletion frequencies can be provided for each subsequence.  The format of the file is shown in Figure~\ref{fig:zipf}.  This example is for the indel probabilities of sizes 1--10 of the Zipfian distribution described in Chang and Benner~\cite{Chang04}.  
+indel-Seq-Gen will read in the number of values corresponding to the {\tt max\_indel\_size} (\#$_1$) specified for the subsequence (for Figure~\ref{fig:zipf}, the maximum indel size of a subsequence using this file can be up to size 10), and then normalize the values to create a distribution.  This means that the frequencies can be given in absolute numbers or in any scale (as shown in Figure~\ref{fig:zipf}).  If the maximum indel size is greater than the number of indel positions in the length distribution file, indel-Seq-Gen will output a message that it is unable to read the input distribution file.
+
+\begin{figure}[htbp]
+\centering
+\fbox{\texttt{2628,743.8,355.5,210.5,140.2,100.6,76,59.6,48.1,39.7}}
+\caption{An example length distribution input file.  This has the frequencies of indels with lengths from 1 to 10 amino acids, taken from the first 10 values of the Zipfian 
+distribution.  The number of values in this file should not be smaller than the given max 
+indel size.}
+\label{fig:zipf}
+\end{figure}
+
+\section{Examples}
+\label{sec:example}
+
+\subsection{Toy Example}
+
+Figure~\ref{fig:complex_tree} gives an example of a spec file that uses all options available. This spec file is given as the file {\tt tree\_file} in the iSG directory.
+Figure~\ref{fig:NEX} shows the NEXUS output file for the first two partitions.
+To run this example from the command line, type:
+
+\begin{verbatim}
+./indel-Seq-Gen -m JTT -l 200 -n 1 -o n -b 60 -e outfiles -q < tree_file
+\end{verbatim}
+
+This command runs in the quiet mode ({\tt -q}) one simulation ({\tt -n 1}), with the JTT
+matrix ({\tt -m JTT}), outputting the root sequence into {\tt outfiles.root}, the sequences into {\tt outfiles.seq}, and the multiple alignment into {\tt outfiles.ma} ({\tt -e outfiles}). The multiple alignment output will be in NEXUS format ({\tt -o n}) printing 60 residues per line in the multiple alignment file ({\tt -b 60}).  Note that the length option ({\tt -l})  is required, even though a multiple alignment file ({\tt input\_MA}) is specified in the spec file.  The spec file is given in the file {\tt tree\_file}, which is shown on the top of Figure~\ref{fig:complex_tree}, with the following options for each subsequence:
+
+\begin{itemize}
+
+\item[] Subsequence 1: Labelled ``Thioredoxin-like Sequence'' in the multiple alignment
+output.  Each branch length is scaled by the factor of 0.1, and the root sequence is found in the file {\tt [:CXXC\_like]} (shown in Figure~\ref{fig:trx}).  The maximum indel size is 5, and indels are created using Chang and Benner's indel distribution formulation.
+
+\item[] Subsequence 2: Labelled ``Long Subseq'' in the multiple alignment output.  22\% of the positions in this subsequence will be held invariable, the substitution matrix is PAM, and the amino acid frequency is in the file {\tt aaf.freq}.  The root sequence is a randomly generated sequence of 40 residues.  The maximum indel size is 7, and the insertion and deletion frequency are equal, with 1.2 indels occurring every 100 substitutions.  The length distribution of the insertion and deletions are found in the file {\tt idLD}.
+
+\item[] Subsequence 3: Labelled ``seq 3'' in the multiple alignment output.  No subsequence options are changed for the evolution of this subsequence.  The root sequence is built from the file {\tt input\_MA}, using every position, and taking the consensus sequence of each column.  The indel model is more complex, still allowing the maximum indel size of 7, but insertions happen 0.3 times per 100 substitutions following the ``inLD'' length distribution, while deletions occur 1.1 times per 100 substitutions following the ``delLD'' length distribution.  Most interestingly, however, is that ``seq 3'' also follows a different evolutionary pattern than either of the first two subsequences, where Taxon3 and Taxon4 are switched (note that this is a rooted tree).
+
+\end{itemize}
+
+\subsection{Coding Region Simulation}
+\label{sec:coding_region}
+Figure~\ref{fig:coding_region} is an example of a coding region simulation run. To run this example from the command line, type:
+
+\begin{verbatim}
+./indel-Seq-Gen -m F84 --num_runs 2 --length 200 -w -c 0.15,0.05,0.8 < nuc.tree
+\end{verbatim}
+
+This command is similar to the previous example, with the exception of using the F84 nucleotide matrix, and specifying codon relative rates for the 1st, 2nd, and 3rd codons ({\tt -c 0.15,0.05,0.8}). The spec file, {\tt nuc.tree}, holds two exons separated by a single intron. Note the intron is not affected by the codon relative rates ({\tt \#r\#}), and that the indel distribution file contains non-zero entries for only those indel lengths that are multiples of three. Figure~\ref{fig:coding_region} are displays all files needed to run this example.
+
+\subsection{GPCR Olfactory-receptor Files}
+
+The spec file used in the GPCR Olfactory-receptor example in the indel-Seq-Gen manuscript are included in the downloadable archives under the name ``{\tt gpcr\_olfac.tree}''.  All of the input files necessary for {\tt gpcr\_olfac.tree} are also included in the download.
+
+\section{How to Cite indel-Seq-Gen}
+
+If you publish any results obtained using indel-Seq-Gen and any materials included in the 
+package, please cite as follows:
+
+\begin{verbatim}
+Strope, CL, SD Scott and EN Moriyama. (2007). indel-Seq-Gen: A new protein family simulator incorporating domains, motifs, and indels. Mol. Biol. Evol. 24:640-649.
+   doi: 10.1093/molbev/ms1195.
+\end{verbatim}
+
+Please also remember to cite Seq-Gen~\cite{Rambaut97}.
+
+\newpage
+\appendix
+
+\begin{figure}[htbp]
+\centering
+\footnotesize{
+\begin{tabular}{|l|}
+\hline
+\\
+\fbox{{\bf tree\_file:}}\\
+\\
+\verb+"Thioredoxin-like Sequence"#b0.1#[:CXXC_like]{5,0.0}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);+\\
+\verb+"Long Subseq"#i0.22,mPAM,faaf.freq#[40]{7,0.012,idLD}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);+\\
+\verb+"seq 3"[:input_MA(,,)]{7,0.003/0.011,inLD/delLD}(((Taxon2:0.2,Taxon:0.2):0.1,Taxon4:0.3):0.1,Taxon3:0.4);+\\
+\\
+\hline
+\\
+\verb+Root:  LARDCVLCSTWVTIALACLKTTPPENTMHGFFLMCLNFWIFGNDKTDFPEGYFCKQGMPRTGPDILQENGDFRIGFTAIQNIEAGEELFCNYELNE+ \\
+\\
+\verb+Sequences:+\\
+\verb+Taxon  LARDCVLCSTWATIALACLKTMPPQNTMHGYFLMCLQFWIFGNDKTDFFNVYYCQNGMYRSAPNIVSDFRIGFTLIQKIEAGEELFCNYELTG+\\
+\verb+Taxon2 LARDCVACSTWATVALACLKTMPPTNTMHGFFLKCLNMWILSNDIQDFFDVFFCHQGMAWTAPDILCDFQIGLTVIVNIEAGEELFASYRLNE+\\
+\verb+Taxon3 LARDCVLCSTWVTIALACLKTTPPAPNTMPGFNYWIFGADMGDFMMGYCCNGGIPRTAPDVLQENGDVKIGFIALLNIEAGEDLFCNYLLNE+\\
+\verb+Taxon4 LARDCLLCSTWVIALACLKIQPSENTMHGFHINCLNFWIYGNDKVDFPPGFFYKQDMTRTGGEVLQENGDFKLGFTAIKNIKAGEELFCTYELSE+ \\
+\\
+\verb+Multiple Alignment:+\\
+\verb+       |        :0        ||              Long Subseq              ||               seq 3              |+\\
+\verb+       1000322330000000010000000011101000000000000010011000000000000000000000000000000000100322300010000+\\
+\verb+Taxon  LARDCVLCSTWATIALACLKTMPP-QNTMHGYFLMCLQFWIFGNDKTDFFNVYYCQNGMYRSAPNIV---SDFRIGFTLIQKIEAGEELFCNYELTG+\\
+\verb+Taxon2 LARDCVACSTWATVALACLKTMPP-TNTMHGFFLKCLNMWILSNDIQDFFDVFFCHQGMAWTAPDIL---CDFQIGLTVIVNIEAGEELFASYRLNE+\\
+\verb+Taxon3 LARDCVLCSTWVTIALACLKTTPPAPNTMPGF-----NYWIFGADMGDFMMGYCCNGGIPRTAPDVLQENGDVKIGFIALLNIEAGEDLFCNYLLNE+\\
+\verb+Taxon4 LARDCLLCSTWV-IALACLKIQPS-ENTMHGFHINCLNFWIYGNDKVDFPPGFFYKQDMTRTGGEVLQENGDFKLGFTAIKNIKAGEELFCTYELSE+\\
+\verb+Labels for Short Sequences:+\\
+\verb+:0.     Thioredoxin-like Sequence+\\
+\\
+\hline
+\end{tabular}
+}
+\caption{An example spec file containing many of the options presented in 
+Table~\ref{tab:options}.  An example of the output obtained from a run of indel-Seq-Gen using 
+the given spec file, {\tt tree\_file}, is shown below.  ``input\_MA'' uses the input multiple 
+alignment in Figure~\ref{fig:input_MA}, ``CXXC\_like'' uses the root sequence specification in 
+Figure~\ref{fig:trx}, and ``aaf.freq'' is a file containing the relative frequencies of amino 
+acids, comma-delimited and ordered \texttt{(ARNDCQEGHILKMFPSTWYV)}.  Finally, ``idLD'', 
+``inLD'', and ``delLD'' are text files containing the indel length distributions, 
+comma-delimited and ordered from size $1 \ldots n$, where $n$ is larger than the maximum
+indel size for the corresponding partition.}
+\label{fig:complex_tree} 
+\end{figure}
+
+\begin{figure}
+\footnotesize{
+\begin{verbatim}
+INPUT_FILE:
+#b0.1#[:CXXC_like]{5,0.0}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);
+#i0.22,mPAM,faaf.freq#[40]{7,0.012,gpcr/gpcr_delete}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);
+
+#NEXUS
+[
+Generated by indel-seq-gen, using seq-gen Version 1.3.2
+ 
+Simulation of 4 sequences, 60 amino acids
+  for 1 tree with 1 dataset(s) per tree
+  and 2 partitions per dataset
+ 
+Rate homogeneity of sites.
+ 
+Partition specific parameters:
+(Partition 1)
+-Tree = (((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4)
+-Branch lengths of trees multiplied by 0.1
+-Invariable sites model = User root sequence
+        Conserved Sites = L CXXC C
+-Model = JTT
+-Insertion/Deletion Model:
+        Maximum indel size=5
+        Chang,M.S.S, and Benner, S. (2004).  J. Mol. Biol. 341:617-631.
+ 
+(Partition 2)
+-Tree = (((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4)
+-Branch lengths assumed to be number of substitutions per site
+-Invariable sites model = 0.22 invariable sites
+-Model = PAM
+-Insertion/Deletion Model:
+        Maximum indel size=7
+        P(ins)=0.012, P(del)=0.012
+        indel Length Distributions:
+          insert: 1:0.79752 2:0.08978 3:0.05633 4:0.03521 5:0.01760 6:0.00352 7:0.00000
+          delete: 1:0.94182 2:0.05540 3:0.00277 4:0.00000 5:0.00000 6:0.00000 7:0.00000
+-Amino acid frequencies:
+        A=0.035 R=0.012 N=0.068 D=0.023 C=0.058 Q=0.035 E=0.009 G=0.077 H=0.044 I=0.033
+        L=0.046 K=0.068 M=0.080 F=0.092 P=0.068 S=0.046 T=0.092 W=0.068 Y=0.035 V=0.012
+ 
+]
+ 
+Begin DATA;     [Tree 1, Dataset 0]
+        Dimensions NTAX=4 NCHAR=61;
+        Format MISSING=? GAP=- DATATYPE=PROTEIN;
+        Matrix
+Taxon  LARDCVLCST WVTISLACLK PTNDGLITHE LN-PFCPSTL FCDWYNWMSQ GVCAAPCKSM P
+Taxon2 LARDCVLCST WVTIALACLK PPNNGQMLHE KN-NFCQSNF FCDWYNW-SQ GLSAANCKHM P
+Taxon3 LARDCVLCST WVTIALACLK KTNDGHGMNS MN-NFCPSTF FCNWYTWMGR GTNAAPCKSF P
+Taxon4 LARDCVLCST WVTIALACLK PSNDGQGLHQ MNNLFCPSTF KYDWYNWKNQ GHRFASCKQM P
+        ; 
+END; 
+\end{verbatim}
+}
+\caption{The output NEXUS file format for the first two partitions using the spec file shown 
+in Figure~\ref{fig:complex_tree} (Displayed at the top of the figure).  This output file, {\tt 
+test.ma}, was obtained using the command:
+{\tt ./indel-Seq-Gen -m JTT -l 200 -b 70 -o n -e test < tree\_file}}
+\label{fig:NEX}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\footnotesize{
+\begin{tabular}{|l|}
+\hline
+\\
+\fbox{{\bf nuc.tree:}}\\
+\\
+\verb+"Exon 1"#i0.1,fnuc.freq#[23]{9,0.012,nucidLD}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);+\\
+\verb+"intron"#r,b2.1#[:euk_intron]{10,0.0}(((Taxon:0.2,Taxon2:0.2):0.1,Taxon3:0.3):0.1,Taxon4:0.4);+\\
+\verb+"Exon 2"[:nuc_MA(,,)]{9,0.03/0.011,nucidLD}(((Taxon2:0.2,Taxon:0.2):0.1,Taxon4:0.3):0.1,Taxon3:0.4);+\\
+\\
+\hline
+\\
+\fbox{{\bf euk\_intron}}\\
+\\
+\verb+23+\\
+\verb+33000000001000000000033+\\
+\verb+GTAGCACCCTGATGCCAGACTAG+\\
+\\
+\hline\\
+\fbox{{\bf nuc\_MA}}\\
+\\
+\verb+        0000000001100003223000000000001+\\
+\verb+Taxon   --------TTTAGTTATTGCCTAGAGATATA+\\
+\verb+Taxon1  TAAGATACCGTAT--TCCG-----GTAACTG+\\
+\verb+Taxon2  TTAGATTCAGTATAAGCCG--------ACTG+\\
+\verb+Taxon3  TTACATTTAAGCCGAGCTTGCAAGTTCCATA+\\
+\\
+\hline
+\\
+\fbox{{\bf nucidLD}}\\
+\\
+\verb+0, 0, 355.5, 0, 0, 100.6, 0, 0, 48.1, 0+\\
+\\
+\hline
+\\
+\fbox{{\bf nuc.freq}}\\
+\\
+\verb+100,150,233,21+\\
+\\
+\hline
+\\
+\verb+Root: CCATCACGTGCACACAGAAGGGAGTAGCACCCTGATGCCAGACTAGTTACATTTAAGACGAGCTGGCAAGTTCCATA+\\
+\\
+\verb+Sequences:+\\
+\verb+5         CCATCACGTGCACACAGAAGGGAGTAGCACCCTGATGCCAGACTAGTTACATTTAAGACGAGCTGGCAAGTTCCATA+\\
+\verb+6         CCCTTACGTGCACACAGAAGGGAGTAGCACCCTGATGCCAGACTAGTTTCATTTTAGCCGAGCTGGGAAGTTCCAGA+\\
+\verb+7         CCCTTATGTGCACACAGGAGGGAGTAGCACCCTGATGCAAGACTAGTTTCATTTTAGTCAAGCGGGCAAGTTCCAGA+\\
+\verb+Taxon2    CCCCTATGAGCTCACAAGAGGGAGTAGCTCCCTGGCCGAAAGTCTAGAGTCAAGCGGTCAAATTGCAGA+\\
+\verb+Taxon     CCGTTAGGCACGCAGAGGAGGGAGTAGCACATTGATTCAAGACTAGTTTCATTTGAGTCAATCGGAGA+\\
+\verb+Taxon4    TCCTTAATTCGTGCAGATAGTGAGTAGCCTCCTGATGAAAAACTAGTTAAACTTTAGCCGAGCGGGAGAATTCCAAA+\\
+\verb+Taxon3    GCATCTCGTGCGCACAGGAGCGAGTAGTACCGCGTTGCAGGAGCAGTTGCAGTTGTGAACATCGGGTTTCCACA+\\
+\\
+\verb+Multiple Alignment:+\\
+\verb+          |          Exon 1        ||         intron       ||            Exon 2           |+\\
+\verb+          000000000001000000010000003300000000100000000000330000000001100003223000000000001+\\
+\verb+5         CCATCA---CGTGCACACAGAAGGGAGTAGCACCCTG-ATGCCAGACTAGTTACATTTAAGACGAGCTGGCAAGTTCCATA+\\
+\verb+6         CCCTTA---CGTGCACACAGAAGGGAGTAGCACCCTG-ATGCCAGACTAGTTTCATTTTAGCCGAGCTGGGAAGTTCCAGA+\\
+\verb+7         CCCTTA---TGTGCACACAGGAGGGAGTAGCACCCTG-ATGCAAGACTAGTTTCATTTTAGTCAAGCGGGCAAGTTCCAGA+\\
+\verb+Taxon2    CCCCTA---TGAGCTCACAAGAGGGAGTAGCTCCCTGGCCGAAAGTCTAG---------AGTCAAGCGGTCAAATTGCAGA+\\
+\verb+Taxon     CCGTTA---GGCACGCAGAGGAGGGAGTAGCACATTG-ATTCAAGACTAGTTTCATTTGAGTCAATCGG---------AGA+\\
+\verb+Taxon4    TCCTTAATTCGTGCAGATAGT---GAGTAGCCTCCTG-ATGAAAAACTAGTTAAACTTTAGCCGAGCGGGAGAATTCCAAA+\\
+\verb+Taxon3    GCATCT---CGTGCGCACAGGAGCGAGTAGTACCGCG-TTGCAGGAGCAGTTGCAGTTGTGAACATCGGG---TTTCCACA+\\
+\\
+\hline
+\end{tabular}
+}
+\caption{An example of a coding region spec file along with all associated files. Notice that
+insertions and deletions do not fall within the codon boundaries in the exon regions. Such
+indels will induce both an indel and a substitution event on the corresponding (inferred) protein
+sequence.}
+\label{fig:coding_region} 
+\end{figure}
+
+\newpage
+\section{Version History}
+\begin{itemize}
+\item[1.5] indel-Seq-Gen PERL translated to C++, integrated seq-gen fully for a significant speedup. 
+New features include gamma distributions, codon rates, long input options, output of .verb file,
+\#r\# switch, 
+  \begin{itemize}
+  \item {\tt scale} took into account all items requiring scaling, i.e., branchScale, treeScale, and
+    \emph{invariable_proportion normalization}. Such normalization then affected the branch lengths
+    used to determine indels. 
+  \item Added new indel tests corresponding to the function $E(I)=BL\times(P_{ins}N_i+P_{del}N_d)$,
+    New version accounts for variables $N_i$ and $N_d$. Account for new positions added and deleted
+    during simulation run to allow all permutations of insertions along a subtree path to produce 
+    the same sequence (provided the same random number seed) results.
+  \end{itemize}
+\item[1.0] Initial release. indel-Seq-Gen is a PERL wrapper for the modified seq-gen-i program.
+Protein sequences only.
+\end{itemize}
+\newpage
+\bibliographystyle{plain}
+\bibliography{allbibs}
+
+\end{document}
