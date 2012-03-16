@@ -93,17 +93,17 @@ svn:wc:ra_dav:version-url
 V 71
 /svn/code/indel-seq-gen/!svn/ver/1527/trunk/data/nucclade_labelled.tree
 END
-nuc2.freq
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/nuc2.freq
-END
 fig.tree
 K 25
 svn:wc:ra_dav:version-url
 V 56
 /svn/code/indel-seq-gen/!svn/ver/951/trunk/data/fig.tree
+END
+nuc2.freq
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/nuc2.freq
 END
 test_recomb.tree
 K 25
@@ -111,17 +111,17 @@ svn:wc:ra_dav:version-url
 V 64
 /svn/code/indel-seq-gen/!svn/ver/951/trunk/data/test_recomb.tree
 END
-driver.pl
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/driver.pl
-END
 figUM.tree
 K 25
 svn:wc:ra_dav:version-url
 V 58
 /svn/code/indel-seq-gen/!svn/ver/951/trunk/data/figUM.tree
+END
+driver.pl
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/driver.pl
 END
 lipocalin.tree
 K 25
@@ -153,17 +153,17 @@ svn:wc:ra_dav:version-url
 V 56
 /svn/code/indel-seq-gen/!svn/ver/951/trunk/data/input_MA
 END
-test.tree
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/test.tree
-END
 Makefile
 K 25
 svn:wc:ra_dav:version-url
 V 57
 /svn/code/indel-seq-gen/!svn/ver/1932/trunk/data/Makefile
+END
+test.tree
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/test.tree
 END
 exon_intron_lineage.spec
 K 25
@@ -171,17 +171,17 @@ svn:wc:ra_dav:version-url
 V 73
 /svn/code/indel-seq-gen/!svn/ver/1577/trunk/data/exon_intron_lineage.spec
 END
-test_CB.tree
-K 25
-svn:wc:ra_dav:version-url
-V 60
-/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/test_CB.tree
-END
 nuc.freq
 K 25
 svn:wc:ra_dav:version-url
 V 56
 /svn/code/indel-seq-gen/!svn/ver/951/trunk/data/nuc.freq
+END
+test_CB.tree
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/code/indel-seq-gen/!svn/ver/951/trunk/data/test_CB.tree
 END
 nucidLD
 K 25

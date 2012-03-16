@@ -1,0 +1,17 @@
+[:nucpromoter]#fnuc.freq#
+{10,0.2,idLD/idLD}
+(
+ (
+  (Taxon1:0.1,Taxon2:0.1
+  )Clade2:0.1,Taxon3:0.1
+ )Clade1:0.1,
+ (
+  (Taxon4:0.1,Taxon5:0.1
+  )Clade4:0.1,Taxon6:0.1
+ )Clade3:0.1
+);
+[100]{10,0.2,idLD}(((Taxon1:0.1,Taxon2:0.1)Clade2:0.1,Taxon3:0.1)Clade1:0.1,((Taxon4:0.1,Taxon5:0.1)Clade4:0.1,Taxon6:0.1)Clade3:0.1)
+;
+
+[100]{10,0.2,idLD}(((Taxon1:0.1,Taxon2:0.1)Clade2:0.1,Taxon3:0.1)Clade1:0.1,((Taxon4:0.1,Taxon5:0.1)Clade4:0.1,Taxon6:0.1):0.1)
+;

@@ -1,0 +1,5 @@
+
+
+###################################
+Simulation run time: 2011-01-27 14:46:28
+Command:     ./indel-seq-gen -m PAM -p /Users/cstrope/iSG/indel-seq-gen/trunk/data -j trs -o f -e /Users/cstrope/iSG/indel-seq-gen/trunk/data/exon_intron_out -d 011110 < /Users/cstrope/iSG/indel-seq-gen/trunk/data/exon_intron.tree
