@@ -449,7 +449,7 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/Users/cstrope/iSG/indel-seq-gen/branches/codon_models'
+ac_pwd='/Users/cstrope/git/indel-seq-gen'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 MKDIR_P='./install-sh -c -d'
@@ -703,7 +703,7 @@ S["CFLAGS"]="-g -O2"
 S["CC"]="gcc"
 S["am__untar"]="${AMTAR} xf -"
 S["am__tar"]="${AMTAR} chof - \"$$tardir\""
-S["AMTAR"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run tar"
+S["AMTAR"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run tar"
 S["am__leading_dot"]="."
 S["SET_MAKE"]=""
 S["AWK"]="awk"
@@ -711,12 +711,12 @@ S["mkdir_p"]="$(top_builddir)/./install-sh -c -d"
 S["MKDIR_P"]="./install-sh -c -d"
 S["INSTALL_STRIP_PROGRAM"]="$(install_sh) -c -s"
 S["STRIP"]=""
-S["install_sh"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/install-sh"
-S["MAKEINFO"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run makeinfo"
-S["AUTOHEADER"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run autoheader"
-S["AUTOMAKE"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run automake-1.11"
-S["AUTOCONF"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run autoconf"
-S["ACLOCAL"]="${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run aclocal-1.11"
+S["install_sh"]="${SHELL} /Users/cstrope/git/indel-seq-gen/install-sh"
+S["MAKEINFO"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run makeinfo"
+S["AUTOHEADER"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run autoheader"
+S["AUTOMAKE"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run automake-1.11"
+S["AUTOCONF"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run autoconf"
+S["ACLOCAL"]="${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run aclocal-1.11"
 S["VERSION"]="2.2.13"
 S["PACKAGE"]="indel-seq-gen"
 S["CYGPATH_W"]="echo"

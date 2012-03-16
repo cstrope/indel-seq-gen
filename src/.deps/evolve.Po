@@ -95,24 +95,32 @@ evolve.o: evolve.cpp evolve.h /opt/local/include/gcc46/c++/exception \
  /opt/local/include/gcc46/c++/bits/stl_uninitialized.h \
  /opt/local/include/gcc46/c++/bits/stl_tempbuf.h \
  /opt/local/include/gcc46/c++/bits/stl_raw_storage_iter.h \
- /opt/local/include/gcc46/c++/backward/auto_ptr.h aamodels.h \
+ /opt/local/include/gcc46/c++/backward/auto_ptr.h gamma.h \
  /opt/local/include/gcc46/c++/vector \
  /opt/local/include/gcc46/c++/bits/stl_vector.h \
  /opt/local/include/gcc46/c++/bits/stl_bvector.h \
- /opt/local/include/gcc46/c++/bits/vector.tcc eigen.h inClade.h tree.h \
- /opt/local/include/gcc46/c++/limits gamma.h inTree.h \
+ /opt/local/include/gcc46/c++/bits/vector.tcc insert_freqs.h \
+ /opt/local/include/gcc46/c++/cstdlib model.h eigen.h inTree.h \
  /opt/local/include/gcc46/c++/map \
  /opt/local/include/gcc46/c++/bits/stl_tree.h \
  /opt/local/include/gcc46/c++/bits/stl_map.h \
  /opt/local/include/gcc46/c++/bits/stl_multimap.h \
- /opt/local/include/gcc46/c++/cstdlib /opt/local/include/gcc46/c++/cmath \
- model.h nucmodels.h motif.h /opt/local/include/gcc46/c++/set \
+ /opt/local/include/gcc46/c++/cmath inClade.h tree.h \
+ /opt/local/include/gcc46/c++/limits twister.h motif.h \
+ /opt/local/include/gcc46/c++/set \
  /opt/local/include/gcc46/c++/bits/stl_set.h \
  /opt/local/include/gcc46/c++/bits/stl_multiset.h /usr/include/assert.h \
- seqGenOptions.h ../config.h insert_freqs.h treefile.h twister.h random.h \
+ seqGenOptions.h ../config.h propose_path.h stats.h \
+ /opt/local/include/gcc46/c++/algorithm \
+ /opt/local/include/gcc46/c++/utility \
+ /opt/local/include/gcc46/c++/bits/stl_relops.h \
+ /opt/local/include/gcc46/c++/bits/stl_algo.h \
+ /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
+ /opt/local/include/gcc46/c++/bits/stl_heap.h treefile.h \
+ forward_simulation.h trace.h random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- /usr/include/sys/types.h trace.h
+ /usr/include/sys/types.h
 
 evolve.h:
 
@@ -376,7 +384,7 @@ evolve.h:
 
 /opt/local/include/gcc46/c++/backward/auto_ptr.h:
 
-aamodels.h:
+gamma.h:
 
 /opt/local/include/gcc46/c++/vector:
 
@@ -386,15 +394,13 @@ aamodels.h:
 
 /opt/local/include/gcc46/c++/bits/vector.tcc:
 
+insert_freqs.h:
+
+/opt/local/include/gcc46/c++/cstdlib:
+
+model.h:
+
 eigen.h:
-
-inClade.h:
-
-tree.h:
-
-/opt/local/include/gcc46/c++/limits:
-
-gamma.h:
 
 inTree.h:
 
@@ -406,13 +412,15 @@ inTree.h:
 
 /opt/local/include/gcc46/c++/bits/stl_multimap.h:
 
-/opt/local/include/gcc46/c++/cstdlib:
-
 /opt/local/include/gcc46/c++/cmath:
 
-model.h:
+inClade.h:
 
-nucmodels.h:
+tree.h:
+
+/opt/local/include/gcc46/c++/limits:
+
+twister.h:
 
 motif.h:
 
@@ -428,11 +436,27 @@ seqGenOptions.h:
 
 ../config.h:
 
-insert_freqs.h:
+propose_path.h:
+
+stats.h:
+
+/opt/local/include/gcc46/c++/algorithm:
+
+/opt/local/include/gcc46/c++/utility:
+
+/opt/local/include/gcc46/c++/bits/stl_relops.h:
+
+/opt/local/include/gcc46/c++/bits/stl_algo.h:
+
+/opt/local/include/gcc46/c++/bits/algorithmfwd.h:
+
+/opt/local/include/gcc46/c++/bits/stl_heap.h:
 
 treefile.h:
 
-twister.h:
+forward_simulation.h:
+
+trace.h:
 
 random.h:
 
@@ -441,5 +465,3 @@ random.h:
 /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h:
 
 /usr/include/sys/types.h:
-
-trace.h:

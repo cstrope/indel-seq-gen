@@ -52,11 +52,10 @@ PROGRAMS = $(bin_PROGRAMS)
 am_indel_seq_gen_OBJECTS = motif.$(OBJEXT) inTree.$(OBJEXT) \
 	seqGenOptions.$(OBJEXT) main.$(OBJEXT) evolve.$(OBJEXT) \
 	model.$(OBJEXT) eigen.$(OBJEXT) treefile.$(OBJEXT) \
-	progress.$(OBJEXT) gamma.$(OBJEXT) twister.$(OBJEXT) \
-	random.$(OBJEXT) insert_freqs.$(OBJEXT) trace.$(OBJEXT) \
-	inClade.$(OBJEXT) paleo.$(OBJEXT) propose_path.$(OBJEXT) \
-	stats.$(OBJEXT) dependency.$(OBJEXT) \
-	forward_simulation.$(OBJEXT)
+	gamma.$(OBJEXT) random.$(OBJEXT) insert_freqs.$(OBJEXT) \
+	trace.$(OBJEXT) inClade.$(OBJEXT) paleo.$(OBJEXT) \
+	propose_path.$(OBJEXT) stats.$(OBJEXT) dependency.$(OBJEXT) \
+	forward_simulation.$(OBJEXT) twister.$(OBJEXT)
 indel_seq_gen_OBJECTS = $(am_indel_seq_gen_OBJECTS)
 indel_seq_gen_DEPENDENCIES = $(top_builddir)/lib/libgnu.a
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
@@ -208,7 +207,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
-indel_seq_gen_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h progress.cpp progress.h gamma.cpp gamma.h twister.cpp twister.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h
+indel_seq_gen_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h gamma.cpp gamma.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h twister.h twister.cpp
 indel_seq_gen_LDADD = $(top_builddir)/lib/libgnu.a
 all: all-am
 
@@ -303,7 +302,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/model.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/motif.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/paleo.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/progress.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/propose_path.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/seqGenOptions.Po@am__quote@

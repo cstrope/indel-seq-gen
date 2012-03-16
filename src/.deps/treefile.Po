@@ -1,10 +1,16 @@
-treefile.o: treefile.cpp treefile.h /opt/local/include/gcc46/c++/cstring \
+treefile.o: treefile.cpp \
+ /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/limits.h \
+ /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/sys/cdefs.h \
+ /usr/include/machine/limits.h /usr/include/i386/limits.h \
+ /usr/include/i386/_limits.h /usr/include/sys/syslimits.h treefile.h \
+ /opt/local/include/gcc46/c++/cstring \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/cpu_defines.h \
  /usr/include/string.h /usr/include/_types.h /usr/include/sys/_types.h \
- /usr/include/sys/cdefs.h /usr/include/machine/_types.h \
- /usr/include/i386/_types.h /opt/local/include/gcc46/c++/iostream \
+ /usr/include/machine/_types.h /usr/include/i386/_types.h \
+ /opt/local/include/gcc46/c++/iostream \
  /opt/local/include/gcc46/c++/ostream /opt/local/include/gcc46/c++/ios \
  /opt/local/include/gcc46/c++/iosfwd \
  /opt/local/include/gcc46/c++/bits/stringfwd.h \
@@ -102,18 +108,41 @@ treefile.o: treefile.cpp treefile.h /opt/local/include/gcc46/c++/cstring \
  /opt/local/include/gcc46/c++/sstream \
  /opt/local/include/gcc46/c++/bits/sstream.tcc \
  /opt/local/include/gcc46/c++/cstdlib /opt/local/include/gcc46/c++/cmath \
- aamodels.h eigen.h evolve.h /opt/local/include/gcc46/c++/bitset \
+ evolve.h /opt/local/include/gcc46/c++/bitset \
  /opt/local/include/gcc46/c++/memory \
  /opt/local/include/gcc46/c++/bits/stl_tempbuf.h \
  /opt/local/include/gcc46/c++/bits/stl_raw_storage_iter.h \
  /opt/local/include/gcc46/c++/backward/auto_ptr.h insert_freqs.h model.h \
- nucmodels.h motif.h /opt/local/include/gcc46/c++/set \
+ eigen.h motif.h /opt/local/include/gcc46/c++/set \
  /opt/local/include/gcc46/c++/bits/stl_set.h \
  /opt/local/include/gcc46/c++/bits/stl_multiset.h /usr/include/assert.h \
  random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- trace.h twister.h inClade.h seqGenOptions.h ../config.h prosite_motif.h
+ trace.h twister.h inClade.h seqGenOptions.h ../config.h propose_path.h \
+ stats.h /opt/local/include/gcc46/c++/algorithm \
+ /opt/local/include/gcc46/c++/utility \
+ /opt/local/include/gcc46/c++/bits/stl_relops.h \
+ /opt/local/include/gcc46/c++/bits/stl_algo.h \
+ /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
+ /opt/local/include/gcc46/c++/bits/stl_heap.h forward_simulation.h \
+ prosite_motif.h dependency.h
+
+/opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/limits.h:
+
+/opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/machine/limits.h:
+
+/usr/include/i386/limits.h:
+
+/usr/include/i386/_limits.h:
+
+/usr/include/sys/syslimits.h:
 
 treefile.h:
 
@@ -130,8 +159,6 @@ treefile.h:
 /usr/include/_types.h:
 
 /usr/include/sys/_types.h:
-
-/usr/include/sys/cdefs.h:
 
 /usr/include/machine/_types.h:
 
@@ -395,10 +422,6 @@ inTree.h:
 
 /opt/local/include/gcc46/c++/cmath:
 
-aamodels.h:
-
-eigen.h:
-
 evolve.h:
 
 /opt/local/include/gcc46/c++/bitset:
@@ -415,7 +438,7 @@ insert_freqs.h:
 
 model.h:
 
-nucmodels.h:
+eigen.h:
 
 motif.h:
 
@@ -443,4 +466,24 @@ seqGenOptions.h:
 
 ../config.h:
 
+propose_path.h:
+
+stats.h:
+
+/opt/local/include/gcc46/c++/algorithm:
+
+/opt/local/include/gcc46/c++/utility:
+
+/opt/local/include/gcc46/c++/bits/stl_relops.h:
+
+/opt/local/include/gcc46/c++/bits/stl_algo.h:
+
+/opt/local/include/gcc46/c++/bits/algorithmfwd.h:
+
+/opt/local/include/gcc46/c++/bits/stl_heap.h:
+
+forward_simulation.h:
+
 prosite_motif.h:
+
+dependency.h:

@@ -52,11 +52,10 @@ PROGRAMS = $(bin_PROGRAMS)
 am_indel_seq_gen_OBJECTS = motif.$(OBJEXT) inTree.$(OBJEXT) \
 	seqGenOptions.$(OBJEXT) main.$(OBJEXT) evolve.$(OBJEXT) \
 	model.$(OBJEXT) eigen.$(OBJEXT) treefile.$(OBJEXT) \
-	progress.$(OBJEXT) gamma.$(OBJEXT) twister.$(OBJEXT) \
-	random.$(OBJEXT) insert_freqs.$(OBJEXT) trace.$(OBJEXT) \
-	inClade.$(OBJEXT) paleo.$(OBJEXT) propose_path.$(OBJEXT) \
-	stats.$(OBJEXT) dependency.$(OBJEXT) \
-	forward_simulation.$(OBJEXT)
+	gamma.$(OBJEXT) random.$(OBJEXT) insert_freqs.$(OBJEXT) \
+	trace.$(OBJEXT) inClade.$(OBJEXT) paleo.$(OBJEXT) \
+	propose_path.$(OBJEXT) stats.$(OBJEXT) dependency.$(OBJEXT) \
+	forward_simulation.$(OBJEXT) twister.$(OBJEXT)
 indel_seq_gen_OBJECTS = $(am_indel_seq_gen_OBJECTS)
 indel_seq_gen_DEPENDENCIES = $(top_builddir)/lib/libgnu.a
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
@@ -77,11 +76,11 @@ DIST_SOURCES = $(indel_seq_gen_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run aclocal-1.11
-AMTAR = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run tar
-AUTOCONF = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run autoconf
-AUTOHEADER = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run autoheader
-AUTOMAKE = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run automake-1.11
+ACLOCAL = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run aclocal-1.11
+AMTAR = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run tar
+AUTOCONF = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run autoconf
+AUTOHEADER = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run autoheader
+AUTOMAKE = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run automake-1.11
 AWK = awk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -137,7 +136,7 @@ LIBOBJS =
 LIBS = -lm 
 LTLIBINTL = 
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/missing --run makeinfo
+MAKEINFO = ${SHELL} /Users/cstrope/git/indel-seq-gen/missing --run makeinfo
 MKDIR_P = .././install-sh -c -d
 NEXT_UNISTD_H = <unistd.h>
 OBJEXT = o
@@ -160,10 +159,10 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = 
 VERSION = 2.2.13
-abs_builddir = /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/src
-abs_srcdir = /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/src
-abs_top_builddir = /Users/cstrope/iSG/indel-seq-gen/branches/codon_models
-abs_top_srcdir = /Users/cstrope/iSG/indel-seq-gen/branches/codon_models
+abs_builddir = /Users/cstrope/git/indel-seq-gen/src
+abs_srcdir = /Users/cstrope/git/indel-seq-gen/src
+abs_top_builddir = /Users/cstrope/git/indel-seq-gen
+abs_top_srcdir = /Users/cstrope/git/indel-seq-gen
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 am__include = include
@@ -187,7 +186,7 @@ host_alias =
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /Users/cstrope/iSG/indel-seq-gen/branches/codon_models/install-sh
+install_sh = ${SHELL} /Users/cstrope/git/indel-seq-gen/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -208,7 +207,7 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
-indel_seq_gen_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h progress.cpp progress.h gamma.cpp gamma.h twister.cpp twister.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h
+indel_seq_gen_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h gamma.cpp gamma.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h twister.h twister.cpp
 indel_seq_gen_LDADD = $(top_builddir)/lib/libgnu.a
 all: all-am
 
@@ -303,7 +302,6 @@ include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/model.Po
 include ./$(DEPDIR)/motif.Po
 include ./$(DEPDIR)/paleo.Po
-include ./$(DEPDIR)/progress.Po
 include ./$(DEPDIR)/propose_path.Po
 include ./$(DEPDIR)/random.Po
 include ./$(DEPDIR)/seqGenOptions.Po

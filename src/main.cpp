@@ -34,7 +34,6 @@
 #include "treefile.h"
 #include "evolve.h"
 #include "model.h"
-#include "progress.h"
 #include "twister.h"
 #include "random.h"
 #include "trace.h"
