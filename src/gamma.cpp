@@ -12,7 +12,6 @@
 */
 
 #include <math.h>
-#include <iostream>
 
 #include "twister.h"
 #include "gamma.h"
@@ -299,36 +298,6 @@ int DiscreteGamma (double freqK[], double rK[],
    for (i=0; i<K; i++) freqK[i]=1.0/K;
 
    return (0);
-}
-
-int DiscreteGamma(
-				  vector<double>& freqK, 
-				  vector<double>& rK, 
-    			  double alfa, 
-    			  double beta, 
-    			  int K, 
-    			  int median
-    			)
-{
-	//discretization of gamma distribution with equal proportions in each category
-	int i;
-	double gap05=1.0/(2.0*K), t, factor=alfa/beta*K, lnga1;
-
-	if (median) {
-		for (i=0; i<K; i++) 	rK.at(i)=PointGamma((i*2.0+1)*gap05, alfa, beta);
-		for (i=0,t=0; i<K; i++) t+=rK.at(i);
-		for (i=0; i<K; i++)     rK.at(i)*=factor/t;
-	} else {
-		lnga1=LnGamma(alfa+1);
-		for (i=0; i<K-1; i++) freqK.at(i)=PointGamma((i+1.0)/K, alfa, beta);
-		for (i=0; i<K-1; i++) freqK.at(i)=IncompleteGamma(freqK.at(i)*beta, alfa+1, lnga1);
-		rK.at(0) = freqK.at(0)*factor;
-		rK.at(K-1) = (1-freqK.at(K-2))*factor;
-		for (i=1; i<K-1; i++)  rK.at(i) = (freqK.at(i)-freqK.at(i-1))*factor;
-	}
-	for (i=0; i<K; i++) freqK.at(i)=1.0/K;
-
-	return (0);
 }
 
 

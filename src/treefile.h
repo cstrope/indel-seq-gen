@@ -37,15 +37,15 @@
 
 using namespace std;
 
-extern bool fast_simulation;
 extern int invariableSites;
+extern size_t TNode_InheritMotifSites;
 
 void initializeBranchRun(inTree *iTree, TNode *des, double *scale, double *invar_scale, int inNumSites);
 void initializeCladeParameters(TTree *tree, TNode *node);
 void initializeTreeParameters(inTree *iTree, double *scale, double *invar_scale);
 TNode *NewNode(TTree *tree);
-char ReadToNextChar(string& tree_str, int *pos);
-void ReadUntil(string& tree_str, int *pos, char stopChar, const char *what);
+char ReadToNextChar(string tree_str, int *pos);
+void ReadUntil(string tree_str, int *pos, char stopChar, char *what);
 
 #endif /* _TREEFILE_H_ */
 

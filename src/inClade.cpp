@@ -17,10 +17,7 @@
 
 #include "inClade.h"
 
-inClade::inClade(
-				 string& label, 
-				 TTree *tree
-				) 
+inClade::inClade(string& label, TTree *tree) 
 {
 	for (int i = 0; i < NUM_CLADE_VARIABLES; i++) 
 		set_in_clade[i] = false;
@@ -47,13 +44,8 @@ inClade::inClade(
 	my_motifs.clear();
 }
 
-inClade::inClade(
-				 string label, 
-				 const seqGenOptions *options
-				) 
+inClade::inClade(string label, const seqGenOptions *options) 
 {
-	list<string> arg_split;
-	
 	clade_name.assign(label);
 	environment_name.assign(label);
 	P_ins_ = P_del_ = maxIndel = 0;
@@ -61,13 +53,12 @@ inClade::inClade(
 	model = options->global_model;
 	bipartition.clear();
 	values2Export2Freq.clear();
-	arg_split = split(options->global_pi, " ");
-	if (arg_split.size() == numStates) {
-		values2Export2Freq.assign(numStates, 0);
-		vector<double>::iterator pi_t = values2Export2Freq.begin();
-		for (list<string>::iterator it = arg_split.begin(); it != arg_split.end(); ++it, ++pi_t)
-			(*pi_t) = atof((*it).c_str());
-	} 
+	for (int i = 0; i < numStates; i++) {
+		if(isNucModel)
+			values2Export2Freq.push_back(nucFreq[i]);
+		else
+			values2Export2Freq.push_back(aaFreq[i]);
+	}
 	insert_lengthDistribution.clear();
 	delete_lengthDistribution.clear();
 	proportion_invariable = options->default_proportion_invariable;	
@@ -75,6 +66,9 @@ inClade::inClade(
 	constraintChange = NO_CHANGE;
 	for (int i = 0; i < MAX_RATE_CATS; i++)
 		catRate[i] = options->default_catRate[i];
+	for (int i = 0; i < numStates; i++) {
+		values2Export2Freq.at(i) = ((numStates == 4) ? nucFreq[i] : aaFreq[i]);
+	}
 	if (rateHetero == DiscreteGammaRates) numCats = options->num_discrete_gamma_categories;
 	if (rateHetero == GammaRates || rateHetero == DiscreteGammaRates) gammaShape = options->alpha;
 	else gammaShape = 1.0;
@@ -82,9 +76,7 @@ inClade::inClade(
 	my_motifs.clear();
 }
 
-void inClade::rootEnvSetup(
-						   inClade *env
-						  ) 
+void inClade::rootEnvSetup(inClade *env) 
 {
 	processed = true;		// Global params for tree are always processed.
 	environment_name.assign("tree_parameters");
@@ -111,7 +103,7 @@ void inClade::Print_Environment()
 {
 	if ( !environment_name.empty() ) cout << endl << "Environment name: " << environment_name << ", ";
 	cout << "Clade: " << clade_name << "  Top affected node: ";
-	for (vector<bool>::iterator it = bipartition.begin(); it != bipartition.end(); ++it)
+	for (vector<bool>::iterator it = bipartition.begin(); it != bipartition.end(); it++)
 		cout << (*it);
 	cout << endl;
 	if (constraintChange) {
@@ -169,7 +161,7 @@ void inClade::Print_Environment()
 		
 	if ( !my_motifs.empty() ) {
 		cerr << " MOTIFS: " << endl;
-		for (list<inMotif*>::iterator it = my_motifs.begin(); it != my_motifs.end(); ++it)
+		for (list<inMotif*>::iterator it = my_motifs.begin(); it != my_motifs.end(); it++)
 			(*it)->report();
 	}
 }
@@ -188,26 +180,20 @@ string inClade::report_rateHetero()
 	}	
 }
 
-string CladeName(
-				 TTree *tree, 
-				 int which_clade_in_list
-				) 
+string CladeName(TTree *tree, int which_clade_in_list) 
 {
 	string cladename = "";
 	int clade_ctr = 0;
 
-	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); ++it, clade_ctr++)
+	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); it++, clade_ctr++)
 		if (clade_ctr == which_clade_in_list) cladename.assign((*it)->clade_name);
 		
 	return cladename;
 }
 
-inClade *FindEnvironment(
-						 TTree *tree, 
-						 string& which_clade
-						) 
+inClade *FindEnvironment(TTree *tree, string which_clade) 
 {
-	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); ++it) {
+	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); it++) {
 		if ( which_clade.compare((*it)->clade_name) == 0) {
 			return (*it);
 		}
@@ -216,14 +202,12 @@ inClade *FindEnvironment(
 }
 
 // Function to set clade params to be clade-specific or to point to tree parameters (if not)
-int CladeUnprocessed(
-					 TTree *tree
-					) 
+int CladeUnprocessed(TTree *tree) 
 {
 	int unprocessed_clade = 0;
 	int num_cycles = 0;
 
-	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); ++it) {
+	for (list<inClade*>::iterator it = tree->treeEnv.begin(); it != tree->treeEnv.end(); it++) {
 		if ((*it)->processed) unprocessed_clade++;
 		else break;
 		num_cycles++;

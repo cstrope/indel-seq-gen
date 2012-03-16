@@ -18,45 +18,76 @@
 #include "evolve.h"
 
 #define FSL_FAIL -1
+#define PRINT_ID 0
 
 using namespace std;
 
+int				node_num = 0;
+int				total_events = 0;
+int				change_events = 0;
 static double 	NeighborRates[400];
 int 			indel_fill_aas;
 double 			freqRate[MAX_RATE_CATS];
+static double 	*matrix[MAX_RATE_CATS];
+static double 	*cvector;
+int 			indelNo; 
 extern int		num_insert, num_delete, len_insert, len_delete;
-int 			num_subst = 0, rejected_subst = 0, num_ins = 0, num_del = 0;
-extern vector<int> value_check;
-double			global_sum_Pr_subst = 0;
-double	Pr_subst_site_sum_I, Pr_subst_site_sum_D;
-double	total_diff_Pr_subst_site_sum = 0;
-bool round1 = false;
-
-vector<int>		cat_chosen (4,0);
-vector<short>	acgt (20, 0);
-vector<int>		acagatcgctgt (400, 0);
-extern int changed_site;
-extern int prev_state;
+int 			num_subst = 0;
+bool 			insert_debug = false;
+bool 			delete_debug = false;
+extern int 		num_inserted_positions;
+extern int		num_deleted_positions;
+string			simulation_status = "";
 
 // functions 
 
-void Create_Global_Arrays(
-						  TTree *tree, 
-						  int inNumSites
-						 ) 
+void CreateMatrix() 
+{
+    for (int i = 0; i < MAX_RATE_CATS; i++) {
+		try {
+			matrix[i] = new double [numStates * numStates];
+		} catch (exception& e) {
+			cerr << "Error allocating matrix: " << e.what() << endl;
+			exit(EXIT_FAILURE);
+		}
+    }
+	if (!isNucModel) Set_Neighbor_Rates(NeighborRates,indel_fill_aas);
+	try {
+		cvector = new double [numStates];
+	} catch (exception& e) {
+		cerr << "Error allocating cvector: " << e.what() << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+void DestroyMatrix() 
+{
+    for (int i = 0; i < MAX_RATE_CATS; i++) {
+		try {
+			delete [] matrix[i];
+		} catch (exception& e) {
+			cerr << "Error de-allocating matrix: " << e.what() << endl;
+			exit(EXIT_FAILURE);
+		}
+    }
+	try {
+		delete [] cvector;
+	} catch (exception& e) {
+		cerr << "Error de-allocating cvector: " << e.what() << endl;
+		exit(EXIT_FAILURE);
+	}
+}
+
+void Create_Global_Arrays(TTree *tree, int inNumSites) 
 {
 	//////////
 	/// Root sequence, coming from root node.
 	//////////
-	tree->global_alignment->insert_sites.clear();
-	tree->global_alignment->insert_sites.assign(inNumSites, insertSite('i',-1,-1));
+	tree->global_arrays.clear();
+	tree->global_arrays.assign(inNumSites+1, globalAlignment('i',-1,-1));
 }
 
-void SetCategories(
-				   TNode *node, 
-				   int inNumSites, 
-				   seqGenOptions *options
-				  )
+void SetCategories(TNode *node, int inNumSites, seqGenOptions *options)
 {
 	if (node->anc != NULL) {
 		stringstream message;
@@ -117,54 +148,26 @@ void SetCategories(
 		}
 	}
 
-	if (node->nodeEnv->rateHetero != node->anc->nodeEnv->rateHetero || node->mytipNo == -1) {
-		// If not returned from above, we're cool to change the rates.
-	    if (node->nodeEnv->rateHetero==CodonRates) {
-			double sumRates=node->nodeEnv->catRate[0]+node->nodeEnv->catRate[1]+node->nodeEnv->catRate[2];
-			if (sumRates!=3.0) {
-		    	node->nodeEnv->catRate[0]*=3.0/sumRates;
-		    	node->nodeEnv->catRate[1]*=3.0/sumRates;
-		    	node->nodeEnv->catRate[2]*=3.0/sumRates;
-			}
-	    } else if (node->nodeEnv->rateHetero==GammaRates) {
-			for (size_t i=0; i<inNumSites; i++) {
-				node->seq_evo.at(i).setGamma(rndgamma(node->nodeEnv->gammaShape) / node->nodeEnv->gammaShape);
-			}
-	    } else if (node->nodeEnv->rateHetero==DiscreteGammaRates) {
-			DiscreteGamma(freqRate, node->nodeEnv->catRate, node->nodeEnv->gammaShape, node->nodeEnv->gammaShape, node->nodeEnv->numCats, 0);
-			for (size_t i=0; i<inNumSites; i++) node->seq_evo.at(i).setCategory((int)(rndu()*node->nodeEnv->numCats));
-//			for (size_t i=0; i<inNumSites; i++) node->seq_evo.at(i).setCategories((int)(rndu()*node->nodeEnv->numCats));
-	    }
-	} else {
-		//////////
-		/// Need to make sure everything is inherited.
-		//////////
-		int i;
-		switch (node->nodeEnv->rateHetero) {
-		case DiscreteGammaRates:
-			node->nodeEnv->gammaShape = node->anc->nodeEnv->gammaShape;
-			node->nodeEnv->numCats = node->anc->nodeEnv->numCats;
-			for (i=0; i < node->nodeEnv->numCats; i++) 
-				node->nodeEnv->catRate[i] = node->anc->nodeEnv->catRate[i];
-			break;
-		case GammaRates:
-			node->nodeEnv->gammaShape = node->anc->nodeEnv->gammaShape;
-			break;
-		case CodonRates: 
-			node->nodeEnv->catRate[0] = node->anc->nodeEnv->catRate[0];
-			node->nodeEnv->catRate[1] = node->anc->nodeEnv->catRate[1];
-			node->nodeEnv->catRate[2] = node->anc->nodeEnv->catRate[2];
-			break;
-		default:
-			break;
+	// If not returned from above, we're cool to change the rates.
+    if (node->nodeEnv->rateHetero==CodonRates) {
+		double sumRates=node->nodeEnv->catRate[0]+node->nodeEnv->catRate[1]+node->nodeEnv->catRate[2];
+		if (sumRates!=3.0) {
+	    	node->nodeEnv->catRate[0]*=3.0/sumRates;
+	    	node->nodeEnv->catRate[1]*=3.0/sumRates;
+	    	node->nodeEnv->catRate[2]*=3.0/sumRates;
 		}
-	}
+    } else if (node->nodeEnv->rateHetero==GammaRates) {
+		for (size_t i=0; i<inNumSites; i++) {
+			node->seq_evo.at(i).setGamma(rndgamma(node->nodeEnv->gammaShape) / node->nodeEnv->gammaShape);
+		}
+    } else if (node->nodeEnv->rateHetero==DiscreteGammaRates) {
+		DiscreteGamma(freqRate, node->nodeEnv->catRate, node->nodeEnv->gammaShape, node->nodeEnv->gammaShape, node->nodeEnv->numCats, 0);
+		for (size_t i=0; i<inNumSites; i++) node->seq_evo.at(i).setCategories((int)(rndu()*node->nodeEnv->numCats));
+    }
+
 }
 
-char SetState(
-			  double *P, 
-			  string& caller
-			 )
+char SetState(double *P, string& caller)
 {
     char j = 0;
     double r;
@@ -185,14 +188,13 @@ char SetState(
 			cerr << "Value r = " << r << " vs value *P = " << *original_P << " that was received." << endl;
 			exit(EXIT_FAILURE);
 		}
+//		if (!done) cerr << "orig_P = " << *original_P << "    r = " << r << endl; 
 	} while (!done);
 
     return j;
 }
 
-short IsInvariable(
-				   double proportionInvariable
-				  )
+short IsInvariable(double proportionInvariable)
 {
     double r;
 
@@ -201,21 +203,10 @@ short IsInvariable(
     else return 0;
 }
 
-void RandomSequence(
-					char *seq, 
-					int inNumSites, 
-					seqGenOptions *options,
-					RateMatrix *rates
-				   )
+void RandomSequence(char *seq, int inNumSites, seqGenOptions *options)
 {
     char *P;
 	string calling_routine = "RandomSequence";
-	double addFreq[numStates];
-
-	addFreq[0] = rates->pi.at(0);
-	int i = 1;
-	for (vector<double>::iterator it = rates->pi.begin()+1; it != rates->pi.end(); ++it, i++)
-		addFreq[i] = addFreq[i-1]+(*it);
 
     P=seq;
     for (size_t i=0; i<inNumSites; i++) {
@@ -238,30 +229,21 @@ void RandomSequence(
 	}
 }
 
-string insertFillSequence(
-						  int insertSize,
-						  RateMatrix *rates
-						 )
+string insertFillSequence(int insertSize)
 {
     vector<double> bayes_probabilities_for_next (numStates, 0);
     double r;
 	string insert_sequence (insertSize+1, '\0');
 	string calling_routine;
-	double addFreq[numStates];
-
-	addFreq[0] = rates->pi.at(0);
-	int i = 1;
-	for (vector<double>::iterator it = rates->pi.begin()+1; it != rates->pi.end(); ++it, i++)
-		addFreq[i] = addFreq[i-1]+(*it);
 	
 	if (!isNucModel) {
 		calling_routine.assign("insertFillSequence, isNucModel");
 	    insert_sequence.at(0) = SetState(addFreq, calling_routine);
 	    for(size_t i=1; i<insertSize+1; i++) {
-			bayes_probabilities_for_next.at(0)=(rates->pi.at(0)*NeighborRates[(int)insert_sequence.at(i-1)*numStates])/(rates->pi.at(insert_sequence.at(i-1)));
+			bayes_probabilities_for_next.at(0)=(freq[0]*NeighborRates[(int)insert_sequence.at(i-1)*numStates])/(freq[insert_sequence.at(i-1)]);
 	        for(size_t j=1;j<numStates;j++) {
 		    	bayes_probabilities_for_next.at(j)=bayes_probabilities_for_next.at(j-1);
-		    	bayes_probabilities_for_next.at(j)+=(rates->pi.at(j)*NeighborRates[(int)insert_sequence.at(i-1)*numStates+j])/(rates->pi.at(insert_sequence.at(i-1)));
+		    	bayes_probabilities_for_next.at(j)+=(freq[j]*NeighborRates[(int)insert_sequence.at(i-1)*numStates+j])/(freq[insert_sequence.at(i-1)]);
 			}
 
 			r=rndu();
@@ -288,9 +270,178 @@ string insertFillSequence(
 	return insert_sequence;
 }
 
-bool Stop_Codon(
-				int *codon
-			   ) 
+void MutateSequence(inTree *iTree, TNode *des, double inlen, double motif_correction, list<eventTrack*> *events)
+{
+    int j, cat, pos;
+	vector<Site>::size_type i;
+    char result, prev_state;
+    double len, in_value;
+	bool do_sub = false;
+	string calling_routine;
+
+    switch (des->nodeEnv->rateHetero) {
+	case GammaRates:
+		for (i = 0; i < des->seq_evo.size(); i++) {
+			pos = i;
+			vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+			len = inlen + motif_correction;
+			in_value = des->seq_evo.at(pos).returnGamma() * len;
+			SetVector(cvector, (*posit).returnState(), in_value);
+		    if (des->nodeEnv->invariableSites) {
+				if ( !des->seq_evo.at(pos).motif.active_properties.subst->siteInvariable() ) {
+					calling_routine.assign("MutateSequence, GammaRates, invariableSites");
+					result=SetState(cvector, calling_routine);
+					// If not part of the motif, then change regardless of result value.
+					if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+						(*posit).setState(result);
+					// Otherwise, if it is part of the motif, and it is another accepting value, accept.
+					} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+						(*posit).setState(result);
+					}
+					//else cerr << pos << ": Rejected " << stateCharacters[result] << " at position accepting " << des->seq_evo.at(pos).motif.active_properties.subst->report_bitset() << endl;
+		    	}
+
+		    } else {
+				calling_routine.assign("MutateSequence, GammaRates");
+				prev_state = (*posit).returnState();
+				result=SetState(cvector, calling_routine);
+				if (result != prev_state) change_events++; total_events++;
+				if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+					(*posit).setState(result);
+				} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+					(*posit).setState(result);
+				}
+			}
+	    }
+	    break;
+
+	case DiscreteGammaRates:
+	    for (j=0; j < des->nodeEnv->numCats; j++)
+	    	SetMatrix(matrix[j], des->nodeEnv->catRate[j]*(inlen+motif_correction));
+	    if (des->nodeEnv->invariableSites) {
+			for (i = 0; i < des->seq_evo.size(); i++) {
+				pos = i;
+				vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+				if ( !des->seq_evo.at(pos).motif.active_properties.subst->siteInvariable() ) {
+					calling_routine.assign("MutateSequence, DiscreteGammaRates, invariableSites");
+					result=SetState(
+									matrix[des->seq_evo.at(pos).returnCategories()]+((*posit).returnState()*numStates), 
+									calling_routine
+								   );
+					if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+						(*posit).setState(result);
+					} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+						(*posit).setState(result);
+					}
+				}
+			}
+	    } else {
+			for (i = 0; i < des->seq_evo.size(); i++) {
+				pos = i;
+				vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+				calling_routine.assign("MutateSequence, DiscreteGammaRates");
+				result=SetState(
+								matrix[des->seq_evo.at(pos).returnCategories()]+((*posit).returnState()*numStates),
+								calling_routine
+							   );
+				if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+					(*posit).setState(result);
+				} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+					(*posit).setState(result);
+				}
+			}
+	    }
+	    break;
+
+	case CodonRates:
+	    for (j=0; j < 3; j++)
+	    	SetMatrix(matrix[j], des->nodeEnv->catRate[j]*inlen);
+		for (i = 0; i < des->seq_evo.size(); i++) {
+			pos = i;
+			vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+			cat=(pos+iTree->codon_offset)%3;
+			calling_routine.assign("MutateSequence, CodonRates");
+			result=SetState(
+							matrix[cat]+((*posit).returnState() * numStates), 
+							calling_routine
+						   );
+			if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) 
+				do_sub=true;
+			else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) )
+				do_sub = true;
+
+
+			if (do_sub) {
+				// Check if stop codon is result of substitution.
+				int codon[3];
+				if (pos - (3-iTree->codon_offset) < 0 || pos + (3-iTree->codon_offset) >= des->seq_evo.size()) {
+					; // Punt, since I do not keep track of other partitions (what about subsequences??)
+				} else if ( (pos+iTree->codon_offset) % 3 == 0 ) {
+					codon[0] = result;
+					codon[1] = (*(posit+1)).returnState();
+					codon[2] = (*(posit+2)).returnState();
+				} else if ( (pos+iTree->codon_offset) % 3 == 1 ) {
+					codon[0] = (*(posit-1)).returnState();
+					codon[1] = result;
+					codon[2] = (*(posit+1)).returnState();
+				} else if ( (pos+iTree->codon_offset) % 3 == 2 ) {
+					codon[0] = (*(posit-2)).returnState();
+					codon[1] = (*(posit-1)).returnState();
+					codon[2] = result;
+				} else {
+					cerr << "Huh?? how can there be more than 3 codon positions?" << endl;
+					exit(EXIT_FAILURE);
+				}
+				if ( !Stop_Codon(codon) ) {
+					(*posit).setState(result);
+				}
+			}
+	    }
+	    break;
+
+	case NoRates:
+	    SetMatrix(matrix[0], inlen+motif_correction);
+	    if (des->nodeEnv->invariableSites) {
+			for (i = 0; i < des->seq_evo.size(); i++) {
+				pos = i;
+				vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+				if ( !des->seq_evo.at(pos).motif.active_properties.subst->siteInvariable() ) {
+					calling_routine.assign("MutateSequence, NoRates, invariableSites");
+					result=SetState(
+									matrix[0]+((*posit).returnState() * numStates), 
+									calling_routine
+								   );
+					if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+						(*posit).setState(result);
+					} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+						(*posit).setState(result);
+					}
+				}
+			}
+	    } else {
+			for (i = 0; i < des->seq_evo.size(); i++) {
+				pos = i;
+				vector<Site>::iterator posit = des->seq_evo.begin()+pos;
+				prev_state = (*posit).returnState();
+				calling_routine.assign("MutateSequence, NoRates");
+		    	result=SetState(
+		    					matrix[0]+(des->seq_evo.at(pos).returnState()*numStates), 
+		    					calling_routine
+		    				   );
+				if (result != prev_state) change_events++; total_events++;
+				if ( !(des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test((*posit).returnState())) ) {
+					(*posit).setState(result);
+				} else if (des->seq_evo.at(pos).motif.active_properties.subst->substitution_bitstring.test(result) ) {
+					(*posit).setState(result);
+				}
+
+			}
+	    }
+	    break;
+    }
+}
+
+bool Stop_Codon(int *codon) 
 {
         size_t T = stateCharacters.find("T"), 
         	   A = stateCharacters.find("A"), 
@@ -303,15 +454,11 @@ bool Stop_Codon(
         return false;
 }
 
-int calcTrials(
-			   TNode *des, 
-			   int *E_in_, 
-			   int *E_del_
-			  )
+int calcTrials(TNode *des, int *E_in_, int *E_del_)
 {
 	*E_in_ = *E_del_ = 0;
 	if(des->nodeEnv->invariableSites) {
-		for (vector<Site>::iterator it = des->seq_evo.begin(); it != des->seq_evo.end(); ++it) {
+		for (vector<Site>::iterator it = des->seq_evo.begin(); it != des->seq_evo.end(); it++) {
 			//////////
 			/// Calculations or ins/del probabilities.
 			//////////
@@ -339,13 +486,7 @@ int calcTrials(
 	return *E_in_ + *E_del_;
 }
 
-int  Find_Action(
-				 double len, 
-				 double P_insert_, 
-				 double P_delete_, 
-				 int CnB_divisor, 
-				 int action_test
-				) 
+int  Find_Action(double len, double P_insert_, double P_delete_, int CnB_divisor, int action_test) 
 {
     if( !P_insert_ && !P_delete_) {
 		//////////
@@ -373,15 +514,7 @@ int  Find_Action(
     return NO_ACTION;
 } 
 
-void Find_Motif_Positions(
-						  TTree *tree, 
-						  TNode *des, 
-						  motifSite *this_site, 
-						  int indel_size, 
-						  bool back, 
-						  varSite **in_template_varSite, 
-						  varSite **in_motif_varSite
-						 )
+void Find_Motif_Positions(TTree *tree, TNode *des, motifSite *this_site, int indel_size, bool back, varSite **in_template_varSite, varSite **in_motif_varSite)
 {
 	bool st_L, m_L, st_R, m_R;
 
@@ -672,40 +805,49 @@ void Find_Motif_Positions(
 	}
 }
 
-int Insert(
-		   TTree *tree, 
-		   TNode *des, 
-		   int indel_size
-		  ) 
+int Insert(TTree *tree, TNode *des, int indel_size) 
 {
     int start_aa, final_aa;
     int indel_aa_in_globals = 0;
     int position_in_globals = 0;
-	bool profile=true;
 
 	//////////
 	/// When converting from sequence to evolvingSequence, need to change these functions to the
 	/// proper evolvingSequence data. For now, ignoring, try to make evolvingSequence equivalent.
 	//////////
-	final_aa=des->seq_evo.size();
-	cerr << "Evolve::Insert: Just before F_S_L..." << endl;
-	start_aa=Find_Start_Location(des,&indel_size,des->seq_evo.size(),INSERT);
+    final_aa=des->seq_evo.size();
+    start_aa=Find_Start_Location(des,&indel_size,des->seq_evo.size(),INSERT);
 
 	if (start_aa == FSL_FAIL) return 0;
-
 	// For insertion, working on half sites, which in turn means we have to go to the next site
 	// to represent an insertion correctly. 
 	start_aa++;
 
-	tree->global_alignment->insert_sites.insert(
-												tree->global_alignment->locateEvent(des, start_aa),
-												indel_size,
-												insertSite('i', des->mytipNo, eventNo)
-											   );
+	//cerr << endl << endl << "INSERT size " << indel_size << " at " << start_aa << endl;
 
-	//tree->global_alignment->Print();
+    if(start_aa > final_aa) {
+		fprintf(stderr,"start_aa=%d\t+\tindel_size=%d\t>\tfinal_aa=%d\n",start_aa,indel_size,final_aa);
+		exit(EXIT_FAILURE);
+    }
 
-	if (profile) cerr << endl << endl << "INSERT size " << indel_size << " at " << start_aa << endl;
+    while(indel_aa_in_globals <= start_aa) { 
+        if(position_in_globals > tree->global_arrays.size()) { 
+            fprintf(stderr,"INSERT: Over g_a_end.  indel_aa_in_globals = %d,\tstart_aa = %d\n", indel_aa_in_globals,start_aa);
+			cerr << "tree->global_arrays.size() " << tree->global_arrays.size() << " position_in_globals " << position_in_globals << endl;
+            exit(EXIT_FAILURE); 
+        } 
+
+        if(isSpot(tree,&position_in_globals,des)) { indel_aa_in_globals++; } 
+        position_in_globals += 1; 
+    } 
+
+    while(indel_aa_in_globals <= start_aa+indel_size) indel_aa_in_globals++;
+
+	tree->global_arrays.insert(
+							   tree->global_arrays.begin()+position_in_globals, 
+							   indel_size, 
+							   globalAlignment('i', des->mytipNo, indelNo)
+							  );
 
 	//////////
 	/// Insert into existing sequence.
@@ -723,50 +865,40 @@ int Insert(
 						 &in_template_varSite, 
 						 &in_motif_varSite
 						);
-
-	if (profile) {
-		cerr << "MOTIF (" << in_motif_varSite 
-		     << ") TEMPLATE(" << in_template_varSite << ")" 
-		     << " NODE(" << des << ")"
-		     << endl;
-		cerr << "Ancestral and Descendant varSites: " << endl;
-
-		cerr << "Sequence::setActiveProps: Adding new site to site with membership: ";
-		cerr << "st("
- 			 << in_template_varSite->min 
-			 << ","
-			 << in_template_varSite->max
-			 << ")["
-			 << in_template_varSite->member_set.size()
-			 << "] ";
-
-	    //list<varSite*>::iterator des_it =  des->variable_region_list.begin(); 
-		//cerr << "PRE-INSERT:" << endl;
-		//cerr << "anc length: " << des->anc->seq_evo.size() << "  des length: " << des->seq_evo.size() << endl;
-		//for (list<varSite*>::iterator anc_it =  des->anc->variable_region_list.begin();
-		//							  anc_it != des->anc->variable_region_list.end(); 
-		//						  	  ++anc_it,
-		//						  	  ++des_it) 
-		//{
-		//	cerr << (*anc_it) << "->" << (*anc_it)->descendant_equiv << " " << (*anc_it)->min << "," << (*anc_it)->max << " [" << (*anc_it)->member_set.size() << "]" << "\t\t"
-		//		 << (*des_it) << " " << (*des_it)->min << "," << (*des_it)->max << " [" << (*des_it)->member_set.size() << "]" <<endl;
-		//}
-	}
-
+//	cerr << "MOTIF (" << in_motif_varSite 
+//	     << ") TEMPLATE(" << in_template_varSite << ")" 
+//	     << " NODE(" << des << ")"
+//	     << endl;
+//	cerr << "Ancestral and Descendant varSites: " << endl;
+//   list<varSite*>::iterator des_it =  des->variable_region_list.begin(); 
+//	cerr << "PRE-INSERT:" << endl;
+//	cerr << "anc length: " << des->anc->seq_evo.size() << "  des length: " << des->seq_evo.size() << endl;
+//	for (list<varSite*>::iterator anc_it =  des->anc->variable_region_list.begin();
+//								  anc_it != des->anc->variable_region_list.end(); 
+//							  	  anc_it++,
+//							  	  des_it++) 
+//	{
+//		cerr << (*anc_it) << "->" << (*anc_it)->descendant_equiv << " " << (*anc_it)->min << "," << (*anc_it)->max << " [" << (*anc_it)->member_set.size() << "]" << "\t\t"
+//			 << (*des_it) << " " << (*des_it)->min << "," << (*des_it)->max << " [" << (*des_it)->member_set.size() << "]" <<endl;
+//	}
 	if (!des->isVarSite(in_template_varSite)) {
+		cerr << "template not varsite." << endl; 
 		if (des->isVarSite(in_template_varSite->descendant_equiv)) {
+			cerr << "template->descendant_equiv is a varSite." << endl;
 			in_template_varSite = in_template_varSite->descendant_equiv;
 		} else {
 			cerr << "template->descendant_equiv is NOT a varSite" << endl;
-			exit(EXIT_FAILURE);
+			exit(1);
 		}
 	}
 	if (!des->isVarSite(in_motif_varSite)) { 
+		cerr << "motif not varsite." << endl;  
 		if (des->isVarSite(in_motif_varSite->descendant_equiv)) {
+			cerr << "motif->descendant_equiv is a varSite." << endl;
 			in_motif_varSite = in_motif_varSite->descendant_equiv;
 		} else {
 			cerr << "motif->descendant_equiv is NOT a varSite" << endl;
-			exit(EXIT_FAILURE);
+			exit(1);
 		}
 	}
 
@@ -780,22 +912,23 @@ int Insert(
 	//  * Passing the motif environment, so no need to worry about integrating sites (except for 
 	//    L_ins_ in first position and R_ins_ in last position, which need to be connected to
 	//    R_ins_ and L_ins_ of the site before and site after, respectively).
-	if (profile) cerr << "INSERT! size " << indel_size << "(" << des->seq_evo.size() << ")" << endl;
+	//cerr << "INSERT! size " << indel_size << "(" << des->seq_evo.size() << ")" << endl;
 	auto_ptr<Sequence> insert_sites ( new Sequence(des, indel_size)	);
 	insert_sites->init(
 					   des,
-			  		   insertFillSequence(indel_size, des->branch->rates), 
+			  		   insertFillSequence(indel_size), 
 			  		   des->nodeEnv,
 					   (
 					     (Site_back)
 					     ? &(*(site_it+start_aa-1)).motif
-					     : &(*(site_it+start_aa)).motif	
+					     : &(*(site_it+start_aa)).motif
 					   ),	
 			  		   in_template_varSite, 
 			  		   in_motif_varSite
 			 		  );
 	//
 	// Set the properties.
+	num_inserted_positions += indel_size;
 	insert_sites->setActiveProps(true);
 	//
 	// Connect inner activeProps
@@ -847,7 +980,7 @@ int Insert(
 		// Add sites to the end of the sequence.
 		for (vector<Site>::iterator site_it =  insert_sites->evolutionaryAttributes.begin();
 									site_it != insert_sites->evolutionaryAttributes.end();
-									++site_it) 
+									site_it++) 
 		{
 			des->evolvingSequence->evolutionaryAttributes.push_back(*site_it);
 		}
@@ -877,34 +1010,16 @@ int Insert(
 	//
 	//////////
 	des->Site_postProcess();
+	des->setSitePointers();
 
-	//////////
-	/// This will point the deletion and insertion pointers appropriately. The insertion routine
-	/// has a bad habit of adding new members to the deletion structure of the position following the
-	/// the insertion, instead of the position that it will be a representative of.
-	//////////
-	// SEE FIGURE ABOVE: Insert routine places insertion into deletion element of position 2. Using
-	// this function will set it to the deletion element of position 1. Very important for template
-	// and motif constraints. Without this function, we can exceed the specified min and max constraints
-	// of template and motif elements.
-	des->setSitePointers("Insert");
-	//
-	//////////
-
-	if (profile) {
-		//cerr << "INSERT size " << indel_size << " at " << start_aa << endl;
-		//des->Print_Active_Properties();
-		//cerr << "ENDINSERT" << endl;
-		//exit(0);
-	}
+//	cerr << "INSERT size " << indel_size << " at " << start_aa << endl;
+//	des->Print_Active_Properties();
+//	cerr << "ENDINSERT" << endl;
+//	exit(0);
 	return 1;
 }
 
-int Delete(
-		   TTree *tree,
-		   TNode *des, 
-		   int *indel_size
-		  ) 
+int Delete(TTree *tree,TNode *des, int *indel_size) 
 {
     int start_aa, final_aa;
     int indel_aa_in_globals = 0; 
@@ -913,26 +1028,53 @@ int Delete(
     int temp_in_globals; 
     int num_rounds = 0; 
 
-
     final_aa=des->seq_evo.size();
     start_aa=Find_Start_Location(des,indel_size,des->seq_evo.size(),DELETE);
 
 	if (start_aa == FSL_FAIL) return 0;
 
-	cerr << "Evolve::Delete: sequence before = " << des->printSequence() << endl;
-	cerr << "Evolve::Delete: *********************DELETE size " << *indel_size << " at " << start_aa << endl;
+ 	// Find corresponding position in globals...
+    position_in_globals = 0;
+    num_indels_in_globals = 0;
+ 
+    while(indel_aa_in_globals <= start_aa) { 
+        if(position_in_globals > tree->global_arrays.size()) {
+            printf("DELETE: Over g_a_end.  indel_aa_in_globals = %d,\tstart_aa = %d\tfinal_aa = %d\tdelete_size = %d\n", 
+		            indel_aa_in_globals,start_aa,final_aa,*indel_size);
+		    cerr << "position_in_globals = " << position_in_globals 
+		    	 << " tree->global_arrays.size() = " << tree->global_arrays.size() << endl;
+            exit(EXIT_FAILURE);
+        }
 
-	//////////
-	/// For multi-residue deletions, note that we will always track to start_aa when we delete 
-	/// the residue at start_aa, it will no longer be part of the current sequence, and thus will 
-	/// not be counted during our routine. Therefore, we start at the furthest residue, and delete
-	/// backwards.
-	//////////
-	for (int x = *indel_size-1; x >= 0; x--) 
-		(*(tree->global_alignment->locateEvent(
-											   des,
-											   start_aa+x
-											  ))).modifiers.push_back(siteModifier('d',des->mytipNo, eventNo));
+        if(isSpot(tree,&position_in_globals,des)) { indel_aa_in_globals++; }
+        position_in_globals += 1;
+    }
+
+    num_indels_in_globals = position_in_globals;
+    while(indel_aa_in_globals <= start_aa+*indel_size) {
+        if(isSpot(tree,&num_indels_in_globals,des)) { indel_aa_in_globals++; num_rounds++; }
+        num_indels_in_globals += 1; 
+    } 
+
+    temp_in_globals = position_in_globals;
+    for(size_t i = position_in_globals; i < num_indels_in_globals+num_rounds; i++) { 
+        temp_in_globals = i;
+        if(isSpot(tree,&temp_in_globals,des)) { 
+			tree->global_arrays.insert(
+									   tree->global_arrays.begin()+i,
+									   1,
+									   globalAlignment('d', des->mytipNo, indelNo)
+									  );
+            temp_in_globals += 1;
+        }    
+        i = temp_in_globals;
+    }
+
+    if(delete_debug) Print_Globals(tree); 
+
+	//cerr << "*********************DELETE size " << *indel_size << " at " << start_aa << endl;
+
+	num_deleted_positions += *indel_size;
 
 	vector<Site>::iterator site_it = des->seq_evo.begin()+start_aa;
 	for (size_t num_dels = 0; num_dels != *indel_size; num_dels++) {
@@ -943,19 +1085,10 @@ int Delete(
 		des->seq_evo.erase(site_it);
 	}
 
-	cerr << "Evolve::Delete: sequence after event " << eventNo << " = " << des->printSequence() << endl;
-
-	//cerr << "Evolve::Delete: END DELETE" << endl;
-
 	return 1;
 } 
 
-int Find_Start_Location(
-					    TNode *des, 
-					    int *indel_size, 
-					    int final_aa, 
-					    int action
-					   ) 
+int Find_Start_Location(TNode *des, /*TTree *tree,*/ int *indel_size, int final_aa, int action) 
 {
     int position;
     int i,j; 
@@ -965,12 +1098,11 @@ int Find_Start_Location(
 	vector<bool>::iterator bit = acceptable_positions.begin();
 	size_t first_constrained = 0, last_constrained = 0;
 
-	des->setSitePointers("Find_Start_Location");
+	des->setSitePointers();
     if(action == INSERT) {
 		bit = acceptable_positions.begin();
 		numAcceptablePositions = 0;
-		position = 0;
-		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); ++site_it, ++bit, position++) {
+		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); site_it++, bit++) {
 			if ( (*site_it).motif.active_properties.indel->R_ins_->insertionAllowed(*indel_size) ) {
 				(*bit) = true;
 				numAcceptablePositions++;
@@ -990,7 +1122,7 @@ int Find_Start_Location(
 		// that are constrained (i.e., cannot be deleted), and then calculates the number of
 		// sub-sequence positions that can be taken by a deletion that overlaps the borders of
 		// the sequence being simulated (Since first position is always invariant, start loop
-		// after this position. It will make little difference to the overall routine.
+		// after this position. It will make litte difference to the overall routine.
 		// THIS IS ONLY OK FOR A GUIDE TREE FILE THAT IS ASSUMED TO BE GENES, NOT DOMAINS.
 		// Sets the maximum number of positions that can be deleted for the template in N-term.
 		if (des->seq_evo.size() > 1) {	// Make sure there is sequence left... Otherwise, KABOOM! //
@@ -1003,12 +1135,12 @@ int Find_Start_Location(
 		bool success;
 		vector<bool>::iterator pos;
 		pos = st_accept.begin();
-		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); ++site_it, pos++) {
+		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); site_it++, pos++) {
 			// Template array fillage.
 			current_varSite = NULL;
 			current_indel_size = 0;
 			success = true;
-			for (vector<Site>::iterator site_it2 = site_it; site_it2 != des->seq_evo.end() && current_indel_size != *indel_size; ++site_it2, current_indel_size++) {
+			for (vector<Site>::iterator site_it2 = site_it; site_it2 != des->seq_evo.end() && current_indel_size != *indel_size; site_it2++, current_indel_size++) {
 				// If we are in a new varSite, need to reflect that in all data members.
 				if ( (*site_it2).motif.active_properties.indel->del->my_sequence_template_varSite != current_varSite) {	
 					current_varSite = (*site_it2).motif.active_properties.indel->del->my_sequence_template_varSite;
@@ -1029,12 +1161,12 @@ int Find_Start_Location(
 		}
 
 		pos = m_accept.begin();
-		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); ++site_it, pos++) {
+		for (vector<Site>::iterator site_it = des->seq_evo.begin(); site_it != des->seq_evo.end(); site_it++, pos++) {
 			// Motif array fillage.
 			current_varSite = NULL;
 			current_indel_size = 0;
 			success = true;
-			for (vector<Site>::iterator site_it2 = site_it; site_it2 != des->seq_evo.end() && current_indel_size != *indel_size; ++site_it2, current_indel_size++) {
+			for (vector<Site>::iterator site_it2 = site_it; site_it2 != des->seq_evo.end() && current_indel_size != *indel_size; site_it2++, current_indel_size++) {
 				// If we are in a new varSite, need to reflect that in all data members.
 				if ( (*site_it2).motif.active_properties.indel->del->my_motif_varSite != current_varSite) {	
 					current_varSite = (*site_it2).motif.active_properties.indel->del->my_motif_varSite;
@@ -1055,7 +1187,7 @@ int Find_Start_Location(
 
 		vector<bool>::iterator it2 = m_accept.begin();
 		bit = acceptable_positions.begin();
-		for (vector<bool>::iterator it = st_accept.begin(); it != st_accept.end(); ++it, ++it2, ++bit) {
+		for (vector<bool>::iterator it = st_accept.begin(); it != st_accept.end(); it++, it2++, bit++) {
 			(*bit) = (*it) && (*it2);
 			if (*bit) numAcceptablePositions++;
 		}
@@ -1075,6 +1207,7 @@ int Find_Start_Location(
     } 
 
     if(i >= final_aa) {
+		num_template_violations++;
 		return FSL_FAIL;
     } else {
     	if (action == INSERT) i=(int)(rndu()*(double)numAcceptablePositions+1);
@@ -1092,7 +1225,7 @@ int Find_Start_Location(
 					j = 1;
 					*indel_size = x;
 				} else if (position + (first_constrained + last_constrained) < i) {
-					cerr << "Error in the routine for finding indels at N- and C-terminus." << endl;
+					//cerr << "Error in the routine for finding indels at N- and C-terminus." << endl;
 					exit(EXIT_FAILURE);
 				} else {
 					int x = i - (position + first_constrained);
@@ -1103,20 +1236,10 @@ int Find_Start_Location(
 		}
 	}
 
-	cerr << "Sequence template accept: ";
-	for (vector<bool>::iterator it = acceptable_positions.begin(); it != acceptable_positions.end(); ++it) {
-		cerr << (*it);
-	}
-	cerr << endl;
-	cerr << "Evolve::Find_Start_Location: chose site " << j << endl;
-
     return j; 
 }
                      
-int Find_Indel_Size(
-					vector<double>& dist, 
-					int max_indel
-				   ) 
+int Find_Indel_Size(vector<double>& dist, int max_indel) 
 {
     int size=0;   
     int i=1;  
@@ -1134,12 +1257,8 @@ int Find_Indel_Size(
     return size;
 }        
      
-int  isAnc(
-		   TNode *thisNode, 
-		   int anc
-		  ) 
+int  isAnc(TNode *thisNode, int anc) 
 {
-//cerr << "Evolve::isAnc: mytipNo = " << thisNode->mytipNo << endl;
     if(thisNode -> mytipNo == anc) {
         return 1; 
     } else if(thisNode -> mytipNo == -1) {
@@ -1148,14 +1267,38 @@ int  isAnc(
         return isAnc(thisNode->anc, anc);
     } 
 } 
+             
+int  isSpot(TTree *tree, int *pos, TNode *curr_taxa) 
+{
+    int new_pos;
+	int save_pos = *pos;
+
+    while(tree->global_arrays.at(*pos).action != 'i' && *pos < tree->global_arrays.size())
+    	*pos+=1;
+
+    if(!isAnc(curr_taxa,tree->global_arrays.at(*pos).fromAnc)) { return 0; }
+    else { 
+        new_pos = *pos-1;
+        while(new_pos > 0 && tree->global_arrays.at(new_pos).action != 'i') { new_pos--; }
+         
+        new_pos++;
+             
+        if(new_pos == *pos) { return 1; } 
+        else {
+            while(tree->global_arrays.at(new_pos).action == 'd') {
+                if(isAnc(curr_taxa,tree->global_arrays.at(new_pos).fromAnc)) { return 0; } 
+                new_pos++;
+            } 
+            return 1; 
+        } 
+    } 
+
+} 
 
 //////////
 /// This changes all environment parameters for Nodes (no motif changes).
 //////////
-void initializeCladeParameters(
-							   TTree *tree, 
-							   TNode *node
-							  ) 
+void initializeCladeParameters(TTree *tree, TNode *node) 
 {
 	inClade *env;
 	if (node->anc == NULL) env = tree->treeEnv.front();
@@ -1190,10 +1333,11 @@ void initializeCladeParameters(
 		// Model frequencies should be used if the model is set.
 		if (node->nodeEnv->set_in_clade[__model__] && !isNucModel) {
 			node->nodeEnv->values2Export2Freq.assign(numStates,0);
-//			SetModelFreqs(node->nodeEnv->model, node->nodeEnv);
-			node->branch->rates->SetAAFreqs(node->nodeEnv->model, node->nodeEnv);
+			SetModelFreqs(node->nodeEnv->model, node->nodeEnv);
 		}
-		else node->nodeEnv->values2Export2Freq = env->values2Export2Freq;
+		else {
+			node->nodeEnv->values2Export2Freq = env->values2Export2Freq;
+		}
 	}
 
 	if (!(node->nodeEnv->set_in_clade[__model__])) 
@@ -1224,15 +1368,9 @@ void initializeCladeParameters(
 //  * PSEUDOGENE's lineages
 //  * Sets site categories for clade changes.
 //////////
-void initializeBranchRun(
-						 inTree *iTree, 
-						 TNode *node, 
-						 int inNumSites, 
-						 seqGenOptions *options
-						) 
+void initializeBranchRun(inTree *iTree, TNode *node, double *en_invar_scale, int inNumSites, seqGenOptions *options) 
 {
-//	SetModel(node->nodeEnv->model, node->nodeEnv, options);
-	node->branch->rates->SetModel(node->nodeEnv);
+	SetModel(node->nodeEnv->model, node->nodeEnv);
 
 	if (node->nodeEnv->constraintChange == PSEUDOGENE) {
 		///////////
@@ -1242,7 +1380,7 @@ void initializeBranchRun(
 		//////////
 		if (node->nodeEnv->invariableSites) {
 			node->nodeEnv->invariableSites = false;
-			for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
+			for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); it++)
 				(*it).setInvariableState(NO_CONSTRAINT);
 			node->nodeEnv->proportion_invariable = 0;
 		}
@@ -1259,10 +1397,12 @@ void initializeBranchRun(
 		node->nodeEnv->rateHetero = NoRates;
     } else if (node->nodeEnv->invariableSites) {
         for(int i=0; i<inNumSites; i++) {
-			if ( (iTree->randomInvariableAssignment) ) {
-				// No invariable sites, therefore set the proportion_invariable.
-				node->seq_evo.at(i).setInvariableState(IsInvariable(node->nodeEnv->proportion_invariable));
-			} else if (node->anc->nodeEnv->invariableSites && node->anc->nodeEnv->proportion_invariable != node->nodeEnv->proportion_invariable) {
+			if ( !(iTree->randomInvariableAssignment) ) {
+				//////////
+				/// Do I need this after the copy constructor???
+				//////////
+				node->seq_evo.at(i).setInvariableState(node->anc->seq_evo.at(i).returnInvariableState());
+			} else if (node->anc->nodeEnv->invariableSites) {
 				//////////
 				/// Preserves invariable regions.
 				//////////
@@ -1299,22 +1439,148 @@ void initializeBranchRun(
 					} else node->seq_evo.at(i).copyInvariableState(node->anc->seq_evo.at(i));
 				} else node->seq_evo.at(i).copyInvariableState(node->anc->seq_evo.at(i));
 			} else {
-				//////////
-				/// Do I need this after the copy constructor???
-				//////////
-				node->seq_evo.at(i).setInvariableState(node->anc->seq_evo.at(i).returnInvariableState());
+				// No invariable sites, therefore set the proportion_invariable.
+				node->seq_evo.at(i).setInvariableState(IsInvariable(node->nodeEnv->proportion_invariable));
 			}
         }
+
+		//////////
+		/// Invalidates above.
+		//////////
+		if ( !(iTree->randomInvariableAssignment) ) {
+			int num_invar = 0;
+			for (int i = 0; i < inNumSites; i++) {
+				if (node->seq_evo.at(i).returnInvariableState() == INVARIABLE 
+					|| node->seq_evo.at(i).returnInvariableState() == INVAR_AND_NOINDEL)	
+					num_invar++;
+			}
+			node->nodeEnv->proportion_invariable = (double)num_invar / (double)inNumSites;
+		}
     } 
 
 	if (node->nodeEnv->constraintChange != PSEUDOGENE)
 		SetCategories(node, inNumSites, options);
 }
 
-int testRelation(
-				 vector<bool>& clade, 
-				 vector<bool>& node
-				)
+//////////
+/// Maybe get rid of this function, instead "retrying" whenever a substitution fails, rather
+/// than scaling up the substitution rate for each site.
+//////////
+void initializeTreeScalingParameters(inTree *iTree, double *scale, double *invar_scale) 
+{
+	// Calc scale
+	*scale = iTree->partitionRate;
+
+	// Calc invar_scale.
+	if (iTree->my_tree->treeEnv.front()->invariableSites) {
+		if (iTree->randomInvariableAssignment) {
+			if (iTree->rootSeqType == RANDOM) {
+				for (int j=0; j<iTree->partitionLength; j++) {
+   					iTree->my_tree->root->seq_evo.at(j).setInvariableState(IsInvariable(iTree->proportion_invariable)); 
+				}
+   				for (int j=iTree->partitionLength; j<iTree->partitionLength; j++) 
+   					iTree->my_tree->root->seq_evo.at(j).setInvariableState(0);
+			} else {
+				cerr << "Didn't think I could get to this spot:: InitializeTreeParameters, iTree->randomInvariableAssignment, iTree->rootSeqType != RANDOM." << endl;
+				exit(EXIT_FAILURE);
+			}
+		} else {
+			if (!(iTree->rootSeqType == RANDOM)) {
+				for (int j=0; j<iTree->partitionLength; j++) 
+					if (iTree->my_tree->root->seq_evo.at(j).returnInvariableState() == INVARIABLE 
+						|| iTree->my_tree->root->seq_evo.at(j).returnInvariableState() == INVAR_AND_NOINDEL)
+						(iTree->proportion_invariable)++;
+				iTree->proportion_invariable /= iTree->partitionLength;
+			} else {
+				cerr << "Didn't think I could get to this spot:: InitializeTreeParameters, !(iTree->randomInvariableAssignment), iTree->rootSeqType == RANDOM." << endl;
+				exit(EXIT_FAILURE);
+			}
+		}
+		*invar_scale = (1.0 - iTree->my_tree->treeEnv.front()->proportion_invariable);
+	} else *invar_scale = 1;
+}
+
+void calculateMotifScale(inTree *iTree, TNode *des, seqGenOptions *options, double subst_len, double *motif_scale)
+{
+	size_t current_position;
+
+	current_position = 0;
+
+	if (des->seq_evo.size() > 1)
+		for (vector<Site>::iterator site_it = des->seq_evo.begin()+1; site_it != des->seq_evo.end(); site_it++, current_position++)
+			*motif_scale += CalculateMotifScale(des, current_position, subst_len, (*site_it).motif.active_properties.subst->substitution_bitstring);
+
+	*motif_scale /= des->seq_evo.size();
+}
+
+double CalculateMotifScale(TNode *des, int position, double subst_len, bitset<20>& motif_characters)
+{
+	double scale = 0;
+	double position_score, in_val;
+	int cat;
+	int num_pos = 0;
+
+	switch (des->nodeEnv->rateHetero) {
+	case GammaRates:
+		for (int i = 0; i < numStates; i++) {
+			position_score = 0;
+			if (motif_characters.test(i)) {
+				num_pos++;
+				in_val = des->seq_evo.at(position).returnGamma() * subst_len;
+				SetVector(cvector, i, in_val);
+				for (int j = 0; j < numStates; j++)
+					if (!motif_characters.test(j))
+						scale += ( (j == (numStates-1)) ? (cvector[j+1]-cvector[j]) : (1-cvector[j]) );
+			}
+		}
+	    break;
+
+	case DiscreteGammaRates:
+		cat = des->seq_evo.at(position).returnCategories();
+		SetMatrix(matrix[cat], des->nodeEnv->catRate[cat]*subst_len);
+		for (int i = 0; i < numStates; i++) {
+			position_score = 0;
+			if (motif_characters.test(i)) {
+				num_pos++;
+				for (int j = 0; j < numStates; j++)
+					if (!motif_characters.test(j))
+						scale += ( (j == (numStates-1)) ? (1-matrix[cat][i*numStates+j]) : (matrix[cat][i*numStates+j+1]-matrix[cat][i*numStates+j]) );
+			}
+		}
+	    break;
+
+	case CodonRates:
+		cat = position % 3;
+		SetMatrix(matrix[cat], des->nodeEnv->catRate[cat]*subst_len);
+		for (int i = 0; i < numStates; i++) {
+			position_score = 0;
+			if (motif_characters.test(i)) {
+				num_pos++;
+				for (int j = 0; j < numStates; j++)
+					if (!motif_characters.test(j))
+						scale += ( (j == (numStates-1)) ? (1-matrix[cat][i*numStates+j]) : (matrix[cat][i*numStates+j+1]-matrix[cat][i*numStates+j]) );
+			}
+		}
+	    break;
+
+	case NoRates:
+	    SetMatrix(matrix[0], subst_len);
+		for (int i = 0; i < numStates; i++) {
+			position_score = 0;
+			if (motif_characters.test(i)) {
+				num_pos++;
+				for (int j = 0; j < numStates; j++)
+					if (!motif_characters.test(j))
+						scale += ( (j == (numStates-1)) ? (1-matrix[0][i*numStates+j]) : (matrix[0][i*numStates+j+1]-matrix[0][i*numStates+j]) );
+			}
+		}
+	    break;
+	} 
+
+	return scale / (double)num_pos;
+}
+
+int testRelation(vector<bool>& clade, vector<bool>& node)
 {
 	bool all_bits_same = true;
 	bool some_bits_same = false;
@@ -1324,7 +1590,7 @@ int testRelation(
 		abort();
 	}
 	vector<bool>::iterator it2 = node.begin();
-	for (vector<bool>::iterator it = clade.begin(); it != clade.end(); ++it, ++it2) {
+	for (vector<bool>::iterator it = clade.begin(); it != clade.end(); it++, it2++) {
 		if ( (*it) != (*it2) ) all_bits_same = false;
 		if ( (*it) && (*it2) ) some_bits_same = true;
 	}
@@ -1332,18 +1598,79 @@ int testRelation(
 
 	if (some_bits_same) {
 		vector<bool>::iterator it2 = node.begin();
-		for (vector<bool>::iterator it = clade.begin(); it != clade.end(); ++it, ++it2) {
+		for (vector<bool>::iterator it = clade.begin(); it != clade.end(); it++, it2++) {
 			if ( (*it) && !(*it2) ) return NODE_IS_DES;
 			if ( !(*it) && (*it2) ) return NODE_IS_ANC;
 		}
 	} else return NO_RELATION;
 }
 
-////////// InDel deprecated, removed (version 1980, from codon_models/src svn repository) /////////
+void InDel(TTree *tree, TNode  *des, double len, list<eventTrack*> *events, int CnB_divisor, seqGenOptions *options) 
+{
+    int action = INSERT;
+    int indel_size;
+    int i;
+	int E_in_ = 0;
+	int E_del_ = 0;
+	int total_trials;
 
-void initializeMotifPositions(
-							  TNode *des
-							 ) 
+	total_trials = calcTrials(des,&E_in_,&E_del_);		// Calculate rounds by examining indel objects.
+
+	bool success;
+	for(i=0; i<total_trials; i++) {
+		if (des->nodeEnv->rateHetero == CodonRates) {
+			if ((double)rndu() < (double)E_in_ / ((double)E_in_+E_del_))
+				action = Find_Action(len,des->nodeEnv->P_ins_ / 3.,des->nodeEnv->P_del_ / 3., CnB_divisor, INSERT); 
+			else
+				action = Find_Action(len,des->nodeEnv->P_ins_ / 3.,des->nodeEnv->P_del_ / 3., CnB_divisor, DELETE); 
+		} else {
+			if ((double)rndu() < (double)E_in_ / ((double)E_in_+E_del_))
+				action = Find_Action(len,des->nodeEnv->P_ins_,des->nodeEnv->P_del_, CnB_divisor, INSERT); 
+			else
+				action = Find_Action(len,des->nodeEnv->P_ins_,des->nodeEnv->P_del_, CnB_divisor, DELETE); 
+		}
+		
+		if(action == INSERT || action == DELETE) {
+			success = false;
+	    	if(action == INSERT) {
+				des->setSitePointers();
+	        	indel_size=Find_Indel_Size(des->nodeEnv->insert_lengthDistribution,des->nodeEnv->maxIndel);	
+				if ( (success=Insert(tree,des,indel_size)) ) {
+					des->setSitePointers();
+					num_insert++;
+					len_insert += indel_size;
+				}
+	    	} else {
+				des->setSitePointers();
+	        	indel_size=Find_Indel_Size(des->nodeEnv->delete_lengthDistribution,des->nodeEnv->maxIndel);
+				if ( (des->seq_evo.size()-indel_size) > 0)
+		    		if ( (success=Delete(tree,des,&indel_size)) ) {
+						des->setSitePointers();
+		    			num_delete++;
+						len_delete += indel_size;
+					}
+	    	}
+			if (success && traceEvents) {
+				eventTrack *new_event;// = new eventTrack(INSERT | DELETE);
+				new_event = new eventTrack(
+										   indelNo,
+										   action,
+										   des->atEpochTime,
+										   des->bipartition,
+										   indel_size
+										  );
+				(*events).push_back(new_event);
+				indelNo++;
+			}
+		}
+    }
+	if (PRINT_ID) {
+		cout << des->atEpochTime << " "; 
+		cout << num_insert << " " << len_insert << " " << num_delete << " " << len_delete << endl;
+	}
+}
+
+void initializeMotifPositions(TNode *des) 
 {
 	//////////
 	/// Inherit the varSites from the ancestor. Does not deal with motifs.
@@ -1355,98 +1682,263 @@ void initializeMotifPositions(
 		des->InheritMotifSites();
 		des->setInvariableArrayPos();
 	} else des->clearMotifSites();
-	//des->setSitePointers("InitializeMotifPositions");
+	des->setSitePointers();
 
-	//cerr << endl << endl << "Evolve::initializeMotifPositions: DES" << endl << endl;
+	//cerr << endl << endl << "DES" << endl << endl;
 	//des->Print_Active_Properties();
-	//cerr << endl << endl << "Evolve::initializeMotifPositions ENDDES" << endl << endl;
+	//cerr << endl << endl << "ENDDES" << endl << endl;
 	//des->evolvingSequence->print_sequence();
 	//exit(0);
 }
 
-bool substitute (
-				 TTree *tree, 
-				 TNode *des, 
-				 int *event_site,
-				 int simulation_step_type, 
-				 string& event, 
-				 bool track,
-				 double rateAwayFromSequence
-				)
-{
-	double key;
-	int mid;
+void EvolveNode(inTree *iTree, TNode *anc, TNode *des, double scale, double invar_scale, int inNumSites, list<eventTrack*> *events, seqGenOptions *options)
+{ 
+    double subst_len, indel_len;   
+    double en_scale = scale, en_invar_scale = invar_scale;
+	double motif_scale = 0;
 
-	if (simulation_step_type == UNIFORMIZATION) {	// UNIFORMIZATION
-		//////////
-		/// Uniformization approach.
-		//////////
-		//
-		key = (double)rndu() * (des->seq_evo.size() * des->rate_away_site_width);
-		mid = key / des->rate_away_site_width;
-		key = (key - (mid * des->rate_away_site_width)) / des->rate_away_site_width;
-		//////////
-	} else if (simulation_step_type == INDEPENDENT_ENDPOINT_CONDITIONED) {
-		// Independent sites, special case of Uniformization, where bin_size is set to 1. We also
-		// specifically know which site is under consideration, since the state for independence
-		// is the site, rather than the sequence, which is different from uniformization and dependence.
-		// rateAwayFromSequence points to the beginning of the next position under consideration. Subtract
-		// 1 to make it point to the beginning of the current position.
-		mid = *event_site;
-		key = (double)rndu();
-		prev_state = des->seq_evo.at(mid).returnState();
+	ofstream step_out;
+	string trs_outfile;
+
+	node_num++;
+	if (!options->quiet && node_num % 100 == 0) cerr << "Node " << node_num << endl;
+    des->anc=anc;
+	des->atEpochTime = anc->atEpochTime;
+
+	initializeMotifPositions(des);
+	initializeCladeParameters(iTree->my_tree, des);
+	initializeBranchRun(iTree, des, &en_invar_scale, anc->seq_evo.size(), options);
+
+	if (options->simulation_step_type == GILLESPIE) {
+		des->numEventsToSimulate = 1;
+		subst_len = des->branch->anc_length() * (en_scale / en_invar_scale);
+		indel_len = des->branch->anc_length() * en_scale;
 	} else {
-		//////////
-		/// For TRS, simulation_step_type is the site under consideration.
-		//////////
-		key = (double)rndu() * rateAwayFromSequence;
-//		cerr << "rateAwayFromSequence: " << rateAwayFromSequence << " key: " << key << "  ";
-		mid = des->locateSite(&key, simulation_step_type);
-		prev_state = des->seq_evo.at(mid).returnState();
-//		cerr << "mid: " << mid << " remainder: " << key << endl;
-//		des->evolvingSequence->print_sequence();
+	    subst_len=des->BL_step_size * (en_scale / en_invar_scale);
+		indel_len=des->BL_step_size * en_scale;
 	}
-	if (des->nodeEnv->rateHetero == CodonRates) {
-		int codon[3];
-		int *return_value;
-		vector<Site>::iterator posit = des->seq_evo.begin() + mid;
-		if (mid-(3-tree->my_iTree->codon_offset) < 0 || mid + (3-tree->my_iTree->codon_offset) >= des->seq_evo.size()) {
-			; // Punt, since I do not keep track of other partitions
-		} else if ( (mid+tree->my_iTree->codon_offset) % 3 == 0 ) {
-			return_value = &codon[0];
-			des->seq_evo.at(mid).doSubstitution(key, simulation_step_type, des, return_value, event);
-			codon[1] = (*(posit+1)).returnState();
-			codon[2] = (*(posit+2)).returnState();
-		} else if ( (mid+tree->my_iTree->codon_offset) % 3 == 1 ) {
-			codon[0] = (*(posit-1)).returnState();
-			return_value = &codon[1];
-			des->seq_evo.at(mid).doSubstitution(key, simulation_step_type, des, return_value, event);
-			codon[2] = (*(posit+1)).returnState();
-		} else if ( (mid+tree->my_iTree->codon_offset) % 3 == 2 ) {
-			codon[0] = (*(posit-2)).returnState();
-			codon[1] = (*(posit-1)).returnState();
-			return_value = &codon[2];
-			des->seq_evo.at(mid).doSubstitution(key, simulation_step_type, des, return_value, event);
-		} else {
-			cerr << "Huh?? how can there be more than 3 codon positions?" << endl;
-			exit(EXIT_FAILURE);
+
+	calculateMotifScale(iTree, des, options, subst_len, &motif_scale);
+	motif_scale /= des->numEventsToSimulate;
+
+	if (options->simulation_step_type == GILLESPIE) {
+		gillespieIndel(iTree, des, indel_len, events, options);
+		MutateSequence(iTree, des, subst_len, motif_scale, events);
+	} else {
+		for (int i = 0; i < des->numEventsToSimulate; i++) {
+			des->atEpochTime += iTree->my_tree->epoch_step_size;
+	    	MutateSequence(iTree, des, subst_len, motif_scale, events);
+	    	if (des->nodeEnv->indelFlag)
+		   		InDel(iTree->my_tree,des,indel_len,events, des->numEventsToSimulate, options);
 		}
-		if ( !Stop_Codon(codon) && track) {
-			event.clear();
-			event.push_back( stateCharacters.at( (*posit).returnState() ) );
-			(*posit).setState(*return_value);
-			event.push_back( stateCharacters.at( (*posit).returnState() ) );
-			(*(tree->my_iTree->my_tree->global_alignment->locateEvent(des,mid))).modifiers.push_back(siteModifier('s',des->mytipNo, eventNo));
-			return true;
-		} else return false;
+		if (output_trs_example) step_out.close();
 	}
+
+//	cerr << "node num " << node_num << endl;
+//	des->Print_Active_Properties();
+//	cerr << "end node num " << node_num << endl;
+
+    if (des->tipNo==-1) { 
+    	des->setSitePointers();
+        EvolveNode(iTree, des, des->branch1, scale, invar_scale, inNumSites, events, options);
+    	EvolveNode(iTree, des, des->branch2, scale, invar_scale, inNumSites, events, options);
+    } else des->calcMotifAccuracy();	// calculator for pub (both iSGv1 & iSGv2)
+
+	des->Remove_Objects();
+} 
+
+void EvolveSequences(inTree *iTree, list<eventTrack*> *events, seqGenOptions *options)
+{
+	double scale, invar_scale;
+	num_subst = 0;
+	initializeTreeScalingParameters(iTree, &scale, &invar_scale);
+
+	EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch1, scale, invar_scale, iTree->partitionLength, events, options);
+    EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch2, scale, invar_scale, iTree->partitionLength, events, options);
+    if (!iTree->my_tree->rooted) {
+		cerr << "Unrooted tree??" << endl; 
+		exit(EXIT_FAILURE);
+        EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch0, scale, invar_scale, iTree->partitionLength, events, options);
+	}
+
+	//////////
+	/// Remove objects from root sequence.
+	//////////
+	// The following line of code blows iSG up when a motif sequence is followed by a RANDOM,
+	// sequence with the -1 option unset.
+	if ( iTree->rootSeqType != RANDOM || !iTree->randomInvariableAssignment )
+		iTree->my_tree->root->Remove_Objects(true);
+	//
+	// Regardless of the motif situation, the general varSites still need to be removed. This is
+	// done automatically if the if-stmt is true.
+	else iTree->my_tree->root->Remove_varSites();
+	//
+	//////////
+} 
+
+void Print_Globals(TTree *tree) 
+{ 
+    stringstream getlen;
+    int fromAnc_len, indelNo_len;
+   
+    getlen.str("");
+	//////////
+	/// Print global array positions.
+	//////////
+    getlen.str("");
+	// action
+    for(int i=1; i<tree->global_arrays.size(); i++) {
+        if(tree->global_arrays.at(i).fromAnc == -1) { fprintf(stderr,"-"); }
+        else {
+			if(tree->global_arrays.at(i).fromAnc != -1) {
+        		getlen << tree->global_arrays.at(i).fromAnc;
+        		fromAnc_len = (getlen.str()).size();
+        		getlen.str("");
+        	} else fromAnc_len = 1;
+        	if(tree->global_arrays.at(i).indelNo != -1) {
+        		getlen << tree->global_arrays.at(i).indelNo;
+        		indelNo_len = (getlen.str()).size();
+				getlen.str("");
+			} else indelNo_len = 1;
+
+			int numspace = (fromAnc_len > indelNo_len) ? fromAnc_len : indelNo_len;
+			if(numspace > 1) 
+				for(int j = 1; j < numspace; j++) fprintf(stderr, " ");
+
+            fprintf(stderr,"%c",tree->global_arrays.at(i).action);
+        }    
+    } 
+
+	// fromAnc
+    fprintf(stderr,"\n"); 
+    for(int i=1; i<tree->global_arrays.size(); i++) {
+        if(tree->global_arrays.at(i).fromAnc == -1) { fprintf(stderr,"-"); }
+        else { 
+        	if(tree->global_arrays.at(i).indelNo != -1) {
+        		getlen << tree->global_arrays.at(i).indelNo;
+        		indelNo_len = (getlen.str()).size();
+        		getlen.str("");
+			} else indelNo_len = 1;
+
+			if(indelNo_len > 1) 
+				for(int j = 1; j < indelNo_len; j++) fprintf(stderr, " ");
+
+        	fprintf(stderr,"%d",tree->global_arrays.at(i).fromAnc); 
+        }
+    }
+    fprintf(stderr,"\n");
+
+	// indelNo
+	for(int i=1; i<tree->global_arrays.size(); i++) {
+        if(tree->global_arrays.at(i).fromAnc == -1) { fprintf(stderr,"-"); }
+        else { 
+        	if(tree->global_arrays.at(i).indelNo != -1) {
+        		getlen << tree->global_arrays.at(i).fromAnc;
+        		fromAnc_len = (getlen.str()).size();
+        		getlen.str("");
+			} else fromAnc_len = 1;
+
+			if(fromAnc_len > 1) 
+				for(int j = 1; j < fromAnc_len; j++) fprintf(stderr, " ");
+
+        	fprintf(stderr,"%d",tree->global_arrays.at(i).indelNo); 
+        }
+    }
+	fprintf(stderr,"\n");
+
+} 
+
+double calcGillespieLambda(TNode *des, double *lambda_ins, int *ins_L, double *lambda_del, int *del_L)
+{
+	double lambda = 0;
+	double del_freq_by_size=0, del_freq=0, u_del=0;
+	int i = 0;
+	for (vector<double>::iterator it = des->nodeEnv->delete_lengthDistribution.begin(); it != des->nodeEnv->delete_lengthDistribution.end(); it++, i++) {
+		del_freq += (*it);
+		del_freq_by_size += (*it)*i;
+	}
+
+	if (del_freq == 0) u_del = 0;
+	else u_del = del_freq_by_size / del_freq;
+
+	*lambda_ins = des->nodeEnv->P_ins_;
+	*lambda_del = des->nodeEnv->P_del_;
+
+	calcTrials(des, ins_L, del_L);
+	lambda = *lambda_ins*(*ins_L) + *lambda_del*(*del_L) + *lambda_del*u_del - *lambda_del + *lambda_ins;
+
+	return lambda;
+}
+               
+void gillespieIndel(inTree *iTree, TNode *des, double indel_len, list<eventTrack*> *events, seqGenOptions *options)
+{
+	// Gillespie style indels. 
+	int ins_L, del_L;
+	double lambda_ins, lambda_del, lambda_T, u_del, exp_mean;
+	bool success;
+	int indel_size = 0, action = INSERT;
+
+   	if (des->nodeEnv->indelFlag) {
+		//////////
+		/// The Chang and Benner model does not reconcile with the Gillespie model. Run
+		/// the C&B model as is done in iSGv1.
+		//////////
+		if (des->nodeEnv->P_ins_ == 0 && des->nodeEnv->P_del_ == 0) {
+			InDel(iTree->my_tree, des, indel_len, events, 1, options);
+		} else {
+			//////////
+			// Indel routine	
+			//  * Should codonRates affect the probability of an indel occurring?
+			//////////
+			lambda_T = calcGillespieLambda(des, &lambda_ins, &ins_L, &lambda_del, &del_L);
+			exp_mean = 1.0/lambda_T;
+			des->setSitePointers();
+			for (double dt = rand_exp(exp_mean); dt <= indel_len; dt += rand_exp(exp_mean)) {
+				success = false;
+				if ( (double)rndu() < ((lambda_ins*(double)ins_L + lambda_ins) / lambda_T) ) {	// Insertion.
+		        	indel_size=Find_Indel_Size(des->nodeEnv->insert_lengthDistribution,des->nodeEnv->maxIndel);	
+					action = INSERT;
+					des->setSitePointers();
+					if ( (success=Insert(iTree->my_tree,des,indel_size)) ) {
+						num_insert++;
+						len_insert += indel_size;
+					}
+				} else { // Deletion.
+		        	indel_size=Find_Indel_Size(des->nodeEnv->delete_lengthDistribution,des->nodeEnv->maxIndel);
+					action = DELETE;
+					if ( (des->seq_evo.size()-indel_size) > 0) {
+						des->setSitePointers();
+			    		if ( (success=Delete(iTree->my_tree,des,&indel_size)) ) {
+			    			num_delete++;
+							len_delete += indel_size;
+						}
+					}
+				}
+				if (success && traceEvents) {
+					eventTrack *new_event;
+					//////////
+					/// Calculate the relative time that the event occurs at.
+					//////////
+					// * anc->trDistanceFromRoot: The scaled distance from the root
+					// * (dt/indel_len): Percentage of the branch that has been simulated
+					// * des->branch0_time_relative_length: Time rel length of the branch being simulated.
+					// * iTree->global_max_path_length: Scalar for the sum of above terms to set time of occurrence between 0 and 1.
+					//////////
+					des->atEpochTime = (des->anc->trDistanceFromRoot+(dt/indel_len)*des->branch->branch0_time_relative_length) / iTree->global_max_path_length;
+					new_event = new eventTrack(
+											   indelNo,
+											   action,
+											   des->atEpochTime,
+											   des->bipartition,
+											   indel_size
+											  );
+					(*events).push_back(new_event);
+					indelNo++;
+				}
 	
-	// Commented out tracking because it stops changes from being made during the evolution to equilibrium.
-	if (des->seq_evo.at(mid).doSubstitution(key, simulation_step_type, des, NULL, event)) {
-		cat_chosen.at(des->seq_evo.at(mid).returnCategory())++;
-		(*(tree->global_alignment->locateEvent(des,mid))).modifiers.push_back(siteModifier('s',des->mytipNo, eventNo));
-		*event_site = mid;
-		changed_site = mid;
-		return true;
-	} else return false;
+				lambda_T = calcGillespieLambda(des, &lambda_ins, &ins_L, &lambda_del, &del_L);
+				exp_mean = 1.0/lambda_T;
+			}
+		}
+	}
 }

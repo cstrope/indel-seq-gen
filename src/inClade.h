@@ -97,7 +97,7 @@ public:
 	string report_rateHetero();
 };
 
-inClade *FindEnvironment(TTree *tree, string& which_clade);
+inClade *FindEnvironment(TTree *tree, string which_clade);
 int CladeUnprocessed(TTree *tree);
 string CladeName(TTree *tree, int which_clade_in_list);
 

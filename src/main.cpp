@@ -34,256 +34,98 @@
 #include "treefile.h"
 #include "evolve.h"
 #include "model.h"
+#include "nucmodels.h"
+#include "aamodels.h"
 #include "progress.h"
 #include "twister.h"
 #include "random.h"
 #include "trace.h"
-#include "paleo.h"
-#include "dependency.h"
-#include "propose_path.h"
-#include "stats.h"
+
+bool	output_trs_example = false;
+int		run_no = 0;
+bool	empty_column_warning_spooled = false;
+
+int numDatasets, numTrees;
+int ancestorSeq;
+// Motif accuracy checking:
+int total_motif_positions = 0;
+int correct_motif_positions = 0;
+int num_template_violations = 0;
+ofstream verbose_output;
+extern ofstream verbose_output;
+vector<int> num_siteProperty_copies (4,0);
+int num_copy_ctor = 0, num_dtor = 0, num_ctor = 0;
+int num_insert = 0, num_delete = 0, len_insert = 0, len_delete = 0;
+size_t TNode_InheritMotifSites = 0;
+vector<int> motifSite_setActiveProps (3,0);
+int num_ms_siteProps = 0;
+int num_inserted_positions = 0;
+int num_deleted_positions = 0;
 
 using namespace std;
 
-bool	empty_column_warning_spooled = false;
-ofstream verbose_output;
-extern 	ofstream verbose_output;
-int 	num_copy_ctor = 0, num_dtor = 0, num_ctor = 0;
-int 	num_insert = 0, num_delete = 0, len_insert = 0, len_delete = 0;
-int 	actual_events = 0, virtual_events = 0;
-int		eventNo; 
-const string nucleotides="ACGT";
-const string aminoAcids="ARNDCQEGHILKMFPSTWYV";
-bool 	test_alternate_representations = true;
-bool	order_3_markov = true;
-unsigned int		numStates_squared;
-unsigned int		numStates_cubed;
-int 	changed_site=0;
-int		prev_state = 0;
-bool	forward_simulation = false;
-bool	fast_simulation = true;
-bool	optimize = true;
-bool	rasmus_independent_proposals;
-bool 	MCMC_sample_evenly = false;
-bool	Qd=true, Pc=true, nij=false;
-
 // MAIN prototypes
-void setRates(list<inTree*>& inputTrees,seqGenOptions *options);
-void Forward_Simulation(list<inTree*>& inputTrees, inClade *global_environment, int replicate, vector<ofstream*>& simulation_output_streams, seqGenOptions *options, list<eventTrack*> *events);
-void Simulate(list<inTree*>& inputTrees, inClade *global_environment, vector<ofstream*>& simulation_output_streams, seqGenOptions *options);
-void Path_Proposal(list<inTree*>& inputTrees, Statistics *stats, inClade *global_environment, vector<ofstream*>& simulation_output_streams, seqGenOptions *options, list<eventTrack*> *events);
-void closeOutputStreams(list<inTree*>& inputTrees, vector<ofstream*>& simulation_output_streams, vector<bool> outfile_flags);
-void openOutputStreams(vector<ofstream*>& simulation_output_streams, vector<bool> outfile_flags, string& outfile_name_root, bool simulation_type);
+
 void Print_Root(list<inTree*> inputTrees, ostream& root_out, seqGenOptions *options);
 void Print_Trace(list<inTree*> inputTrees, list<eventTrack*> events, ostream& trace_out, int step_type, int treeNo, int setNo);
 void Print_Seq(list<inTree*> inputTrees, ostream& seq_out, seqGenOptions *options, int dataset_num);
-void Print_MSA(list<inTree*> inputTrees, ostream& ma_out, seqGenOptions *options, int dataset_num, list<eventTrack*> events);
-void Print_Motifs(list<inTree*>& inputTrees, ostream& motif_out);
-void WriteAncestralMSA(vector<vector<char> >&, int *print_array_row, TNode *branch, int *n, TTree *tree, char **anc_names, seqGenOptions *options);
+void Print_MA(list<inTree*> inputTrees, ostream& ma_out, seqGenOptions *options, int dataset_num, list<eventTrack*> events);
+void Print_Motifs(list<inTree*> inputTrees, ostream& motif_out);
+void WriteAncestralMA(vector<vector<char> >&, int *print_array_row, TNode *branch, int *n, TTree *tree, char **anc_names, seqGenOptions *options);
 void WriteAncestralSequencesNode(vector<vector<char> >& print, int *print_array_row, TTree *tree, int *nodeNo, TNode *des, char **anc_names);
 void PrintTitle();
 void Print_NEXUS_Header(list<inTree*> inputTrees, seqGenOptions *options, ostream& out);
 void Reset_Run(list<inTree*>& inTrees, seqGenOptions *options, bool reset);
 void readInputTrees(list<inTree*>& inputTrees, 	seqGenOptions *options, inClade *global_environment, 
 					vector<string>& OTU_names, int *numTrees, int numTaxa);
-unsigned int rand_seed();
+inline unsigned int rand_seed();
 void setTRS(list<inTree*>& inputTrees, seqGenOptions *options, double max_path_length, double min_branch);
 void CheckTrees(list<inTree*>& inputTrees, seqGenOptions *options);
 size_t trimMSA(vector<vector<char> >& print, vector<bool>& empty_columns, seqGenOptions *options);
+long print_memory(string message, size_t howMany, int object_size);
+void Leakage();
 void fiddle_with_trees(list<inTree*>& inTrees, seqGenOptions *options);
-void QuickTest();
-
-////////////////////////////////////////
-////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {	
+	int numTaxa = 0;		// To check if all trees have the same number of taxa.
 	clock_t totalStart;
 	double totalSecs;
-	vector<ofstream*> simulation_output_streams;
+	vector<string> OTU_names;
+	inClade *global_environment;
+	vector<unsigned int> gil_Seed;
+	gil_Seed.clear();
 
-	//QuickTest();
-	//////////
-	/// Major player variables.
-	//////////
-	inClade *global_environment;			// Environment
-	list<inTree*> inputTrees;				// Tree + partition structure.
 	totalStart = clock();
 
 	// Options parsing, error-checking //
 	seqGenOptions *options = new seqGenOptions();
+	options->debug = true;
 	options->readOptions(argc, argv);
-
-	if (options->gil_Seed.empty() ) {
+	options->postProcess();
+	if (gil_Seed.empty() ) {
 		for (unsigned int i = 0; i < 4; i++) {
-			options->gil_Seed.push_back(rand_seed());
+			gil_Seed.push_back(rand_seed());
 		}
 	}
-	mt_srand(&options->gil_Seed[0], options->gil_Seed.size());
+	mt_srand(&gil_Seed[0], gil_Seed.size());
 	SetSeed(options->randomSeed);
+	model = options->global_model;
+	SetModel(model, NULL);
 	global_environment = new inClade("Global Environment", options);	
-
-	simulation_output_streams.resize(6);
-	openOutputStreams(simulation_output_streams, options->output_file_flags, options->output_files, options->path_proposal);
-
-	rasmus_independent_proposals = options->rasmus_independent_proposals;
-
-	//////////
-	/// Primary routine. Preprocesses data, then either calls Forward simulation or path proposals.
-	//////////
-	Simulate(
-		     inputTrees, 
-			 global_environment, 
-			 simulation_output_streams, 
-			 options
-			);
-
-
-	closeOutputStreams(inputTrees, simulation_output_streams, options->output_file_flags);
-	options->SpoolWarnings("",true);
-
-	//////////
-	/// Cleanup all objects created in run.
-	//////////
-	delete global_environment;
-	delete options;
-	//Leakage();
-
-	totalSecs = (double)(clock() - totalStart) / CLOCKS_PER_SEC;
-	fprintf(stderr,"Time taken: %G seconds\n", totalSecs);
-	
-	return EXIT_SUCCESS;
-}
-
-////////////////////
-//// FUNCTIONS /////
-////////////////////
-void QuickTest()
-{
-	/// This just allows me to test anything that I want to test that does not need to go through the
-	/// Entire simulation routine.
-	RateMatrix *rates;
-	isNucModel = true;
-	numStates = 4;
-	numStates_squared = 16;
-	numStates_cubed = 64;
-	
-	rates = new RateMatrix();
-	
-	rates->InitializeSubstitutionVectors();
-
-//	for (int i = 0; i < numStates; i++) {
-//		for (int j = 0; j < numStates; j++) {
-//			if (i != j)
-//				rates->Qij.at(i*numStates+j) = rates->Qij.at(i+j*numStates) = rndu();
-//		}
-//	}
-
-//	double sum_neg;
-//	for (int i = 0; i < numStates; i++) {
-//		sum_neg = 0;
-//		for (int j = 0; j < numStates; j++) {
-//			if (i != j) {
-//				sum_neg += rates->Qij.at(i*numStates+j);
-//			} else rates->Qij.at(i*numStates+j) = 0;
-//		}
-//		rates->Qij.at(i*numStates+i) = -sum_neg;
-//	}
-
-//	rates->printQij();
-
-	//////////
-	// Testing Ziheng's exponentiation routine using A felsenstein representation...
-	// Qij = S * pi_j, if i != j
-	// Qii = -S * \sum_{j, j!=i} pi_j
-	//
-	// This leads to Pij(t) = e^{-st}+(1-e^{-st})*pi_j  if i=j
-	//               Pij(t) = (1-e^{-st})*pi_j  if i != j
-	//
-	// S = constant, t = branch length.
-	//////////
-	rates->pi.at(0) = 0.1;
-	rates->pi.at(1) = 0.2;
-	rates->pi.at(2) = 0.3;
-	rates->pi.at(3) = 0.4;
-
-	double S = 0.1;
-	double t = 10;
-	double sum_neg;
-	for (int i = 0; i < numStates; i++) 
-		for (int j = 0; j < numStates; j++)
-			if (i != j)
-				rates->Qij.at(i*numStates+j) = S * rates->pi.at(j);
-
-	for (int i = 0; i < numStates; i++) {
-		sum_neg = 0;
-		for (int j = 0; j < numStates; j++) 
-			if (i != j) sum_neg += rates->Qij.at(i*numStates+j);
-			else rates->Qij.at(i*numStates+j) = 0;
-		rates->Qij.at(i*numStates+i) = -sum_neg;
-	}
-
-	rates->SetupMatrix(false);
-	Site site;
-	rates->setPij(site, t, NoRates);
-	//rates->setPij(Site site, BL, rateHetero);
-	rates->printQij();
-
-	cerr << "    //{" << rates->pi.at(A) << "," << rates->pi.at(C) << "," << rates->pi.at(G) << "," << rates->pi.at(T) << "}" << endl;
-	cerr << "    //S=" << S << " t=" << t << endl;
-	rates->printPij();
-
-	cerr << "    //P_{AA}=" << exp(-S*t)+(1-exp(-S*t))*rates->pi.at(A) << " ";
-	cerr << "P_{AC}=" << (1-exp(-S*t))*rates->pi.at(C) << " ";
-	cerr << "P_{AG}=" << (1-exp(-S*t))*rates->pi.at(G) << " ";
-	cerr << "P_{AT}=" << (1-exp(-S*t))*rates->pi.at(T) << endl;
-
-	cerr << "    //P_{CA}=" << (1-exp(-S*t))*rates->pi.at(A) << " ";
-	cerr << "P_{CC}=" << exp(-S*t)+(1-exp(-S*t))*rates->pi.at(C) << " ";
-	cerr << "P_{CG}=" << (1-exp(-S*t))*rates->pi.at(G) << " ";
-	cerr << "P_{CT}=" << (1-exp(-S*t))*rates->pi.at(T) << endl;
-
-	cerr << "    //P_{GA}=" << (1-exp(-S*t))*rates->pi.at(A) << " ";
-	cerr << "P_{GC}=" << (1-exp(-S*t))*rates->pi.at(C) << " ";
-	cerr << "P_{GG}=" << exp(-S*t)+(1-exp(-S*t))*rates->pi.at(G) << " ";
-	cerr << "P_{GT}=" << (1-exp(-S*t))*rates->pi.at(T) << endl;
-
-	cerr << "    //P_{TA}=" << (1-exp(-S*t))*rates->pi.at(A) << " ";
-	cerr << "P_{TC}=" << exp(-S*t)+(1-exp(-S*t))*rates->pi.at(C) << " ";
-	cerr << "P_{TG}=" << (1-exp(-S*t))*rates->pi.at(G) << " ";
-	cerr << "P_{TT}=" << exp(-S*t)+(1-exp(-S*t))*rates->pi.at(T) << endl;
-
-	exit(0);
-}
-
-void Simulate(
-	   	      list<inTree*>& inputTrees, 
-			  inClade *global_environment,
-			  vector<ofstream*>& simulation_output_streams, 
-			  seqGenOptions *options
-			 )
-{
-	paleobiology *paleontologicalProcess;	// Fossil deposition
-	list<eventTrack*> events;				// Event tracking
-	int numTaxa = 0;		// To check if all trees have the same number of taxa.
-	vector<string> OTU_names;
-	Statistics stats(options->number_of_datasets_per_tree);
-	vector<SampleStatistics>::iterator stats_it = stats.sample_stats.begin();
- 
-	if (options->deposit_fossils) 
-		paleontologicalProcess = new paleobiology(options->paleo_root_age, options->fossil_deposition_rate);
 
 	//////////
 	/// Gathering inTrees, checking sanity 
 	//////////
+	list<inTree*> inputTrees;
 	int numTrees = 0;
 	readInputTrees(inputTrees,options,global_environment,OTU_names,&numTrees,numTaxa);
 	CheckTrees(inputTrees, options);
-	setRates(inputTrees, options);
+
 	if(options->writeAncestors) {
 		string node_names = "";
 		inputTrees.front()->CheckPhylogeneticAncestralNodes(node_names, SET);
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 			if(!(*it)->CheckPhylogeneticAncestralNodes(node_names, CHECK)) {
 				options->writeAncestors = false;
 				options->SpoolWarnings("Cannot write ancestral sequences unless all partition tree topologies are equivalent.");
@@ -292,23 +134,44 @@ void Simulate(
 		}
 	}
 
-	if (!options->quiet && !options->path_proposal) {
+	string verbose_outfile;
+	ofstream root_out, seq_out, ma_out, trace_out, tree_out;
+	bool anc_tree_not_printed = true;
+	string tree_outfile, root_outfile, seq_outfile, ma_outfile, trace_outfile;
+	if(options->output_file_flags[tree]) {
+		tree_outfile = options->output_files + ".anc_tree";
+		tree_out.open(tree_outfile.c_str(), ios::trunc | ios::out);
+	}
+	if(options->output_file_flags[root]) {
+		root_outfile = options->output_files + ".root";	
+		root_out.open(root_outfile.c_str(), ios::trunc | ios::out);
+	}
+	if(options->output_file_flags[seq]) {
+		seq_outfile = options->output_files + ".seq";
+		seq_out.open(seq_outfile.c_str(), ios::trunc | ios::out);
+	}
+	if(options->output_file_flags[ma]) {
+		ma_outfile = options->output_files + ".ma";
+		ma_out.open(ma_outfile.c_str(), ios::trunc | ios::out);
+	}
+	if(options->output_file_flags[trace]) {
+		trace_outfile = options->output_files + ".trace";
+		trace_out.open(trace_outfile.c_str(), ios::trunc | ios::out);
+	}
+	if (options->output_file_flags[verb]) {
+		verbose_outfile = options->output_files + ".verb";
+		verbose_output.open(verbose_outfile.c_str(), ios::trunc | ios::out);
+	}
+
+	if (!options->quiet) {
 		if (options->fileFormat == NEXUSFormat) 
-			Print_NEXUS_Header(
-							   inputTrees,
-							   options,
-							   (
-							     (options->output_file_flags[seqGenOptions::ma])
-							     ? *simulation_output_streams.at(seqGenOptions::ma)
-							     : cout
-							   )
-							  );
+			Print_NEXUS_Header(inputTrees,options,((options->output_file_flags[ma])?ma_out:cout));
 
 		stringstream header;
 		header << "Taxa bit representation:" << endl;
 		inputTrees.front()->Print_Trace_Header(header, OTU_names, options);
 
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 			header << "Clade List (<taxon members> = <clade name>): " << endl;
 			for (list<TNode*>::iterator itn = (*it)->my_tree->nodeList.begin(); itn != (*it)->my_tree->nodeList.end(); itn++) {
 				if ( !((*itn)->clade_label.empty()) ) {
@@ -318,22 +181,17 @@ void Simulate(
 			}
 		}
 
-		if (!options->output_file_flags[seqGenOptions::trace]) 
-			cout << header.str() << endl;
-		else 
-			*simulation_output_streams.at(seqGenOptions::trace) << header.str() << endl;
+		if (!options->output_file_flags[trace]) cout << header.str() << endl;
+		else trace_out << header.str() << endl;
 	}
 
-	//////////
-	/// MAIN ROUTINE: All events that need to be done for each dataset are done inside this
-	/// loop, and the Forward_Simulation or Propose_Path function is called.
-	//////////
-	for (int i = 0; i < options->number_of_datasets_per_tree; i++) {
-		cerr << "---------- Replicate " << i+1 << "/" << options->number_of_datasets_per_tree << " ----------" << endl;
+	list<eventTrack*> events;
+	for (int i = 0; i < options->number_of_datasets_per_tree; i++, run_no++) {
 		double sum = 0;
 		int numSites = 0;
-		eventNo = 0;
+		indelNo = 0;
 		events.clear();
+		int size_prev_msa_positions = 0;
 
 		//////////
 		/// Set guide tree branch lengths.
@@ -347,7 +205,7 @@ void Simulate(
 		//
 		double max_path_length = 0.0, thisTree_max_path, thisTree_min_branch1, thisTree_min_branch2;
 		double min_branch = numeric_limits<double>::max();
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 			if ( (*it)->my_tree->rooted )  {
 				thisTree_max_path = (*it)->CalculatePathLengths();
 				if(thisTree_max_path > max_path_length) 
@@ -359,7 +217,6 @@ void Simulate(
 				if(thisTree_min_branch1 < min_branch && thisTree_min_branch1 != 0.0) 
 					min_branch = thisTree_min_branch1;
 			} 
-			(*it)->nameAncestralNodes();
 		}
 		//
 		// (3) Finally, set TRS steps
@@ -369,24 +226,27 @@ void Simulate(
 		// Print out tree with perturbation (Perturbed tree will print out different trees for each
 		// dataset) if the user wants the anc_trees.
 		//
-		if (!options->path_proposal) {
-			if (options->output_file_flags[seqGenOptions::tree]) {
-				if (options->simulation_step_type == TIME_RELATIVE_STEPS || options->simulation_step_type == UNIFORMIZATION) {
-					for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it)
-						(*it)->Print_Time_Rel_Tree(*simulation_output_streams.at(seqGenOptions::tree), options->writeAncestors);
-				} else {
-					for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it)
-						(*it)->Print_Newick_Tree(*simulation_output_streams.at(seqGenOptions::tree), false);
+		if (options->output_file_flags[tree]) {
+			if (options->simulation_step_type == TIME_RELATIVE_STEPS || options->simulation_step_type == GILLESPIE) {
+				if (options->perturbTree != 1 || anc_tree_not_printed) {
+					for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++)
+						(*it)->Print_Time_Rel_Tree(tree_out, options->writeAncestors);
+					anc_tree_not_printed = false;
+				}
+			} else {
+				if (options->perturbTree != 1 || anc_tree_not_printed) {
+					for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++)
+						(*it)->Print_Tree(tree_out, false);
+					anc_tree_not_printed = false;
 				}
 			}
 		}
 		//
 		//////////
-
 		//////////
 		/// Setup of sequences for this run.
 		//////////
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 			(*it)->Setup_Tree(options);
 			sum += (*it)->partitionRate * (*it)->partitionLength;
 			numSites += (*it)->partitionLength;
@@ -402,305 +262,143 @@ void Simulate(
 							(*it)->codon_offset += (*rit)->partitionLength;
 							(*it)->codon_offset = ((*it)->codon_offset) % 3;
 						}
-						++rit;
+						rit++;
 					}
 				}
 			}
 		}
-		//
-		//////////
+		CreateMatrix();
 
 		//////////
 		/// One final check to see if all coding regions add up to 0 (mod 3)
 		//////////
 		if (isNucModel) {
-			for(list<inTree*>::reverse_iterator rit = inputTrees.rbegin(); rit != inputTrees.rend(); ++rit) {
+			for(list<inTree*>::reverse_iterator rit = inputTrees.rbegin(); rit != inputTrees.rend(); rit++) {
 				if ( (*rit)->my_tree->root->nodeEnv->rateHetero == CodonRates ) {
 					if ( ((*rit)->partitionLength + (*rit)->partitionLength) % 3 != 0 )
 						options->SpoolWarnings("The lengths of all codon sequences do not add up to a factor of three.");
 				}
 			}
 		}
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) 
-			(*it)->partitionRate *= numSites / sum;
 
-		//////////
-		/// Need to calculate likelihoods under what conditions?
-		//////////
-		// i.   End-point conditioned runs
-		// ii.  When specfile places probabilities of each state (Pfam-like?? Motif conservation)
-		//////////
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-			//////////
-			/// Check to see if there are dependencies specified.
-			//////////
-			if ( !options->dependency_file.empty() || order_3_markov ) {
-				if (options->path_proposal) {
-					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, options->dependence_superscript));	// Current: hard-coded 3rd-order Markov.
-				} else {
-					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) 
+			(*it)->partitionRate *= numSites / sum;
+		
+		size_t x = 0;
+		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++, x++) {
+			EvolveSequences(*it, &events, options);
+			// Sort out the positions of the sequences.
+			int msa_size = (*it)->my_tree->root_numSites;
+			if (traceEvents) {
+				for (list<eventTrack*>::iterator it2 = events.begin(); it2 != events.end(); it2++) {
+					msa_size = (*it2)->Compute_MSA_Positions((*it)->my_tree, size_prev_msa_positions);
 				}
+				size_prev_msa_positions += msa_size;
+			}
+			if (options->simulation_step_type == DISCRETE_EVOLUTIONARY_STEPS && traceEvents) {
+				Print_Trace(
+							inputTrees, 
+							events, 
+							((options->output_file_flags[trace]) ? trace_out : cout), 
+							options->simulation_step_type, 
+							(*it)->treeNum, 
+							i
+						   );
+				events.clear();		// DES prints each partition separately, since they cannot be related.
 			}
 		}
 
-		if (options->path_proposal) {
-			Path_Proposal(
-						  inputTrees, 
-						  &stats,
-						  global_environment, 
-						  simulation_output_streams, 
-						  options,
-						  &events
-						 );
-		} else {
-			Forward_Simulation(
-							   inputTrees, 
-							   global_environment, 
-							   i,
-							   simulation_output_streams, 
-							   options,
-							   &events
-							  );
-		}
-
-		//////////
-		/// Remove objects from root sequence.
-		//////////
-		for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-			// The following line of code blows iSG up when a motif sequence is followed by a RANDOM,
-			// sequence with the -1 option unset.
-			if ( (*it)->rootSeqType != RANDOM || !(*it)->randomInvariableAssignment )
-				(*it)->my_tree->root->Remove_Objects(true);
-			//
-			// Regardless of the motif situation, the general varSites still need to be removed. This is
-			// done automatically if the if-stmt is true.
-			else (*it)->my_tree->root->Remove_varSites();
-			//
-			//////////
-			for (list<Dependency*>::iterator jt = (*it)->my_tree->dep.begin(); jt != (*it)->my_tree->dep.end(); ++jt)
-				delete (*jt);
-			(*it)->my_tree->dep.clear();
-		}
-
-		if (options->deposit_fossils) {
-			paleontologicalProcess->max_path_length = max_path_length;
-			cerr << "run " << i << ": Depositing fossils" << endl;
-			paleontologicalProcess->doPaleontology(inputTrees.front()->my_tree, &events);
-		}
-
-		(*stats_it).calculateStatistics(&events);
-
-		if (options->output_file_flags[seqGenOptions::verb]) verbose_output << "DATASET " << i << ":" << endl;
-		if (options->tracking_defined()) {
-			if (options->simulation_step_type == TIME_RELATIVE_STEPS || options->simulation_step_type == UNIFORMIZATION) {
-				Print_Trace(
-						    inputTrees, 
+		if (options->output_file_flags[verb]) verbose_output << "DATASET " << i << ":" << endl;
+		if (traceEvents) {
+			if (options->simulation_step_type == TIME_RELATIVE_STEPS || options->simulation_step_type == GILLESPIE) {
+				Print_Trace(inputTrees, 
 							events, 
-							(
-							  (options->output_file_flags[seqGenOptions::trace]) 
-							  ? *simulation_output_streams.at(seqGenOptions::trace)
-							  : cout
-							), 
+							((options->output_file_flags[trace]) ? trace_out : cout), 
 							options->simulation_step_type, 
 							0, 
 							i
 						   );
-			} else if (options->output_file_flags[seqGenOptions::trace]) 
-				*simulation_output_streams.at(seqGenOptions::trace) << endl;
+			} else if (options->output_file_flags[trace]) trace_out << endl;
 			else cout << endl;
 		}
 
-		if (!options->path_proposal) {
-			Print_Root(
-				 	   inputTrees, 
-				 	   (
-				 	     (options->output_file_flags[seqGenOptions::root]) 
-				 	     ? *simulation_output_streams.at(seqGenOptions::root)
-				 	     : cout
-				 	   ), 
-				 	   options 
-				 	  );
-			Print_Seq(
-					  inputTrees, 
-					  (
-					    (options->output_file_flags[seqGenOptions::seq]) 
-					    ? *simulation_output_streams.at(seqGenOptions::seq)
-					    : cout
-					  ), 
-					  options, 
-					  i
-					 );
-			Print_MSA(
-					  inputTrees, 
-					  (
-					    (options->output_file_flags[seqGenOptions::ma]) 
-					    ? *simulation_output_streams.at(seqGenOptions::ma)
-					    : cout
-					  ), 
-					  options, 
-					  i, 
-					  events
-					 );
-
-		} else {
-			//(*stats_it).calculateStatistics(&events);
-			if (stats.returnM() < (*stats_it).m_i()) stats.setM((*stats_it).m_i());
-			(*stats_it).set_numEvents(eventNo);
-			++stats_it;
-		}
+		Print_Root(inputTrees, ((options->output_file_flags[root]) ? root_out : cout), options );
+		Print_Seq(inputTrees, ((options->output_file_flags[seq]) ? seq_out : cout), options, i);
+		Print_MA(inputTrees, ((options->output_file_flags[ma]) ? ma_out : cout), options, i, events);
+		//Print_Motifs(inputTrees, ((options->output_files == "!") ? cout : cout)/*, options, i*/);
 
 		Reset_Run(inputTrees, options, (i+1 != options->number_of_datasets_per_tree));
+
+//		cerr << "Run " << i << " leakage:" << endl;
+//		Leakage();
 	}
 
-	//////////
-	/// If this was a path proposal, calculate necessary statistics.
-	//////////
-	if (options->path_proposal) {
-		stats.setWeights();
-		stats.reportStatistics();
-		stats.calc_ESS();
+	if (options->output_file_flags[tree]) tree_out.close();
+	if (options->output_file_flags[root]) root_out.close();
+	if (options->output_file_flags[seq]) seq_out.close();
+	if (options->output_file_flags[ma]) ma_out.close();
+	if (options->output_file_flags[verb]) verbose_output.close();
+	size_t x = 1;
+	if (options->output_file_flags[trace]) {
+		for (list<inTree*>::iterator xt = inputTrees.begin(); xt != inputTrees.end(); xt++, x++)
+			trace_out << "GUIDE_TREE_PARTITION" << x << "=" << (*xt)->tree << ";" << endl;
+		trace_out.close();
 	}
 
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-		(*it)->my_tree->global_alignment->insert_sites.clear();
-		for (list<TNode*>::iterator it2 = (*it)->my_tree->nodeList.begin(); it2 != (*it)->my_tree->nodeList.end(); ++it2) {
-			delete (*it2)->branch->rates;
+	options->SpoolWarnings("",true);
+
+	totalSecs = (double)(clock() - totalStart) / CLOCKS_PER_SEC;
+	if(!options->quiet) fprintf(stderr,"Time taken: %G seconds\n", totalSecs);
+
+	//////////
+	/// Cleanup all objects created in run.
+	//////////
+	delete global_environment;
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
+		for (list<TNode*>::iterator it2 = (*it)->my_tree->nodeList.begin(); it2 != (*it)->my_tree->nodeList.end(); it2++) {
 			delete (*it2)->branch;
 			delete (*it2);
 		}
-		for (list<inClade*>::iterator it2 = (*it)->my_tree->treeEnv.begin(); it2 != (*it)->my_tree->treeEnv.end(); ++it2)
+		for (list<inClade*>::iterator it2 = (*it)->my_tree->treeEnv.begin(); it2 != (*it)->my_tree->treeEnv.end(); it2++)
 			delete (*it2);
-		for (list<inMotif*>::iterator it2 = (*it)->motif_specs.begin(); it2 != (*it)->motif_specs.end(); ++it2)
+		for (list<inMotif*>::iterator it2 = (*it)->motif_specs.begin(); it2 != (*it)->motif_specs.end(); it2++)
 			delete (*it2);
-		delete (*it)->my_tree->global_alignment;
 		delete (*it)->my_tree;
 		delete (*it);
 	}
-	if (options->deposit_fossils) delete paleontologicalProcess;
+	delete options;
+
+//	Leakage();
+	
+	return EXIT_SUCCESS;
 }
 
-void Path_Proposal(
-	   	    	   list<inTree*>& inputTrees, 
-	   	    	   Statistics *stats,
-				   inClade *global_environment,
-				   vector<ofstream*>& simulation_output_streams, 
-				   seqGenOptions *options,
-				   list<eventTrack*> *events
-				  )
-{
-	vector<string> OTU_names;
-
-	forward_simulation = false;
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-		(*it)->path = new PathProposal();
-		(*it)->path->parseEndpointInfile(options->end_point_condition_file);
-		(*it)->path->setNodeSequences((*it)->my_tree);
-		(*it)->path->setUnspecifiedNodeSequences((*it)->my_tree, (*it)->partitionLength);
-		(*it)->my_tree->setTransitionProbabilities();
-
-		//////////
-		/// Propose paths. If we are emulating a forward run, then fill the event histories.
-		//////////
-		Create_Global_Arrays((*it)->my_tree, (*it)->my_tree->root->seq_evo.size());
-		if (options->epc_emulate_forward_simulation) {
-			(*it)->path->setEventHistory(events, options->forward_sim_event_file_to_emulate);
-			(*it)->path->emulateForwardSimulation((*it)->my_tree, events);
-			return;
-		} else {
-			// Set "current" path (for MCMC; otherwise, this is the only path).
-			(*it)->path->Evolve((*it)->my_tree, events);
-			for (list<eventTrack*>::iterator it2 = (*events).begin(); it2 != (*events).end(); ++it2) 
-				(*it2)->Compute_MSA_Positions((*it)->my_tree, 0);
-			// If MCMC, need to perform some steps to set up path and run MCMC.
-			if (options->num_mcmc_steps) {
-				(*it)->path->epc_events.assign((*events).begin(), (*events).end());
-				stats->MCMC_run((*it)->my_tree, options->num_mcmc_steps, (*it)->path);
-			}
-		}
-
-		for (list<eventTrack*>::iterator it2 = (*events).begin(); it2 != (*events).end(); ++it2) 
-			(*it2)->Compute_MSA_Positions((*it)->my_tree, 0);
-
-		delete (*it)->path;
-	}
-}
-
-void Forward_Simulation(
-	   	    	   		list<inTree*>& inputTrees, 
-				   		inClade *global_environment,
-				   		int replicate,
-				   		vector<ofstream*>& simulation_output_streams, 
-				   		seqGenOptions *options,
-					 	list<eventTrack*> *events
-					   )
-{
-	int size_prev_msa_positions = 0;
-
-	forward_simulation = true;		// Declared at top of main. bad style, yes, but...
-	cerr << "Made it to EvolveSequences!! But left lineage-specific rates untouched, so far" << endl;
-	size_t x = 0;
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it, x++) {
-		(*it)->sim = new ForwardSimulation();
-		(*it)->sim->EvolveSequences(*it, events, options);
-		
-		//(*it)->my_tree->global_alignment->Print();
-		
-		// Sort out the positions of the sequences.
-		int msa_size = (*it)->my_tree->root_numSites;
-		if (options->tracking_defined()) {
-			for (list<eventTrack*>::iterator it2 = (*events).begin(); it2 != (*events).end(); ++it2) {
-				msa_size = (*it2)->Compute_MSA_Positions((*it)->my_tree, size_prev_msa_positions);
-			}
-			size_prev_msa_positions += msa_size;			
-		}
-		if (options->simulation_step_type == DISCRETE_EVOLUTIONARY_STEPS && options->tracking_defined()) {
-			Print_Trace(
-						inputTrees, 
-						*events, 
-						( 
-						  (options->output_file_flags[seqGenOptions::trace]) 
-						  ? *simulation_output_streams.at(seqGenOptions::trace) 
-						  : cout
-						), 
-						options->simulation_step_type, 
-						(*it)->treeNum, 
-						replicate
-					   );
-			(*events).clear();		// DES prints each partition separately, since they cannot be related.
-		}
-	}
-}
+//////////\\\\\\\\\\
+//// FUNCTIONS \\\\\
+//////////\\\\\\\\\\
 
 //////////
 /// This applies tree perturbations and treeScales to tree.
 //////////
-void fiddle_with_trees(
-					   list<inTree*>& inTrees, 
-					   seqGenOptions *options
-					  ) 
+void fiddle_with_trees(list<inTree*>& inTrees, seqGenOptions *options) 
 {
 	double all_paths_sum, mean, std_dev;
 
 	//////////
-	/// (1) Perturb and (2) scale tree
+	/// Scale and perturb tree
 	//////////
-	//
-	// Set the perturbation values for the trees.
-	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); ++it)
-		(*it)->perturbTree(options->perturbTree);
-	//
 	//
 	// If option is set, output tree stats:
 	// * Average root-to-tip path lengths (+ std. dev).
 	size_t x = 0;
-	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); ++it, x++) {
-		(*it)->calcDistancesFromRoot();
+	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); it++, x++) {
 		if (options->treelength_check || options->treelength_scale || (*it)->scaleTree) {
+			(*it)->calcDistancesFromRoot();
 			all_paths_sum = mean = std_dev = 0.0;
-			for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); ++jt)
+			for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); jt++)
 				all_paths_sum += (*jt)->DistanceFromRoot;
 			mean = all_paths_sum / (*it)->my_tree->tips.size();
-			for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); ++jt)
+			for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); jt++)
 				std_dev += ((*jt)->DistanceFromRoot-mean)*((*jt)->DistanceFromRoot-mean);
 			std_dev /= (*it)->my_tree->tips.size();
 			if ((*it)->scaleTree) {
@@ -716,29 +414,32 @@ void fiddle_with_trees(
 				// Test if it is correct.
 				all_paths_sum = 0.0;
 				mean = std_dev = 0.0;
-				for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); ++jt)
+				for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); jt++)
 					all_paths_sum += (*jt)->DistanceFromRoot;
 				mean = all_paths_sum / (*it)->my_tree->tips.size();
-				for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); ++jt)
+				for (vector<TNode*>::iterator jt = (*it)->my_tree->tips.begin(); jt != (*it)->my_tree->tips.end(); jt++)
 					std_dev += ((*jt)->DistanceFromRoot-mean)*((*jt)->DistanceFromRoot-mean);
 				std_dev /= (*it)->my_tree->tips.size();
 				cout << mean << " " << sqrt(std_dev) << endl;
 			} else {
-				cout << "If you wanted to scale average root-to-tip path length, input number must be negative." << endl; 
 				cout << mean << " ... " << sqrt(std_dev) << endl;
 				exit(EXIT_SUCCESS);
 			}
 		}
 	}
 	//
-	//////////
+	// Set the perturbation values for the trees.
+	//
+	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); it++)
+		(*it)->perturbTree(options->perturbTree);
+
 
 	ofstream treescale_out;
 	string treescale_outfile;
 	treescale_outfile = options->output_files + ".scale_tree";
 	treescale_out.open(treescale_outfile.c_str(), ios::trunc | ios::out);
-	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); ++it) 
-		(*it)->Print_Newick_Tree(treescale_out, false);
+	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); it++) 
+		(*it)->Print_Tree(treescale_out, false);
 
 	return;
 }
@@ -746,52 +447,41 @@ void fiddle_with_trees(
 //////////
 /// Remove single-replicate specific objects, which will be recreated in next run
 //////////
-void Reset_Run(
-			   list<inTree*>& inTrees, 
-			   seqGenOptions *options, 
-			   bool reset
-			  )
+void Reset_Run(list<inTree*>& inTrees, seqGenOptions *options, bool reset)
 {
 	//////////
 	/// This small chunk of code applies ONLY to random sequences using the PROSITE library
 	/// (option -1). 
 	//////////
-	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); ++it) {
+	for (list<inTree*>::iterator it = inTrees.begin(); it != inTrees.end(); it++) {
 		if ((*it)->rootSeqType == RANDOM && options->random_sequence_proportion_motif) {
 			(*it)->motif_specs.clear();
 			// Destroy inMotifs, will reset them for next run.
 			for (list<inMotif*>::iterator jt = (*it)->my_tree->treeEnv.front()->my_motifs.begin(); 
 										  jt != (*it)->my_tree->treeEnv.front()->my_motifs.end(); 
-										  ++jt) 
+										  jt++) 
 			{
 				delete *jt;
 			}
 			(*it)->my_tree->treeEnv.front()->my_motifs.clear();
 		}
 
-		for (list<TNode*>::iterator it2 = (*it)->my_tree->nodeList.begin(); it2 != (*it)->my_tree->nodeList.end(); ++it2) {
+		for (list<TNode*>::iterator it2 = (*it)->my_tree->nodeList.begin(); it2 != (*it)->my_tree->nodeList.end(); it2++) {
 			(*it2)->evolvingSequence->evolutionaryAttributes.clear();
 			delete (*it2)->evolvingSequence;
 			// Variable region lists.
 			if (reset) (*it2)->addGeneral_varSites();
 		}
 	}
-	
-	eventNo = 0;
+	DestroyMatrix();
 }
 
 //////////
 /// Read the trees in the partition file, parse them, get statistics of trees, and perform
 /// necessary bookkeeping.
 //////////
-void readInputTrees(
-					list<inTree*>& inputTrees, 
-					seqGenOptions *options, 
-					inClade *global_environment, 
-					vector<string>& OTU_names, 
-					int *numTrees, 
-					int numTaxa
-				   )
+void readInputTrees(list<inTree*>& inputTrees, 	seqGenOptions *options, inClade *global_environment, 
+					vector<string>& OTU_names, int *numTrees, int numTaxa)
 {
 	string treeInput;
 	string tmpInput;
@@ -817,7 +507,7 @@ void readInputTrees(
 		} while (treeInput.find(";") == treeInput.npos && cin.good());
 		
 		if(!treeInput.empty() && !cin.good()) {
-			cerr << "Treefile error: Trailing characters after last tree. (Last tree may not end with ';\n')" << endl << treeInput << endl;
+			cerr << "Treefile error: Trailing characters after last tree. (Last tree may not end with ';')" << endl << treeInput << endl;
 			exit(EXIT_FAILURE);
 		}
 
@@ -826,21 +516,14 @@ void readInputTrees(
 		(*numTrees)++;
 		inTree *tempTree = new inTree(options, *numTrees, global_environment);
 		tempTree->perform_checks(treeInput, options);
-		//////////
-		/// Parsing lineages MUST come before parsing the tree. parseLineages collects motif data,
-		/// all except the sitemap, which is done in parseTree-->Read_MA, which needs to know the
-		/// motif marker in order to place the sitemap correctly.
-		//////////
-		if(options->lineageSpecificFile != "") tempTree->parseLineages(options);
-		//////////
-		/// Get the tree from the file
-		//////////
 		tempTree->parseTree(treeInput, options);
+		if(options->lineageSpecificFile != "") tempTree->parseLineages(options);
 		if(!(numTaxa)) {
 			numTaxa = tempTree->my_tree->numTips;
 			for (int i = 0; i < numTaxa; i++) 
 				OTU_names.push_back(tempTree->my_tree->names.at(i));
 		}
+
 		tempTree->Define_Ancestors();
 		tempTree->propagateTreePointers();
 		tempTree->Define_Bipartitions(OTU_names);
@@ -850,46 +533,7 @@ void readInputTrees(
 		/// later in the main loop.
 		//////////
 		if (!tempTree->scaleTree) tempTree->apply_branchScales(tempTree->branchScale);
-		tempTree->my_tree->my_iTree = tempTree;
 		inputTrees.push_back(tempTree);
-	}
-}
-
-void setRates(
-			  list<inTree*>& inputTrees,
-			  seqGenOptions *options
-			 )
-{
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-		for (list<TNode*>::iterator jt = (*it)->my_tree->nodeList.begin(); jt != (*it)->my_tree->nodeList.end(); ++jt) {
-			(*jt)->branch->rates = new RateMatrix();
-			(*jt)->branch->rates->setModelConditions(
-													 options->inputModel, 
-													 options->rate_matrix_values, 
-													 options->global_pi
-													);
-			(*jt)->branch->rates->SetModel((*jt)->nodeEnv);
-			//////////
-			/// Discrete category setup.
-			//////////
-			if (options->default_rateHetero == DiscreteGammaRates) {
-				(*jt)->branch->rates->num_categories = options->num_discrete_gamma_categories;
-				(*jt)->branch->rates->alphaGamma = options->alpha;
-				DiscreteGamma(
-							  (*jt)->branch->rates->freqRate, 
-							  (*jt)->branch->rates->catRate, 
-							  (*jt)->branch->rates->alphaGamma, 
-							  (*jt)->branch->rates->alphaGamma, 
-							  (*jt)->branch->rates->num_categories, 
-							  false
-							 );
-				(*jt)->nodeEnv->rateHetero = DiscreteGammaRates;
-			} else if (options->default_rateHetero == GammaRates) {
-				cerr << "Setting gamma rates only (not discrete gamma) is left undealt with." << endl;
-				(*jt)->branch->rates->alphaGamma = options->alpha;
-				(*jt)->nodeEnv->rateHetero = GammaRates;
-			}
-		}
 	}
 }
 
@@ -897,17 +541,14 @@ void setRates(
 /// This function checks to see if all lineages have marker matches, as well as other 
 /// items of interest.
 //////////
-void CheckTrees(
-			    list<inTree*>& inputTrees, 
-			    seqGenOptions *options
-			   )
+void CheckTrees(list<inTree*>& inputTrees, seqGenOptions *options)
 {
 	stringstream warning;
 	bool set = false;
 	// Now check each inMotif, find out if each marker defined is used or not. //
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		if ((*it)->rootSeqType != RANDOM) {
-			for (list<inMotif*>::iterator jt = (*it)->motif_specs.begin(); jt != (*it)->motif_specs.end(); ++jt) {
+			for (list<inMotif*>::iterator jt = (*it)->motif_specs.begin(); jt != (*it)->motif_specs.end(); jt++) {
 				if ( (*jt)->sitemap.empty() ) {
 					warning << "Motif " << (*jt)->marker << " is not used in any of the input root sequences." << endl;
 					set = true;
@@ -918,16 +559,13 @@ void CheckTrees(
 	if (set) options->SpoolWarnings(warning.str());
 }
 
-void Print_Motifs(
-				  list<inTree*>& inputTrees, 
-				  ostream& motif_out
-				 ) 
+void Print_Motifs(list<inTree*> inputTrees, ostream& motif_out) 
 {
 	size_t curr_tree = 0;
 
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		motif_out << curr_tree << ":" << endl;
-		for (list<inMotif*>::iterator jt = (*it)->motif_specs.begin(); jt != (*it)->motif_specs.end(); ++jt) {
+		for (list<inMotif*>::iterator jt = (*it)->motif_specs.begin(); jt != (*it)->motif_specs.end(); jt++) {
 			motif_out << "Name: " << (*jt)->name << endl;
 			motif_out << "Regular Expression: " << (*jt)->regex << endl;
 			motif_out << "Placement on Root Sequence: " << (*jt)->sitemap << endl;
@@ -935,27 +573,21 @@ void Print_Motifs(
 	}
 }
 
-void Print_Trace(
-				 list<inTree*> inputTrees, 
-				 list<eventTrack*> events, 
-				 ostream& trace_out, 
-				 int step_type, 
-				 int treeNo, 
-				 int setNo
-				)
+void Print_Trace(list<inTree*> inputTrees, list<eventTrack*> events, ostream& trace_out, int step_type, int treeNo, int setNo)
 {
+
 	trace_out << ">Dataset_" << setNo;
 
-	if(step_type == TIME_RELATIVE_STEPS || step_type == UNIFORMIZATION) {
+	if(step_type == TIME_RELATIVE_STEPS || step_type == GILLESPIE) {
 		trace_out << endl;
 		vector<eventTrack*> thisTip_event;
 		thisTip_event.clear();
-		int i = 0;
-		for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); ++it)
+		for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); it++) {
 			thisTip_event.push_back((*it));
+		}
 
 		if (thisTip_event.size() > 0) {
-/*			double min_time;
+			double min_time;
 			int insert_sort_index;
 			eventTrack *tmp;
 			string out_event;
@@ -972,13 +604,10 @@ void Print_Trace(
 				thisTip_event.at(j) = thisTip_event.at(insert_sort_index);
 				thisTip_event.at(insert_sort_index) = tmp;
 			}
-*/
-			string event_outstring;
-			int i = 0;
-			for (vector<eventTrack*>::iterator it = thisTip_event.begin(); it != thisTip_event.end(); ++it, i++) {
-				event_outstring = (*it)->Print_Event();
-				trace_out << event_outstring;
-			}
+
+			for (vector<eventTrack*>::iterator it = thisTip_event.begin(); it != thisTip_event.end(); it++)
+				trace_out << (*it)->Print_Event();
+
 			thisTip_event.clear();
 		}
 	} else {	// DISCRETE_EVOLUTIONARY_STEPS
@@ -986,7 +615,7 @@ void Print_Trace(
 		string out_event;
 		inTree *curr_tree = NULL;
 		if(events.size() > 0) {
-			for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+			for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 				if ((*it)->treeNum == treeNo) curr_tree = (*it);
 			}
 	
@@ -996,7 +625,7 @@ void Print_Trace(
 			}
 
 			trace_out << "__partition_" << treeNo << endl;
-			for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); ++it) {
+			for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); it++) {
 				out_event = (*it)->Print_Event();
 				trace_out << out_event;
 			}
@@ -1006,40 +635,32 @@ void Print_Trace(
 	}
 	
 	// Free all of the event tracking.
-	for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); ++it) {
+	for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); it++) {
 		delete (*it);
 	}
 }
 
-void Print_Root(
-				list<inTree*> inputTrees, 
-				ostream& root_out, 
-				seqGenOptions *options
-			) 
+void Print_Root(list<inTree*> inputTrees, ostream& root_out, seqGenOptions *options) 
 {
-	if (options->output_file_flags[seqGenOptions::verb]) verbose_output << "Root: ";
+	if (options->output_file_flags[verb]) verbose_output << "Root: ";
 
-	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		for(int i = 0; i < (*it)->my_tree->root_numSites; i++) {
 			root_out << stateCharacters[(*it)->my_tree->root->seq_evo.at(i).returnState()];
-			if (options->output_file_flags[seqGenOptions::verb]) verbose_output << stateCharacters[(*it)->my_tree->root->seq_evo.at(i).returnState()];
+			if (options->output_file_flags[verb]) verbose_output << stateCharacters[(*it)->my_tree->root->seq_evo.at(i).returnState()];
 		}
 	}
 	root_out << endl;
-	if (options->output_file_flags[seqGenOptions::verb]) verbose_output << endl << endl;
+	if (options->output_file_flags[verb]) verbose_output << endl << endl;
 }
 
-void Print_NEXUS_Header(
-						list<inTree*> inputTrees, 
-						seqGenOptions *options, 
-						ostream& out
-					   ) 
+void Print_NEXUS_Header(list<inTree*> inputTrees, seqGenOptions *options, ostream& out) 
 {
 	int root_length = 0;
 	int partitions = 0;
 	bool gene_flag = false;
 
-	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		root_length += (*it)->partitionLength;
 		if((*it)->my_tree->treeEnv.front()->rateHetero == CodonRates) gene_flag = true;
 		partitions++;
@@ -1056,7 +677,7 @@ void Print_NEXUS_Header(
 		
 	out << "Partition-specific parameters: " << endl;
 	partitions = 1;
-	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		out << "(Partition " << partitions << ") " << (*it)->label << endl;
 		out << " -Tree = " << (*it)->tree << endl;
 		if((*it)->scaleBranches) {
@@ -1136,10 +757,10 @@ void Print_NEXUS_Header(
 		for(int i = 0; i < numStates; i++) {
 			if(i % 10 == 0) { out << "\n\t"; }
 			out << stateCharacters[i] << ":";
-			for (vector<double>::iterator pi_T = (*it)->my_tree->root->branch->rates->pi.begin();
-										  pi_T!= (*it)->my_tree->root->branch->rates->pi.end();
-										  pi_T++)
-				out << setprecision(3) << setw(6) << (*pi_T) << " ";
+			if(isNucModel)
+				out << setprecision(3) << setw(6) << nucFreq[i] << " ";
+			else 
+				out << setprecision(3) << setw(6) << aaFreq[i] << " ";
 		}
 		out << endl;
 		if((*it)->my_tree->treeEnv.front()->rateHetero == CodonRates) {
@@ -1186,10 +807,10 @@ void Print_Seq(
 		}
 	}
 
-	if (options->output_file_flags[seqGenOptions::verb]) verbose_output << "Sequences:" << endl;
+	if (options->output_file_flags[verb]) verbose_output << "Sequences:" << endl;
 
 	if(options->writeAncestors) {
-		for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 			print_array_row = 0;
 			n = inputTrees.front()->my_tree->numTips + 1;
 			sprintf(anc_names[0], "%d", n);
@@ -1205,7 +826,7 @@ void Print_Seq(
 		for(size_t i = 0; i < print.size(); i++) {
 			seq_out << ">" << anc_names[i] << endl;
 
-			if (options->output_file_flags[seqGenOptions::verb]) {
+			if (options->output_file_flags[verb]) {
 				int j;
 				for(j = 0; j < 9 && anc_names[i][j]; j++)
 					verbose_output << anc_names[i][j];
@@ -1217,19 +838,18 @@ void Print_Seq(
 				// If the second condition is true, there is a double-endline in the output, which is bad.
 				if((j+1) % options->output_width == 0 && (j+1) != print.at(i).size()) 
 					seq_out << endl;
-				if (options->output_file_flags[seqGenOptions::verb]) 
-					verbose_output << print.at(i).at(j);
+				if (options->output_file_flags[verb]) verbose_output << print.at(i).at(j);
 			}
 			seq_out << endl;
-			if (options->output_file_flags[seqGenOptions::verb]) verbose_output << endl;
+			if (options->output_file_flags[verb]) verbose_output << endl;
 		}
 		seq_out << endl;
-		if (options->output_file_flags[seqGenOptions::verb]) verbose_output << endl;
+		if (options->output_file_flags[verb]) verbose_output << endl;
 	} else {
 		// tips were correctly sorted in the beginning, so using the front tree only is OK.
 		for (int i = 0; i < numTips; i++) {
 			seq_out << ">" << inputTrees.front()->my_tree->names.at(i) << endl;
-			if (options->output_file_flags[seqGenOptions::verb]) {
+			if (options->output_file_flags[verb]) {
 				int j;
 				for(j = 0; j < 9 && j < inputTrees.front()->my_tree->names.at(i).size(); j++) {
 					verbose_output << inputTrees.front()->my_tree->names.at(i).at(j);
@@ -1238,32 +858,26 @@ void Print_Seq(
 			}
 
 			int aggregate = 0;
-			for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+			for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 				for(int j = 0; j < (*it)->my_tree->tips.at(i)->seq_evo.size(); aggregate++, j++) {
 					seq_out << stateCharacters[(*it)->my_tree->tips.at(i)->seq_evo.at(j).returnState()];
 					if(options->fileFormat == FASTAFormat) {
 						if((aggregate+1) % options->output_width == 0 && (aggregate+1) != (*it)->my_tree->tips.at(i)->seq_evo.size()) 
 							seq_out << endl;
 					}
-					if (options->output_file_flags[seqGenOptions::verb]) verbose_output << stateCharacters[(*it)->my_tree->tips.at(i)->seq_evo.at(j).returnState()];
+					if (options->output_file_flags[verb]) verbose_output << stateCharacters[(*it)->my_tree->tips.at(i)->seq_evo.at(j).returnState()];
 				}
 			}
 			seq_out << endl;
-			if (options->output_file_flags[seqGenOptions::verb]) verbose_output << endl;
+			if (options->output_file_flags[verb]) verbose_output << endl;
 		}
 		seq_out << endl;
-		if (options->output_file_flags[seqGenOptions::verb]) verbose_output << endl;
+		if (options->output_file_flags[verb]) verbose_output << endl;
 	}
 }      
 
-void WriteAncestralSequencesNode(
-								 vector<vector<char> >& print, 
-								 int *print_array_row, 
-								 TTree *tree, 
-								 int *nodeNo, 
-								 TNode *des, 
-								 char **anc_names
-								)
+void WriteAncestralSequencesNode(vector<vector<char> >& print, int *print_array_row, TTree *tree, 
+								 int *nodeNo, TNode *des, char **anc_names)
 { 
     int j;       
      
@@ -1285,13 +899,8 @@ void WriteAncestralSequencesNode(
     }   
 } 
 
-void Print_MSA(
-			  list<inTree*> inputTrees, 
-			  ostream& ma_out, 
-			  seqGenOptions *options, 
-			  int dataset_num,
-			  list<eventTrack*> events
-			 ) 
+void Print_MA(list<inTree*> inputTrees, ostream& ma_out, seqGenOptions *options, int dataset_num,
+			  list<eventTrack*> events) 
 {
 	int numTips;
 	
@@ -1327,102 +936,148 @@ void Print_MSA(
 	size_t this_iter_size;
 	char overflow_label = 'A';
 	list<string> overflows;
-	//////////
-	/// Filling the vector for printing.
-	//////////
-	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	for(list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		if((*it)->my_tree->treeEnv.front()->rateHetero == CodonRates) gene_flag = true;
 		if(options->writeAncestors) {
-			print_array_row = taxa_ptr = 0;
+			print_array_row = i = taxa_ptr = 0;
 			n = inputTrees.front()->my_tree->numTips+1;
 			sprintf(anc_names[0], "%d", n);
+			if((*it)->my_tree->global_arrays.at(0).action == 'd') { i=0; } else { i=1; }
+			while((*it)->my_tree->global_arrays.at(i).action != 'i' && i < (*it)->my_tree->global_arrays.size()) 
+				i++;			
 
-			vector<insertSite>::iterator bt;
-			list<siteModifier>::iterator ct;
-			vector<Site>::iterator taxon_iterator = (*it)->my_tree->root->seq_evo.begin();
-			bool isSite;
-			for (
-				 bt =  (*it)->my_tree->global_alignment->insert_sites.begin(); 
-				 bt != (*it)->my_tree->global_alignment->insert_sites.end(); 
-				 ++bt
-				) 
-			{
-				isSite = true;
-				//////////
-				/// If: site is related to this insertion site, need to check if deleted
-				/// Else: it is a gap character (a '+' if v is set)
-				//////////
-				if ( isAnc((*it)->my_tree->root, (*bt).fromAnc) ) {
-					for (ct = (*bt).modifiers.begin(); ct != (*bt).modifiers.end(); ++ct) {
-						if ( (*ct).action == 'd' )	// Site has potentially been removed.
-							if ( isAnc((*it)->my_tree->root, (*ct).fromAnc) ) isSite = false;
+			while(i < (*it)->my_tree->global_arrays.size()) {
+				if((*it)->my_tree->global_arrays.at(i).fromAnc == -1) {
+					label_print += " ";
+					if ((!(*it)->randomInvariableAssignment && (*it)->rootSeqType == RANDOM) ||
+						(!(*it)->my_tree->treeEnv.front()->invariableSites)) {
+						invar.push_back(0);
+					} else {
+						invar.push_back((*it)->my_tree->root->seq_evo.at(taxa_ptr).returnInvariableState());
 					}
-					//////////
-					/// If it isSite is still true after all checks, then return character.
-					//////////
-					if (taxon_iterator == (*it)->my_tree->root->seq_evo.end()) 
-						print.at(print_array_row).push_back('-');
-					else 
-						print.at(print_array_row).push_back ( 
-											   (
-											     (isSite) 
-											     ? stateCharacters.at((*taxon_iterator).returnState())
-											     : '-'
-											   )
-											  );
-					if (isSite) taxon_iterator++;
-				} else print.at(print_array_row).push_back( ((options->output_indel_gaps) ? '+' : '-') );
+					print.at(print_array_row).push_back(stateCharacters[(*it)->my_tree->root->seq_evo.at(taxa_ptr).returnState()]);
+					taxa_ptr++;
+				} else {
+					if(options->output_indel_gaps) print.at(print_array_row).push_back('+');
+					else print.at(print_array_row).push_back('-');
+					label_print += " ";
+					invar.push_back(0);
+				}
+				i++;
+				if (i < (*it)->my_tree->global_arrays.size())
+					while((*it)->my_tree->global_arrays.at(i).action != 'i' && i < (*it)->my_tree->global_arrays.size())
+						i++;
 			}
+
+			label_print.at(last_iter_size) = '|';
+			this_iter_size = label_print.size() - last_iter_size;
+			if((*it)->label.size() > (this_iter_size-2)) {
+				label_print.at(last_iter_size+this_iter_size/2-1) = ':';
+				label_print.at(last_iter_size+this_iter_size/2) = overflow_label;
+				overflow_label++;
+				overflows.push_back((*it)->label);
+			} else {
+				int placement = last_iter_size+(this_iter_size/2-(*it)->label.size()/2)+1;
+				for (size_t x = 0; x < (*it)->label.size(); x++, placement++)
+					label_print.at(placement) = (*it)->label.at(x);
+			}
+			last_iter_size = label_print.size();
+			label_print.at(label_print.size()-1) = '|';
 
 			print_array_row++;
 			if(!(*it)->my_tree->rooted)
-				WriteAncestralMSA(print, &print_array_row, (*it)->my_tree->root->branch0, &n, (*it)->my_tree, anc_names, options);
-			WriteAncestralMSA(print, &print_array_row, (*it)->my_tree->root->branch1, &n, (*it)->my_tree, anc_names, options);
-			WriteAncestralMSA(print, &print_array_row, (*it)->my_tree->root->branch2, &n, (*it)->my_tree, anc_names, options);
+				WriteAncestralMA(print, &print_array_row, (*it)->my_tree->root->branch0, &n, (*it)->my_tree, anc_names, options);
+			WriteAncestralMA(print, &print_array_row, (*it)->my_tree->root->branch1, &n, (*it)->my_tree, anc_names, options);
+			WriteAncestralMA(print, &print_array_row, (*it)->my_tree->root->branch2, &n, (*it)->my_tree, anc_names, options);
 		} else {
-			vector<TNode*>::iterator at;
-			vector<insertSite>::iterator bt;
-			list<siteModifier>::iterator ct;
-			vector<Site>::iterator taxon_iterator;
-			bool isSite;
-			int j = 0;	// This is a pointer to which print row we are filling. Follows tip ptr.
-			for (at = (*it)->my_tree->tips.begin(); at != (*it)->my_tree->tips.end(); ++at, j++) {
-				taxon_iterator = (*at)->seq_evo.begin();
-				for (
-					 bt = (*it)->my_tree->global_alignment->insert_sites.begin(); 
-					 bt != (*it)->my_tree->global_alignment->insert_sites.end(); 
-					 ++bt
-					) 
-				{
-					isSite = true;
-					//////////
-					/// If: site is related to this insertion site, need to check if deleted
-					/// Else: it is a gap character (a '+' if v is set)
-					//////////
-					if ( isAnc((*at), (*bt).fromAnc) ) {
-						for (ct = (*bt).modifiers.begin(); ct != (*bt).modifiers.end(); ++ct) {
-							if ( (*ct).action == 'd' )	// Site has potentially been removed.
-								if ( isAnc((*at), (*ct).fromAnc) ) isSite = false;
-						}
-						//////////
-						/// If it isSite is still true after all checks, then return character.
-						//////////
-						if (taxon_iterator == (*at)->seq_evo.end()) { 
-							print.at(j).push_back('-');
-							isSite = false;
+			vector<int> taxa_ptrs(numTips);
+			for(int x = 0; x < numTips; x++) { taxa_ptrs.at(x) = 0; }
+			i=0;
+			if((*it)->my_tree->global_arrays.at(0).action == 'd') i=0; else i=1;
+			bool push_back, label_push_back;
+			while(i < (*it)->my_tree->global_arrays.size()) {
+				push_back = label_push_back = false;
+				while((*it)->my_tree->global_arrays.at(i).action != 'i' && i < (*it)->my_tree->global_arrays.size()) 
+					i++;
+				for(int j = 0; j < numTips; j++) {
+					if(!isAnc((*it)->my_tree->tips.at(j),(*it)->my_tree->global_arrays.at(i).fromAnc)) {
+						if(options->output_indel_gaps) print.at(j).push_back('+');
+						else print.at(j).push_back('-');
+						if(!label_push_back) { label_print += " "; label_push_back = true; }
+					} else {	
+						// If it is an ancestor, and prev is insert, then this is an insert
+						if((*it)->my_tree->global_arrays.at(i-1).action == 'i') {
+							print.at(j).push_back(stateCharacters[(*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnState()]);
+							if ((*it)->my_tree->treeEnv.front()->invariableSites && !push_back &&
+								(*it)->my_tree->tips.at(j)->nodeEnv->invariableSites) {
+								invar.push_back((*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnInvariableState());
+								push_back = true;
+							}
+							if(!label_push_back) { label_print += " "; label_push_back = true; }
+							taxa_ptrs.at(j)++;
 						} else {
-							print.at(j).push_back ( 
-												   (
-												     (isSite) 
-												     ? stateCharacters.at((*taxon_iterator).returnState())
-												     : '-'
-												   )
-												  );
+							// Take care of deletions...
+							int keep = i;
+							i--;
+							while ((*it)->my_tree->global_arrays.at(i).action != 'i' && i >=0)
+								i--;
+							i++;
+							if (keep == i) {
+								if ((*it)->my_tree->global_arrays.at(i).fromAnc == (*it)->my_tree->tips.at(j)->tipNo) {
+									if (!label_push_back) { label_print += " "; label_push_back = true; }
+									print.at(j).push_back(stateCharacters[(*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnState()]);
+									if ((*it)->my_tree->treeEnv.front()->invariableSites && !push_back &&
+										(*it)->my_tree->tips.at(j)->nodeEnv->invariableSites) {
+										invar.push_back((*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnInvariableState());
+										push_back = true;
+									}
+									taxa_ptrs.at(j)++;
+								} else {
+									if (!label_push_back) { label_print += " "; label_push_back = true; }
+									print.at(j).push_back('-');
+								}
+							} else {
+								int deletion = 0;
+								while ((*it)->my_tree->global_arrays.at(i).action != 'i' && i < (*it)->my_tree->global_arrays.size()) {
+									if (isAnc((*it)->my_tree->tips.at(j),(*it)->my_tree->global_arrays.at(i).fromAnc)) {
+										deletion = 1;
+									}
+									i++;
+								}
+								if (deletion) {
+									if (!label_push_back) { label_print += " "; label_push_back = true; }
+									print.at(j).push_back('-');
+								} else {
+									print.at(j).push_back(stateCharacters[(*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnState()]);
+									if (!label_push_back) { label_print += " "; label_push_back = true; }
+									if ((*it)->my_tree->treeEnv.front()->invariableSites && !push_back &&
+										(*it)->my_tree->tips.at(j)->nodeEnv->invariableSites) {
+										invar.push_back((*it)->my_tree->tips.at(j)->seq_evo.at(taxa_ptrs.at(j)).returnInvariableState());
+										push_back = true;
+									}
+									taxa_ptrs.at(j)++;
+								}
+							}
 						}
-						if (isSite) taxon_iterator++;
-					} else print.at(j).push_back( ((options->output_indel_gaps) ? '+' : '-') );
+					}
 				}
+				if (!push_back) invar.push_back(0);
+				i++;
 			}
+			label_print.at(last_iter_size) = '|';
+			this_iter_size = label_print.size() - last_iter_size;
+			if((*it)->label.size() > (this_iter_size-2)) {
+				label_print.at(last_iter_size+this_iter_size/2-1) = ':';
+				label_print.at(last_iter_size+this_iter_size/2) = overflow_label;
+				overflow_label++;
+				overflows.push_back((*it)->label);
+			} else {
+				int placement = last_iter_size+(this_iter_size/2-(*it)->label.size()/2)+1;
+				for (size_t x = 0; x < (*it)->label.size(); x++, placement++)
+					label_print.at(placement) = (*it)->label.at(x);
+			}
+			last_iter_size = label_print.size();
+			label_print.at(label_print.size()-1) = '|';
 		}
 	}
 
@@ -1432,7 +1087,6 @@ void Print_MSA(
 	vector<bool> empty_columns(print.front().size(), false);
 	int num_empty_col = 0;
 	num_empty_col = trimMSA(print, empty_columns, options);
-	num_empty_col = 0;
 	size_t maxNameLen = 0;
 	int MA_length = print.at(0).size() - num_empty_col;
 	
@@ -1515,74 +1169,119 @@ void Print_MSA(
 	} else { cerr << "What format is this??? " << options->fileFormat << endl; exit(EXIT_FAILURE); }
 
 	//////////
+	/// VERBOSE-SPECIFIC OUTPUT
+	//////////
+	if (options->output_file_flags[verb]) {
+		int k = 0;
+		size_t m = 0;
+		verbose_output << "Multiple Alignment:" << endl;
+		while(m < print.at(0).size()) {
+			//////////
+			/// Labels
+			//////////
+			for(int j = 0; j < 10; j++) verbose_output << " ";
+			for(k = 0; (m + k) < print.at(0).size() && k < options->output_width; k++)
+				verbose_output << label_print.at(m+k);
+			verbose_output << endl;
+
+			//////////
+			/// Invariable
+			//////////
+			for(int j = 0; j < 10; j++) verbose_output << " ";
+			for(k = 0; (m + k) < print.at(0).size() && k < options->output_width; k++) 
+				verbose_output << invar.at(m+k);
+			verbose_output << endl;
+
+			for(size_t i = 0; i < print.size(); i++) {
+				int j;
+				if(options->writeAncestors)
+					for(j = 0; j < 9 && anc_names[i][j]; j++)
+						verbose_output << anc_names[i][j];
+				else
+					for(j = 0; j < 9 && j < inputTrees.front()->my_tree->names.at(i).size(); j++) 
+						verbose_output << inputTrees.front()->my_tree->names.at(i).at(j);
+				while(j++ < 10) verbose_output << " ";
+				for(k = 0; (m + k) < print.at(i).size() && k < options->output_width; k++) 
+					verbose_output << print.at(i).at(m+k);
+				verbose_output << endl;
+			}
+			m += options->output_width;
+			verbose_output << endl;
+		}
+	
+		if(overflows.size() > 0) {
+			verbose_output << "Labels for Short Sequences:" << endl;
+			char ch = 'A';
+			for(list<string>::iterator str = overflows.begin(); str != overflows.end(); str++) {
+				verbose_output << ":" << ch << ".\t" << *str << endl;
+			}
+		}
+		verbose_output << endl;
+	}
+
+	//////////
 	/// MSA format footer data.
 	//////////
 	if(options->fileFormat == NEXUSFormat) ma_out << "\t;" << endl << "END;" << endl << endl;
 	if(options->fileFormat == FASTAFormat) ma_out << endl;
 }
 
-void WriteAncestralMSA(
-					  vector<vector<char> >& print, 
-					  int *print_array_row, 
-					  TNode *des, 
-					  int *nodeNo, 
-					  TTree *tree, 
-					  char** anc_names, 
-					  seqGenOptions *options
-					 )
+void WriteAncestralMA(vector<vector<char> >& print, int *print_array_row, TNode *des, int *nodeNo, 
+					  TTree *tree, char** anc_names, seqGenOptions *options)
 {
+	int i, taxa_ptr, keep, found;
+	i = taxa_ptr = 0;
+	
 	if(des->tipNo == -1) {
 		(*nodeNo)++;
-		cerr << "des->ancestorNo: " << des->ancestorNo << "  nodeNo: " << *nodeNo << endl;
 		sprintf(anc_names[*print_array_row], "%d", *nodeNo);
 	} else {
 		strcpy(anc_names[*print_array_row], (tree->names.at(des->tipNo).c_str()));
 	}
 
-	vector<insertSite>::iterator bt;
-	list<siteModifier>::iterator ct;
-	vector<Site>::iterator taxon_iterator = des->seq_evo.begin();
-	bool isSite;
+	if(tree->global_arrays.at(0).action == 'd') { i=0; } else { i=1; }
+    while(tree->global_arrays.at(i).action != 'i' && i < tree->global_arrays.size()) i++;
+	
+    while(i < tree->global_arrays.size()) {
+		if(!isAnc(des,tree->global_arrays.at(i).fromAnc)) {
+			if(options->output_indel_gaps) print.at(*print_array_row).push_back('+');
+	    	else print.at(*print_array_row).push_back('-');
+		} else {
+	    	keep = i;
+	    	while(tree->global_arrays.at(--i).action == 'd' && i > 0) ;
+	    	i++;
+	    	if(keep == i) {
+	    		print.at(*print_array_row).push_back(stateCharacters[des->seq_evo.at(taxa_ptr).returnState()]);
+				taxa_ptr++;
+	    	} else {
+				found = 0;
+				while(i < keep && !found) {
+		    		if(isAnc(des,tree->global_arrays.at(i).fromAnc)) {
+	    				print.at(*print_array_row).push_back('-');
+						found = 1;
+		    		} else {
+		    			i++;
+		    		}
+				}
+				i=keep;
+				if(!found) {
+		    		print.at(*print_array_row).push_back(stateCharacters[des->seq_evo.at(taxa_ptr).returnState()]);
+		    		taxa_ptr++;
+				}
+	    	}
+		}
 
-	for (
-		 bt =  tree->global_alignment->insert_sites.begin(); 
-		 bt != tree->global_alignment->insert_sites.end(); 
-		 ++bt
-		) 
-	{
-		isSite = true;
-		//////////
-		/// If: site is related to this insertion site, need to check if deleted
-		/// Else: it is a gap character (a '+' if v is set)
-		//////////
-		if ( isAnc(des, (*bt).fromAnc) ) {
-			for (ct = (*bt).modifiers.begin(); ct != (*bt).modifiers.end(); ++ct) {
-				if ( (*ct).action == 'd' )	// Site has potentially been removed.
-					if ( isAnc(des, (*ct).fromAnc) ) isSite = false;
-			}
-			//////////
-			/// If it isSite is still true after all checks, then return character.
-			//////////
-			if (taxon_iterator == des->seq_evo.end()) {
-				print.at(*print_array_row).push_back('-');
-				isSite = false;
-			} else 
-				print.at(*print_array_row).push_back ( 
-									   (
-									     (isSite) 
-									     ? stateCharacters.at((*taxon_iterator).returnState())
-									     : '-'
-									   )
-									  );
-			if (isSite) taxon_iterator++;
-		} else print.at(*print_array_row).push_back( ((options->output_indel_gaps) ? '+' : '-') );
-	}
+		i++;
+		if (i < tree->global_arrays.size())
+			while(tree->global_arrays.at(i).action != 'i' && i <= tree->global_arrays.size()) 
+				i++;
+    }
 
     (*print_array_row)++;	// Go to the next row.
 
     if(des->tipNo==-1) {
-		WriteAncestralMSA(print, print_array_row, des->branch1, nodeNo, tree, anc_names, options);
-		WriteAncestralMSA(print, print_array_row, des->branch2, nodeNo, tree, anc_names, options);
+		WriteAncestralMA(print, print_array_row, des->branch1, nodeNo, tree, anc_names, options);
+		WriteAncestralMA(print, print_array_row, des->branch2, nodeNo, tree, anc_names, options);
     }
 }
 
@@ -1591,11 +1290,7 @@ void WriteAncestralMSA(
 /// in Print_MSA. If output_file_flags[trace] is unset, this function will not set empty_columns
 /// to true in any place, since each site is important for the trace file. 
 //////////
-size_t trimMSA(
-			   vector<vector<char> >& print, 
-			   vector<bool>& empty_columns, 
-			   seqGenOptions *options
-			  )
+size_t trimMSA(vector<vector<char> >& print, vector<bool>& empty_columns, seqGenOptions *options)
 {
 	size_t num_columns = print.front().size();	// Number of sequences
 	size_t num_rows = print.size(); // Number of columns.
@@ -1615,7 +1310,7 @@ size_t trimMSA(
 	if (empty_column_detected && !empty_column_warning_spooled) {
 		stringstream warning;
 		warning << "Output MSAs contain columns consisting of all gaps";
-		if (options->output_file_flags[seqGenOptions::trace]) {
+		if (options->output_file_flags[trace]) {
 			warning << ".";
 			empty_columns.assign(empty_columns.size(), false);
 			empty_column_detected = 0;
@@ -1631,29 +1326,28 @@ size_t trimMSA(
 void PrintTitle()
 {
 	cerr << "Sequence Generator - " << PROGRAM_NAME << VERSION_NUMBER << endl;
+	cerr << "Substitution Engine modified from Seq-Gen v1.3.2:" << endl;
 	cerr << "(c) 2005--present Cory Strope" << endl;
 }
 
 //////////
 /// Fast and dirty random seed algorithm; based off of NR's randqd1
 //////////
-unsigned int rand_seed()
+inline unsigned int rand_seed()
 {
 	static unsigned int u = (unsigned int)(time(NULL)+3*getpid());
 	return (u = u*1664525u + 1013904223u);
 }
 
-void setTRS(
-			list<inTree*>& inputTrees, 
-			seqGenOptions *options, 
-			double max_path_length, 
-			double min_branch
-		   ) 
+void setTRS(list<inTree*>& inputTrees, seqGenOptions *options, double max_path_length, double min_branch) 
 {
-	//////////
-	/// Calculate the max_path_length so that we can correctly place events relative to total sim time.
-	//////////
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	int num_discrete_steps = 1024;
+	while (( (min_branch > 0.01) ? 0.01 : min_branch) < (max_path_length / num_discrete_steps)) 
+		num_discrete_steps *= 2;
+	double step_size = max_path_length / num_discrete_steps;
+	if (step_size < 0.00001) step_size = 0.00001;	// To prevent underflow. For subst, 0=10e-06 //
+
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
 		if((*it)->my_tree->rooted) {
 			(*it)->TimeScale_Tree(max_path_length, (*it)->my_tree->root);
 		} else {
@@ -1661,70 +1355,65 @@ void setTRS(
 		}
 		(*it)->global_max_path_length = max_path_length;
 	}
-}
 
-void openOutputStreams(
-					   vector<ofstream*>& simulation_output_streams, 
-					   vector<bool> outfile_flags, 
-					   string& outfile_name_root,
-					   bool epc
-					  )
-{
-	string outfile_name;
-
-	if (epc) outfile_name_root += ".epc";
-	else outfile_name_root += ".sim";
-
-	if (outfile_flags[seqGenOptions::tree]) {
-		outfile_name = outfile_name_root + ".anc_tree";
-		simulation_output_streams.at(seqGenOptions::tree) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::tree) = NULL;
-	if (outfile_flags[seqGenOptions::root]) {
-		outfile_name = outfile_name_root + ".root";	
-		simulation_output_streams.at(seqGenOptions::root) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::root) = NULL;
-	if (outfile_flags[seqGenOptions::seq]) {
-		outfile_name = outfile_name_root + ".seq";
-		simulation_output_streams.at(seqGenOptions::seq) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::seq) = NULL;
-	if (outfile_flags[seqGenOptions::verb]) {
-		outfile_name = outfile_name_root + ".verb";
-		simulation_output_streams.at(seqGenOptions::verb) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::verb) = NULL;
-	if (outfile_flags[seqGenOptions::ma]) {
-		outfile_name = outfile_name_root + ".ma";
-		simulation_output_streams.at(seqGenOptions::ma) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::ma) = NULL;
-	if (outfile_flags[seqGenOptions::trace]) {
-		outfile_name = outfile_name_root + ".trace";
-		simulation_output_streams.at(seqGenOptions::trace) = new ofstream(outfile_name.c_str(), ios::trunc | ios::out);
-	} else simulation_output_streams.at(seqGenOptions::trace) = NULL;
-}
-
-void closeOutputStreams(
-						list<inTree*>& inputTrees,
-						vector<ofstream*>& simulation_output_streams, 
-						vector<bool> outfile_flags
-					   )
-{
-	size_t x = 1;
-
-	if (outfile_flags[seqGenOptions::tree])
-		delete simulation_output_streams.at(seqGenOptions::tree);
-	if (outfile_flags[seqGenOptions::seq]) 
-		delete simulation_output_streams.at(seqGenOptions::seq);
-	if (outfile_flags[seqGenOptions::root]) 
-		delete simulation_output_streams.at(seqGenOptions::root);
-	if (outfile_flags[seqGenOptions::ma]) 
-		delete simulation_output_streams.at(seqGenOptions::ma);
-	if (outfile_flags[seqGenOptions::verb]) 
-		delete simulation_output_streams.at(seqGenOptions::verb);
-	if (outfile_flags[seqGenOptions::trace]) {
-		//////////
-		/// If there are no inputTrees, this is a path proposal. Close trace stream or events are underreported.
-		//////////
-		for (list<inTree*>::iterator xt = inputTrees.begin(); xt != inputTrees.end(); ++xt, x++)
-			*simulation_output_streams.at(seqGenOptions::trace) << "GUIDE_TREE_PARTITION" << x << "=" << (*xt)->tree << ";" << endl;
-		delete simulation_output_streams.at(seqGenOptions::trace);
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); it++) {
+		(*it)->NudgeBranches(step_size,options->simulation_step_type);
+		if (options->simulation_step_type == TIME_RELATIVE_STEPS)
+			(*it)->my_tree->epoch_step_size = 1.0 / num_discrete_steps;
+		else if (options->simulation_step_type == DISCRETE_EVOLUTIONARY_STEPS) {
+			(*it)->my_tree->epoch_step_size = step_size;
+			(*it)->my_tree->trs_example_step_size = 1.0 / num_discrete_steps;
+		} else {		// GILLESPIE //
+			//////////
+			/// With Gillespie, epoch_step_size should be set as multiplier to dt?
+			//////////
+			(*it)->my_tree->epoch_step_size = 0.0;
+		}
 	}
 }
+
+void Leakage()
+{
+	long memoryLeaked = 0;
+
+	//	cout << "@" << endl;
+	//	cout << correct_motif_positions << " " << total_motif_positions << endl;
+	//	cout << (double)correct_motif_positions/(double)total_motif_positions << endl;
+	//	cout << num_template_violations << endl;
+	//	cout << "*" << endl;
+
+	memoryLeaked = 0
+				 + print_memory("<TNode>:", 		   TNode::howMany(), 			sizeof(TNode))
+				 + print_memory("<inClade>:", 		   inClade::howMany(), 			sizeof(inClade))
+				 + print_memory("<inTree>:", 		   inTree::howMany(), 			sizeof(inTree))
+				 + print_memory("<TTree>:", 		   TTree::howMany(), 			sizeof(TTree))
+				 + print_memory("<Branch>:", 		   Branch::howMany(), 			sizeof(Branch))
+				 + print_memory("<inMotif>:", 		   inMotif::howMany(), 			sizeof(inMotif))
+				 + print_memory("<siteRegEx>:", 	   siteRegEx::howMany(), 		sizeof(siteRegEx))
+				 + print_memory("<Sequence>:", 		   Sequence::howMany(), 		sizeof(Sequence))
+				 + print_memory("<Site>:", 			   Site::howMany(), 			sizeof(Site))
+				 + print_memory("<motifSite>:", 	   motifSite::howMany(), 		sizeof(motifSite))
+				 + print_memory("<siteProperties>:",   siteProperties::howMany(),   sizeof(siteProperties))
+				 + print_memory("<activeProperties>:", activeProperties::howMany(), sizeof(siteProperties))
+				 + print_memory("<seqGenOptions>:",    seqGenOptions::howMany(), 	sizeof(seqGenOptions))
+				 + print_memory("<Indel>:", 		   Indel::howMany(), 			sizeof(Indel))
+				 + print_memory("<Substitution>:", 	   Substitution::howMany(), 	sizeof(Substitution))
+				 + print_memory("<Insertion>:", 	   Insertion::howMany(), 		sizeof(Insertion))
+				 + print_memory("<Deletion>:", 		   Deletion::howMany(), 		sizeof(Deletion))
+				 + print_memory("<varSite>:", 		   varSite::howMany(), 			sizeof(varSite))
+				 + print_memory("<eventTrack>:", 	   eventTrack::howMany(), 		sizeof(eventTrack))
+				 ;
+
+	cout << "Total memory leaked = " << memoryLeaked << " bytes." << endl << endl;
+	cout << "Number of inserted positions: " << num_insert << " insertions for " << num_inserted_positions << endl;
+	cout << "Number of deleted positions:  " << num_delete << " deletions for  " << num_deleted_positions << endl;
+}
+
+long print_memory(string message, size_t howMany, int object_size)
+{
+	cout << setw(20) << message << setw(10) << howMany << " x " << setw(5) << object_size
+		 << " = " << setw(10) << howMany*object_size << endl;
+	
+	return howMany*object_size;
+}
+

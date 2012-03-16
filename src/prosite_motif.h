@@ -1316,4 +1316,4 @@ void Populate_Prosite_Motifs (vector<string>& prosite_motifs)
 	prosite_motifs.push_back("PS60030;Y-G-N-G-[VL]-x-C-x(4)-C;");
 }
 
-#endif
+#endif;
