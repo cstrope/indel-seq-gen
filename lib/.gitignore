@@ -1,2 +1,4 @@
 *.o
 *.a
+getopt.h
+unistd.h
