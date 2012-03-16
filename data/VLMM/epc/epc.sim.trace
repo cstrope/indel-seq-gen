@@ -1,0 +1,10 @@
+Taxa bit representation:
+T_1 10
+T_2 01
+Clade List (<taxon members> = <clade name>): 
+
+>Dataset_0
+[-1,X,0,11,XX,X,8.16392,0,-1,0]
+[-1,X,0,01,XX,X,7.35498,0,-1,0]
+[-1,X,0.1,10,XX,X,7.35498,0,-1,0]
+GUIDE_TREE_PARTITION1=(T_1:0.1,T_2:0);

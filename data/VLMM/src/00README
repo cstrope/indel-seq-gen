@@ -1,0 +1,86 @@
+
+PST source code
+===============
+
+Written by: Gill Bejerano
+Version:    2.01,  9/2003
+
+
+Description
+-----------
+
+Briefly, a PST (Probabilistic/Prediction Suffix Tree) is a data
+structure that allows an efficient representation of a variable memory
+Markov model (VMM, also known as VLMC, variable length Markov chain).
+
+For a more detailed description, as well as literature pointers
+please see the application note under the doc/ directory,
+which accompanies the code.
+
+That document describes the four provided executables:
+train, predict, emit, 2pfa.
+Compile them all using 'make'
+For each, typing its name alone will give a short syntax summary.
+
+Additional relevant publications are available at
+http://www.cs.huji.ac.il/~jill/publications.html
+As an exposition it is recommended to start from either the short or long
+Bejerano and Yona papers.
+
+Notes
+-----
+
+Both training and test sequence files must be in FASTA format
+(see http://tigrblast.tigr.org/web-hmm/fasta.html )
+Of course the sequences themselves can be over any alphabet you define!
+
+In "train", the second algorithmic variant is currently hard wired for 
+proteins, as it contains amino acid prior values derived from BLOSUM.
+However, these can be easily replaced with a different set of priors
+over the desired alphabet.
+
+In "2pfa", the stationary distribution of the resulting PFA is obtained
+by LU decomposition of the PFA transition matrix.
+See Chapter 2 of W.H. Press et al (1993) Numerical recipes in C: the art 
+of scientific computing. 2nd edition, Cambridge.
+
+Example
+-------
+
+In the example/ directory you will find the following files,
+which relate to Figure 1 of the application note found in the doc/ directory:
+
+inputs:
+ab.bin    - the binary alphabet
+bin.fas   - a simple string which we will use for training
+new.fas   - a simpler string which will be used for prediction
+
+(you can copy these to a new directory, say example2, and compare results)
+
+training:
+in the example/ directory, the following command line
+../train ab.bin bin.fas @ @ bin.pst bin.stats:100 @ 1 .05 0 0 1.5 3
+yields the following output files:
+bin.pst   - the pst file that results from training a VMM from bin.fas
+bin.stats - summary statistics of the PST
+
+This PST is drawn in Fig. 1 of the application note.
+
+prediction:
+../predict bin.pst new.fas @ new.long @ @
+yields the output file
+new.long  - which holds P_M(1010), as in the caption of Figure 1.
+
+conversion to PFA:
+../2pfa bin.pst bin.pfa
+bin.pfa   - The PFA equivalent of the PST bin.pst (see Figure 1, right)
+            The probabilities to the right of the labels are the stationary
+            distribution probabilities of the nodes.
+
+Contact information
+-------------------
+Gill Bejerano
+e-mail: jill@soe.ucsc.edu
+web: http://www.cs.huji.ac.il/~jill
+
+-=-

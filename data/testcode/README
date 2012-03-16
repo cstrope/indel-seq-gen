@@ -1,0 +1,7 @@
+2 outstanding issues:
+
+Deletions are incorrectly recorded: 
+Some sites can undergo double deletions (2 deletions from the same ancestral lineage)
+
+Insertions do not land in on_site_...: 
+Templates such as x(0,2) that begin without residues from the root sequence are not found for an insertion.

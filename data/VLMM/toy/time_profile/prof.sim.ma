@@ -1,0 +1,4 @@
+ 2 10
+T_1       ATCAGATTTA
+T_2       AGCAGATTTA
+

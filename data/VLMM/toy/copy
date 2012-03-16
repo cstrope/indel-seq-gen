@@ -1,0 +1,641 @@
+Order of Markov chain: 3.
+	//AAA
+	triplet_pi.push_back(0.015813251);
+	triplet_pi_inv.push_back(63.238103284391);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AAC
+	triplet_pi.push_back(0.015876252);
+	triplet_pi_inv.push_back(62.9871584300879);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AAG
+	triplet_pi.push_back(0.015687249);
+	triplet_pi_inv.push_back(63.7460398569564);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AAT
+	triplet_pi.push_back(0.015624248);
+	triplet_pi_inv.push_back(64.0030803402506);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ACA
+	triplet_pi.push_back(0.015876252);
+	triplet_pi_inv.push_back(62.9871584300879);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ACC
+	triplet_pi.push_back(0.015939504);
+	triplet_pi_inv.push_back(62.7372093886987);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ACG
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ACT
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AGA
+	triplet_pi.push_back(0.015687249);
+	triplet_pi_inv.push_back(63.7460398569564);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AGC
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AGG
+	triplet_pi.push_back(0.015562251);
+	triplet_pi_inv.push_back(64.2580562413497);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//AGT
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ATA
+	triplet_pi.push_back(0.015624248);
+	triplet_pi_inv.push_back(64.0030803402506);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ATC
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ATG
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//ATT
+	triplet_pi.push_back(0.015437504);
+	triplet_pi_inv.push_back(64.7773111508182);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CAA
+	triplet_pi.push_back(0.015876252);
+	triplet_pi_inv.push_back(62.9871584300879);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CAC
+	triplet_pi.push_back(0.015939504);
+	triplet_pi_inv.push_back(62.7372093886987);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CAG
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CAT
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CCA
+	triplet_pi.push_back(0.015939504);
+	triplet_pi_inv.push_back(62.7372093886987);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CCC
+	triplet_pi.push_back(0.016003008);
+	triplet_pi_inv.push_back(62.4882522085848);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CCG
+	triplet_pi.push_back(0.015812496);
+	triplet_pi_inv.push_back(63.2411227171219);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CCT
+	triplet_pi.push_back(0.015748992);
+	triplet_pi_inv.push_back(63.4961272442071);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CGA
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CGC
+	triplet_pi.push_back(0.015812496);
+	triplet_pi_inv.push_back(63.241122717122);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CGG
+	triplet_pi.push_back(0.015624252);
+	triplet_pi_inv.push_back(64.0030639546776);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CGT
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CTA
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CTC
+	triplet_pi.push_back(0.015748992);
+	triplet_pi_inv.push_back(63.4961272442071);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CTG
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//CTT
+	triplet_pi.push_back(0.015499008);
+	triplet_pi_inv.push_back(64.5202583287911);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GAA
+	triplet_pi.push_back(0.015687249);
+	triplet_pi_inv.push_back(63.7460398569564);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GAC
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GAG
+	triplet_pi.push_back(0.015562251);
+	triplet_pi_inv.push_back(64.2580562413497);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GAT
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GCA
+	triplet_pi.push_back(0.015749748);
+	triplet_pi_inv.push_back(63.4930793813336);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GCC
+	triplet_pi.push_back(0.015812496);
+	triplet_pi_inv.push_back(63.241122717122);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GCG
+	triplet_pi.push_back(0.015624252);
+	triplet_pi_inv.push_back(64.0030639546776);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GCT
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GGA
+	triplet_pi.push_back(0.015562251);
+	triplet_pi_inv.push_back(64.2580562413497);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GGC
+	triplet_pi.push_back(0.015624252);
+	triplet_pi_inv.push_back(64.0030639546776);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GGG
+	triplet_pi.push_back(0.015438249);
+	triplet_pi_inv.push_back(64.7741852071436);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GGT
+	triplet_pi.push_back(0.015376248);
+	triplet_pi_inv.push_back(65.0353714378176);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GTA
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GTC
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GTG
+	triplet_pi.push_back(0.015376248);
+	triplet_pi_inv.push_back(65.0353714378176);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//GTT
+	triplet_pi.push_back(0.015314496);
+	triplet_pi_inv.push_back(65.2976108387765);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TAA
+	triplet_pi.push_back(0.015624248);
+	triplet_pi_inv.push_back(64.0030803402506);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TAC
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TAG
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TAT
+	triplet_pi.push_back(0.015437504);
+	triplet_pi_inv.push_back(64.7773111508182);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TCA
+	triplet_pi.push_back(0.015686496);
+	triplet_pi_inv.push_back(63.7490998627099);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TCC
+	triplet_pi.push_back(0.015748992);
+	triplet_pi_inv.push_back(63.4961272442071);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TCG
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TCT
+	triplet_pi.push_back(0.015499008);
+	triplet_pi_inv.push_back(64.5202583287911);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TGA
+	triplet_pi.push_back(0.015499752);
+	triplet_pi_inv.push_back(64.517161306839);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TGC
+	triplet_pi.push_back(0.015561504);
+	triplet_pi_inv.push_back(64.2611408254626);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TGG
+	triplet_pi.push_back(0.015376248);
+	triplet_pi_inv.push_back(65.0353714378176);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TGT
+	triplet_pi.push_back(0.015314496);
+	triplet_pi_inv.push_back(65.2976108387765);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TTA
+	triplet_pi.push_back(0.015437504);
+	triplet_pi_inv.push_back(64.7773111508182);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TTC
+	triplet_pi.push_back(0.015499008);
+	triplet_pi_inv.push_back(64.5202583287911);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TTG
+	triplet_pi.push_back(0.015314496);
+	triplet_pi_inv.push_back(65.2976108387765);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();
+	//TTT
+	triplet_pi.push_back(0.015252992);
+	triplet_pi_inv.push_back(65.5609076566748);
+	pi_tmp.push_back(0.251);
+	pi_tmp.push_back(0.252);
+	pi_tmp.push_back(0.249);
+	pi_tmp.push_back(0.248);
+	pi.push_back(pi_tmp);
+	for (vector<double>::iterator it = pi_tmp.begin(); it != pi_tmp.end(); ++it) (*it) = 1.0/(*it);
+	pi_inv.push_back(pi_tmp); pi_tmp.clear();

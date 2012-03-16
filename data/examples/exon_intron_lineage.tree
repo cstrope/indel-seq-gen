@@ -1,0 +1,14 @@
+[:exon(,,)]"Partition_1"{9,0.031/0.01,codonLD}
+(
+ (Taxon1:0.3,Taxon2:0.14
+ )Clade1_1:0.5,
+ (Taxon3:0.34, Taxon4:0.5
+ ):0.12
+);
+[:intron]"Partition_2"#r,b0.5#{9,0.1,idLD}
+(
+ (Taxon1:0.3,Taxon2:0.14
+ )Clade1_2:0.5,
+ (Taxon3:0.34, Taxon4:0.5
+ ):0.12
+);
