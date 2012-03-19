@@ -379,13 +379,25 @@ Statistics::MCMC::resample_subpath(
 	/// Set path pointers in sequence time.
 	//////////
 	//// 3-8-2012: SPEED THIS UP!!!! e_E CAN BE SET starting FROM E_B.
+cerr << "=================------------------=====================++++++++++++++++++++================" << endl;
+	cerr << "e_B ";
 	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
+	cerr << (*e_B)->Print_Event() << endl;
+	cerr << "e_E ";
 	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
+	cerr << (*e_E)->Print_Event() << endl;
 
+	cerr << "e_E2-";
 	TNode *i_E2;
 	list<eventTrack*>::iterator e_E2;
 	i_E2 = tree->copyNode(i_B);
+	cerr << "-";
+	e_B--;
+	cerr << "-e_B:" << (*e_B)->Print_Event();
 	e_E2 = proposed->setSequenceAtTimePoint(tree, i_E2, t_E, e_B, &(proposed->epc_events));
+	cerr << "-e_E2:" << (*e_E2)->Print_Event();
+	e_B++;
+cerr << "=================------------------=====================++++++++++++++++++++================" << endl;
 
 	vector<Site>::iterator at, bt;
 	at = i_E->seq_evo.begin();
@@ -404,6 +416,8 @@ Statistics::MCMC::resample_subpath(
 		cerr << i_E2->printSequence(true) << endl;
 		exit(0);
 	}
+
+	cerr << "back to original work." << endl;
 
 	if ( e_E == proposed->epc_events.end() ) post_subpath_event_time = T;
 	else { e_E++; post_subpath_event_time = (*e_E)->eventTime; e_E--; }
@@ -500,9 +514,6 @@ Statistics::MCMC::resample_subpath(
 
 	// Emulate the two subpaths to get their forward probability (P(p)) and their EPC probabilities
 	// (J(p|p')) necessary to calculate r = min{1, (P(p')/J(p'|p)) / (P(p)/J(p|p'))
-//	double logRN = log(rndu());
-//	double log_r = logr(cP, cJ, pP, pJ);
-//	bool accept_new_path = ( (logRN < log_r ) ? true : false );
 	bool accept_new_path = accept_proposal(cP, cJ, pP, pJ);
 
 	// Now that events have been emulated, probabilities have been calculated, and path has been accepted,
@@ -603,8 +614,6 @@ Statistics::MCMC::resample_subpath(
 
 	cout << "  " << current->epc_events.size()-2;
 
-	cerr << "DONE." << endl;
-	
 	return return_probability;
 }
 

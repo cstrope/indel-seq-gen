@@ -666,14 +666,6 @@ PathProposal::setSequenceAtTimePoint(
 									 list<eventTrack*> *events
 									)
 {
-
-	if ( (*et)->ID == -1 && (*et)->eventTime > to_time ) { 	// Not likely to be a great solution if there are more than 1 branch.
-		et = (*events).end(); 	// Sets et 1 event past the last event.
-		et--; 					// Set to last event.
-		cerr << "Returning immediately from setSequenceAtTimePoint." << endl; 
-		return et; 
-	}
-
 	while ( (*et)->ID == -1 ) ++et;
 	while ( et != (*events).end() && ((*et)->eventTime < to_time)) {	// Check if et is at end, short-circuit and avoid seg fault.
 		if ( (*et)->ID == -1 ) { 
