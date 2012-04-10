@@ -372,52 +372,38 @@ Statistics::MCMC::resample_subpath(
 
 	// Set up nodes
 	i_B = tree->copyNode(i_0);
-	i_E = tree->copyNode(i_0);
+//	i_E = tree->copyNode(i_0);
 	work = tree->copyNode(i_0);
 
 	//////////
 	/// Set path pointers in sequence time.
 	//////////
 	//// 3-8-2012: SPEED THIS UP!!!! e_E CAN BE SET starting FROM E_B.
-cerr << "=================------------------=====================++++++++++++++++++++================" << endl;
-	cerr << "e_B ";
 	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
-	cerr << (*e_B)->Print_Event() << endl;
-	cerr << "e_E ";
-	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
-	cerr << (*e_E)->Print_Event() << endl;
+//	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
 
-	cerr << "e_E2-";
-	TNode *i_E2;
-	list<eventTrack*>::iterator e_E2;
-	i_E2 = tree->copyNode(i_B);
-	cerr << "-";
+	i_E = tree->copyNode(i_B);
 	e_B--;
-	cerr << "-e_B:" << (*e_B)->Print_Event();
-	e_E2 = proposed->setSequenceAtTimePoint(tree, i_E2, t_E, e_B, &(proposed->epc_events));
-	cerr << "-e_E2:" << (*e_E2)->Print_Event();
+	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, e_B, &(proposed->epc_events));
 	e_B++;
-cerr << "=================------------------=====================++++++++++++++++++++================" << endl;
 
-	vector<Site>::iterator at, bt;
-	at = i_E->seq_evo.begin();
-	bt = i_E2->seq_evo.begin();
-	bool states_differ = false;
-	int sequence_site = 0;
-	for (; at != i_E->seq_evo.end(); ++at, ++bt, ++sequence_site) {
-		if ((*at).returnState() != (*bt).returnState()) {
-			cerr << "States differ between sequences at site " << sequence_site << "." << endl;
-			states_differ = true;
-		}
-	}
-	if (e_E != e_E2) { cerr << "two approaches not equivalent." << endl; }
-	if (states_differ) {
-		cerr << i_E->printSequence(true) << endl;
-		cerr << i_E2->printSequence(true) << endl;
-		exit(0);
-	}
-
-	cerr << "back to original work." << endl;
+	//vector<Site>::iterator at, bt;
+	//at = i_E->seq_evo.begin();
+	//bt = i_E2->seq_evo.begin();
+	//bool states_differ = false;
+	//int sequence_site = 0;
+	//for (; at != i_E->seq_evo.end(); ++at, ++bt, ++sequence_site) {
+	//	if ((*at).returnState() != (*bt).returnState()) {
+	//		cerr << "States differ between sequences at site " << sequence_site << "." << endl;
+	//		states_differ = true;
+	//	}
+	//}
+	//if (e_E != e_E2) { cerr << "two approaches not equivalent." << endl; }
+	//if (states_differ) {
+	//	cerr << i_E->printSequence(true) << endl;
+	//	cerr << i_E2->printSequence(true) << endl;
+	//	exit(0);
+	//}
 
 	if ( e_E == proposed->epc_events.end() ) post_subpath_event_time = T;
 	else { e_E++; post_subpath_event_time = (*e_E)->eventTime; e_E--; }

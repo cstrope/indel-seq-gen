@@ -35,6 +35,8 @@ extern int changed_site;
 extern bool optimize;
 extern bool Pc, Qd, nij;
 
+double CUM_SUM_CHK = 0;
+
 int TauIJ_calls = 0;
 int TauIJ2_calls = 0;
 
@@ -947,24 +949,35 @@ TNode::calculateEndpointRateAwayFromSite(
 	forward_away_it = (*evolver_it).forward_rate_away.begin();
 
 	unsigned int j, k;
+	double CHK_PIK, CHK_PJK;
 	if ( (*target_it).isDefinedByUser() ) {
 		k = (*target_it).returnState();
 		(*evolver_it).Pik0 = rate_matrix->Pij.at((*evolver_it).returnCategory()).at(from(i)+to(k));
 		if ((*evolver_it).Pik0 == 0) (*evolver_it).Pik0=1e-10;	/// Prevent division by zero. ///
 		Pik_inverse = 1.0/(*evolver_it).Pik0;
+		CHK_PIK = 1.0/ (branch->rates->Pij.at((*evolver_it).returnCategory()).at(from(i)+to(k)) );
 		for (j = 0; j < numStates; j++) {
 			if (i != j) {
 				/// With the introduction of the rate_matrix passing into this function, there no longer needs to be a choice for which matrix to use.
 				Qij = rate_matrix->Qij.at(from(i)+to(j));
 				Qij *= rate_matrix->catRate.at((*evolver_it).returnCategory());
 				(*evolver_it).Pjk0.at(j) = rate_matrix->Pij.at((*evolver_it).returnCategory()).at(from(j)+to(k));
-				if (profile) 
+				CHK_PJK = branch->rates->Pij.at((*evolver_it).returnCategory()).at(from(j)+to(k));
+				if (profile) {
+					cerr << "NIJ: ";
 					cerr << "state: " << stateCharacters.at((*evolver_it).returnState()) 
-						 << "->" << stateCharacters.at(j) << "  s_a: " << sum_away << " += " 
+						 << "->" << stateCharacters.at(j) << "|" << stateCharacters.at(k) 
+						 << "  s_a: " << sum_away << " += " 
 						 << Qij << " * " 
 						 << (*evolver_it).Pjk0.at(j) 
 						 << " * " << Pik_inverse << endl;	//XOUT
+
+					cerr << "PIJ: ";
+					cerr << Qij << " * " 
+						 << CHK_PJK<< " * " << CHK_PIK << endl;	//XOUT
+				}
 				sum_away += Qij * ( (*evolver_it).Pjk0.at(j) * Pik_inverse );
+				CUM_SUM_CHK += Qij * CHK_PIK * CHK_PJK;
 				(*forward_site_sum_away) += Qij;
 				(*forward_away_it) = Qij;
 			} else (*forward_away_it) = 0;
@@ -1043,8 +1056,42 @@ TNode::calculateEndpointRateAwayFromSequence(
 											)
 {
 	double site_sum_away = 0, cumulative_site_sum_away = 0, forward_site_sum_away = 0;
-	setRateAway(TIME_RELATIVE_STEPS);	// Resets site_sum_away, allocates e_QijDt.
 	unsigned int end_site;
+	vector<Site>::iterator target_it = k_0->seq_evo.begin();
+
+	RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
+
+	// Checking the cumulative sum with Pij versus Nij.
+	int seq_pos = 0;
+	CUM_SUM_CHK = 0;
+	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
+		update_rate_matrices(&temp_rates, it, T, at_dt);
+		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
+	}
+	
+	// Set values needed for calculating Forward and EPC log probabilities.
+	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
+	evolvingSequence->Qidot = forward_site_sum_away;
+	cerr << " Qi.|k(t): " << evolvingSequence->Qidot_k__T__ << "         Qi: " << evolvingSequence->Qidot << endl; //XOUT
+	cerr << "CUM_SUM_CHK = " << CUM_SUM_CHK << endl;
+
+	return cumulative_site_sum_away;
+}
+
+RateMatrix
+TNode::initialize_rate_matrices(
+							 TTree *tree,
+							 TNode *k_0,
+							 double T,
+							 double at_dt,
+							 int event_site
+							)
+{
+	RateMatrix initial_rates(*branch->rates);
+	double site_sum_away = 0, cumulative_site_sum_away = 0, forward_site_sum_away = 0;
+	unsigned int end_site;
+
+	setRateAway(TIME_RELATIVE_STEPS);	// Resets site_sum_away, allocates e_QijDt.
 
 	// THE -I OPTION
 	//if (acc == independent_sites) rasmus_independent_proposals = true;		rasmus  = 0
@@ -1076,7 +1123,6 @@ TNode::calculateEndpointRateAwayFromSequence(
 	}
 
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
-	RateMatrix temp_rates(*branch->rates);	// Copy constructor. This decl. keeps constant all data that is global, changing site-specific data in loop.
 	int seq_pos = 0;
 	if (nij) {
 		vector<double> nij_row_sum (numStates, 0);
@@ -1087,7 +1133,7 @@ TNode::calculateEndpointRateAwayFromSequence(
 			(*jt) += (*it);
 		}
 
-		vector<double>::iterator pt = temp_rates.Pij.at(0).begin();	// Using nij, cannot use categories... yet. //
+		vector<double>::iterator pt = initial_rates.Pij.at(0).begin();	// Using nij, cannot use categories... yet. //
 		jt = nij_row_sum.begin();
 		i = 0;
 		for (vector<double>::iterator it = branch->nij.begin(); it != branch->nij.end(); ++it, ++pt, ++i) {
@@ -1095,19 +1141,22 @@ TNode::calculateEndpointRateAwayFromSequence(
 			(*pt) = (*it) / (*jt);
 		}
 
-		pt = temp_rates.Pij.at(0).begin();
-		i = 0;
+		branch->rates->setPij(seq_evo.front(), branch->S*(T-at_dt), nodeEnv->rateHetero);	// setPij dependes on the root Matrix
+
+		pt = initial_rates.Pij.at(0).begin();
 		cerr << endl << "Transition Probabilities using nij." << endl;
-		for (; pt != temp_rates.Pij.at(0).end(); ++pt, ++i) {
-			if (i % numStates == 0) cerr << endl;
-			cerr << (*pt) << " ";
+		for (i = 0; i < numStates; ++i) {
+			for (int j = 0; j < numStates; ++j) {
+				cerr << branch->rates->Pij.at(0).at(i*numStates+j) << " (" << initial_rates.Pij.at(0).at(i*numStates+j) << ") " << endl;
+			}
+			cerr << endl;
 		}
 		//exit(0);
 	} else if (!Pc) {	// Independent sites, need to scale the branch length for dependent sites.
 		// setPij uses the Root and Cijk matrices, already set up for branch->rates
 		branch->rates->setPij(seq_evo.front(), branch->S*(T-at_dt), nodeEnv->rateHetero);	// setPij dependes on the root Matrix
-		// Transfer independent rates into the temp_rates holding the dependent Qij's.
-		vector<vector<double> >::iterator ppt = temp_rates.Pij.begin(); 
+		// Transfer independent rates into the initial_rates holding the dependent Qij's.
+		vector<vector<double> >::iterator ppt = initial_rates.Pij.begin(); 
 		for (vector<vector<double> >::iterator PPt = branch->rates->Pij.begin(); PPt != branch->rates->Pij.end(); ++PPt, ++ppt) {
 			vector<double>::iterator pt = (*ppt).begin();
 			for(vector<double>::iterator Pt = (*PPt).begin(); Pt != (*PPt).end(); ++Pt, ++pt) {
@@ -1115,35 +1164,35 @@ TNode::calculateEndpointRateAwayFromSequence(
 			}
 		}
 	}
-
-	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
-		if (Qd && Pc) {
-			/// Calculating and passing the site-specific transition probabilities.
-			temp_rates.Qij = (*it).e_QijDt;							// Entire Qij matrix. For exponentiating.
-			temp_rates.SetupMatrix(false);							// Set Cijk matrix, for exponentiating.
-			temp_rates.setPij((*it), (T-at_dt), nodeEnv->rateHetero); // Exponentiation.
-			calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
-		} else if (!Qd && Pc) {
-			temp_rates.Qij = (*it).e_QijDt;							// Entire Qij matrix. For exponentiating.
-			temp_rates.SetupMatrix(false);							// Set Cijk matrix, for exponentiating.
-			temp_rates.setPij((*it), (T-at_dt), nodeEnv->rateHetero); // Exponentiation.
-			temp_rates.Qij = branch->rates->Qij;					// Reset dependent rates to independent rates.
-			calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
-		} else if (Qd && !Pc) {	// Qd set, !Pc set above to branch->rates so calculation of matrix does not happen every step.
-			// Fast option
-			calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
-		} else {
-			/// Passing global probabilities. This route is a great deal faster.
-			calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, branch->rates);
-		}
-	}
 	
-	// Set values needed for calculating Forward and EPC log probabilities.
-	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
-	evolvingSequence->Qidot = forward_site_sum_away;
-	cerr << " Qi.|k(t): " << evolvingSequence->Qidot_k__T__ << "         Qi: " << evolvingSequence->Qidot << endl; //XOUT
+	
+	return initial_rates;
+}
 
-	return cumulative_site_sum_away;
+void
+TNode::update_rate_matrices(
+							RateMatrix *rates,
+							vector<Site>::iterator site,
+							double T,
+							double at_dt
+						   )
+{
+	if (Qd && Pc) {
+		/// Calculating and passing the site-specific transition probabilities.
+		(*rates).Qij = (*site).e_QijDt;							// Entire Qij matrix. For exponentiating.
+		(*rates).SetupMatrix(false);							// Set Cijk matrix, for exponentiating.
+		(*rates).setPij((*site), (T-at_dt), nodeEnv->rateHetero); // Exponentiation.
+	} else if (!Qd && Pc) {
+		(*rates).Qij = (*site).e_QijDt;							// Entire Qij matrix. For exponentiating.
+		(*rates).SetupMatrix(false);							// Set Cijk matrix, for exponentiating.
+		(*rates).setPij((*site), (T-at_dt), nodeEnv->rateHetero); // Exponentiation.
+		(*rates).Qij = branch->rates->Qij;					// Reset dependent rates to independent rates.
+	} else if (Qd && !Pc) {	// Qd set, !Pc set above to branch->rates so calculation of matrix does not happen every step.
+		// Fast option
+	} else {
+		/// Passing global probabilities. This route is a great deal faster.
+	}
+
 }
 
 void 
@@ -1675,13 +1724,30 @@ Branch::update_nij(
 }
 
 void
-Branch::print_nij()
+Branch::print_nij(bool absolute)
 {
 	int num_print = 0;
-	cerr << "nij: ";
-	for (vector<double>::iterator it = nij.begin(); it != nij.end(); ++it, ++num_print) {
-		if (num_print % numStates == 0) cerr << endl;
-		cerr << (*it) << " ";
+	cerr << endl << "nij (" << ( (absolute) ? "ABSOLUTE" : "RELATIVE" ) << " counts):" << endl;
+	if (absolute) {
+		for (vector<double>::iterator it = nij.begin(); it != nij.end(); ++it, ++num_print) {
+			if (num_print % numStates == 0) cerr << endl;
+			cerr << (*it) << " ";
+		}
+	} else {  // Scaled //
+		vector<double> row_sum (numStates, 0);
+		vector<double>::iterator nt = row_sum.begin();
+		for (vector<double>::iterator it = nij.begin(); it != nij.end(); ++it, ++num_print) {
+			if (num_print % numStates == 0 && num_print != 0) {
+				++nt;
+			}
+			(*nt) += (*it);
+		}
+		nt = row_sum.begin();
+		num_print = 0;
+		for (vector<double>::iterator it = nij.begin(); it != nij.end(); ++it, ++num_print) {
+			if (num_print % numStates == 0 && num_print != 0) { cerr << endl; ++nt; }
+			cerr << (*it)/(*nt) << " ";
+		}
 	}
 }
 

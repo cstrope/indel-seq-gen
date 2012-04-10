@@ -229,7 +229,8 @@ public:
 	double TauIJ3 (TTree *tree, int env_index, int i_seq_index, short residue_i, short residue_j);
 	void set_site_window(int order, int *start_site, unsigned int *end_site);
 	void site_specific_Qmat(TTree *tree, int start_site, unsigned int end_site);
-
+	RateMatrix initialize_rate_matrices(TTree *tree, TNode *des, double T, double at_dt, int event_site);
+	void update_rate_matrices(RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
 	double Rij (TTree *tree, unsigned int position, unsigned int end_position);
 	void resetSequence(TNode *node);
 	void printForwardRateAway();
@@ -277,7 +278,7 @@ public:
 	double anc_length() { return length0 * perturbation; }
 	double des_length(int des) { return ( (des==1) ? length1 : length2 ) * perturbation; }
 	void update_nij(short from_state, short to_state, short target_state);
-	void print_nij();
+	void print_nij(bool absolute = true);
 	void report();
 };
 

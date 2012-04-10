@@ -543,7 +543,6 @@ PathProposal::EvolveStep(
 		if (success) {
 			eventTrack *new_event;
 			if (nij) i_z->branch->update_nij(stateCharacters.find_first_of(event.at(0)), stateCharacters.find_first_of(event.at(1)), k_0->seq_evo.at(event_site).returnState());		// Update the nij values based on the change.
-			i_z->branch->print_nij();
 			//////////
 			/// Calculate the relative time that the event occurs at.
 			//////////
@@ -570,8 +569,22 @@ PathProposal::EvolveStep(
 			lambda_T = i_z->calculateEndpointRateAwayFromSequence(tree, k_0, T, dt, event_site);
 			new_event->Q.idot = i_z->evolvingSequence->Qidot;
 			new_event->Q.idot_k__T__ = lambda_T;
+cerr << "New event: "  << new_event->Print_Event() << endl;
 			(*events).push_back(new_event);
-			cerr << "EVO subst pos: " << event_site << " " << event << ":  "; //XOUT
+			cerr << "EVO subst pos: " << event_site << " " << event << "|" << stateCharacters.at(k_0->seq_evo.at(event_site).returnState()) << ":  "; //XOUT
+			if (nij) {
+				i_z->branch->print_nij();
+				i_z->branch->print_nij(false);
+				
+				vector<double>::iterator pt = i_z->branch->rates->Pij.at(0).begin();
+				int i = 0;
+				cerr << endl << "Transition Probabilities (Jukes Cantor).";
+				for (; pt != i_z->branch->rates->Pij.at(0).end(); ++pt, ++i) {
+					if (i % numStates == 0) cerr << endl;
+					cerr << (*pt) << " ";	
+				}
+
+			}
 			eventNo++;
 		}
 
@@ -927,7 +940,7 @@ PathProbability::EPCProbability (
 			dt = (*it)->eventTime - (*prev2it)->eventTime;
 			if (dt == 0) dt = numeric_limits<double>::min();
 			log_sum_epc	+= EPC_Step((*it)->Q.ij_k__T__, (*prev2it)->Q.idot_k__T__, (*it)->Q.i2k, (*prev2it)->eventTime, dt,	T);
-			//cerr << " = " << log_sum_epc << endl;
+			cerr << " = " << log_sum_epc << endl;
 		}
 		t_z = (*prev2it)->eventTime;
 		i_z_Qidot_k__T__ = (*prev2it)->Q.idot_k__T__;
@@ -953,7 +966,7 @@ PathProbability::EPC_NoEvent(
 								   )
 {
 	if (dt == 0) dt = numeric_limits<double>::min();
-	//cerr << -Qidot_k__T__ << " * " << dt;
+	cerr << -Qidot_k__T__ << " * " << dt;
 	return -Qidot_k__T__ * dt;
 }
 
@@ -979,7 +992,7 @@ PathProbability::EPC_Step(
 	if (exp_value > -115) // -115: 50 decimal places of accuracy; -230: 100 decimal places.
 		if (Qi2k != 0) 
 			overstep_penalty = log( 1 - exp( exp_value ) );
-	//cerr <<	"log(" << Qij_k__T__  << ") - (" << Qidot_k__T__ << " * " << dt << ") - " << overstep_penalty;
+	cerr <<	"log(" << Qij_k__T__  << ") - (" << Qidot_k__T__ << " * " << dt << ") - " << overstep_penalty;
 	return 	log( Qij_k__T__ ) - (Qidot_k__T__ * dt) - overstep_penalty;
 }
 
