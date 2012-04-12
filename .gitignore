@@ -2,3 +2,7 @@
 log
 Makefile
 Makefile.in
+config.h
+config.log
+config.status
+configure

@@ -35,10 +35,14 @@ extern int changed_site;
 extern bool optimize;
 extern bool Pc, Qd, nij;
 
-double CUM_SUM_CHK = 0;
+//double CUM_SUM_CHK = 0;
 
 int TauIJ_calls = 0;
 int TauIJ2_calls = 0;
+
+RateMatrix (*cERAFS_init)(TTree *tree, TNode *des, double T, double at_dt, int event_site) = NULL;
+//double (*cERAFS_update)(TTree *tree, TNode *des, double T, double at_dt, int event_site) = NULL;
+
 
 /* functions */
 
@@ -977,7 +981,7 @@ TNode::calculateEndpointRateAwayFromSite(
 						 << CHK_PJK<< " * " << CHK_PIK << endl;	//XOUT
 				}
 				sum_away += Qij * ( (*evolver_it).Pjk0.at(j) * Pik_inverse );
-				CUM_SUM_CHK += Qij * CHK_PIK * CHK_PJK;
+				//CUM_SUM_CHK += Qij * CHK_PIK * CHK_PJK;
 				(*forward_site_sum_away) += Qij;
 				(*forward_away_it) = Qij;
 			} else (*forward_away_it) = 0;
@@ -1063,7 +1067,7 @@ TNode::calculateEndpointRateAwayFromSequence(
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
-	CUM_SUM_CHK = 0;
+	//CUM_SUM_CHK = 0;
 	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
 		update_rate_matrices(&temp_rates, it, T, at_dt);
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
@@ -1073,7 +1077,7 @@ TNode::calculateEndpointRateAwayFromSequence(
 	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
 	evolvingSequence->Qidot = forward_site_sum_away;
 	cerr << " Qi.|k(t): " << evolvingSequence->Qidot_k__T__ << "         Qi: " << evolvingSequence->Qidot << endl; //XOUT
-	cerr << "CUM_SUM_CHK = " << CUM_SUM_CHK << endl;
+//	cerr << "CUM_SUM_CHK = " << CUM_SUM_CHK << endl;
 
 	return cumulative_site_sum_away;
 }
@@ -1168,6 +1172,61 @@ TNode::initialize_rate_matrices(
 	
 	return initial_rates;
 }
+
+/*
+RateMatrix
+rate_matrices_QdPc(
+				   TTree *tree,
+				   TNode *k_0,
+				   double T,
+				   double at_dt,
+				   int event_site
+				  )
+{
+	RateMatrix initial_rates(*branch->rates);
+
+	//////////
+	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
+	/// affected by a change for subsequent calculation of the site-specific transition matrices.
+	//////////
+	set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
+	site_specific_Qmat(tree, event_site, end_site);
+
+	return initial_rates;
+}
+
+RateMatrix
+rate_matrices_QdP(
+				   TTree *tree,
+				   TNode *k_0,
+				   double T,
+				   double at_dt,
+				   int event_site
+				  )
+{
+	RateMatrix initial_rates(*branch->rates);
+
+	//////////
+	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
+	/// affected by a change for subsequent calculation of the site-specific transition matrices.
+	//////////
+	set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
+	site_specific_Qmat(tree, event_site, end_site);
+
+	// setPij uses the Root and Cijk matrices, already set up for branch->rates
+	branch->rates->setPij(seq_evo.front(), branch->S*(T-at_dt), nodeEnv->rateHetero);	// setPij dependes on the root Matrix
+	// Transfer independent rates into the initial_rates holding the dependent Qij's.
+	vector<vector<double> >::iterator ppt = initial_rates.Pij.begin(); 
+	for (vector<vector<double> >::iterator PPt = branch->rates->Pij.begin(); PPt != branch->rates->Pij.end(); ++PPt, ++ppt) {
+		vector<double>::iterator pt = (*ppt).begin();
+		for(vector<double>::iterator Pt = (*PPt).begin(); Pt != (*PPt).end(); ++Pt, ++pt) {
+			(*pt) = (*Pt);
+		}
+	}
+
+	return initial_rates;
+}
+*/
 
 void
 TNode::update_rate_matrices(

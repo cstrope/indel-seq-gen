@@ -6,6 +6,7 @@
 extern bool forward_simulation;
 extern bool rasmus_independent_proposals;
 extern bool MCMC_sample_evenly;
+extern int  print_stepwise_rates;
 
 vector<double> t_path_start (100001, 0);
 vector<double> t_path_end (100001, 0);
@@ -170,6 +171,8 @@ Statistics::MCMC_run(
 	double post_subpath_event_time;
 	int cycle_sample_length = 1;
 
+	string outfile_name = "outfile.mcmc_run";
+
 	//////////
 	/// Set originally simulated path to the current path (along with events).
 	//////////
@@ -209,12 +212,19 @@ Statistics::MCMC_run(
 		if (rasmus_independent_proposals) 
 			mcmc_chain_forward.push_back( mcmc.rasmus_resample(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		else {
-			mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
+			// Output the forward probability of the ith sample from the MCMC chain. //
+			if (i % 100 == 0) {
+				print_stepwise_rates = i;
+				
+				mcmc.current->EmulateStep(tree, work, k_0, t_0, T, &mcmc.current->epc_events);
+				print_stepwise_rates = 0;
+			} else mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		}
 		cout << "  " << mcmc_chain_forward.back() << endl;
 
 		if (i % cycle_sample_length == 0) tree->global_alignment->cleanArray(mcmc.current->epc_events);	
 		cerr << "DONE." << endl;
+
 	}
 
 	work->Remove_Objects();
@@ -364,6 +374,8 @@ Statistics::MCMC::resample_subpath(
 		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
 		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }
 	}
+
+	if (t_0 == -1) { t_B = 0; t_E = T; }
 
 	list<eventTrack*>::iterator xf = proposed->epc_events.begin(); xf++;
 	list<eventTrack*>::reverse_iterator xb = proposed->epc_events.rbegin(); xb++;

@@ -3,6 +3,7 @@
 
 extern vector<short> acgt;
 extern vector<int> acagatcgctgt;
+extern int print_stepwise_rates;
 
 #define PRE 0
 #define IN 1
@@ -569,7 +570,7 @@ PathProposal::EvolveStep(
 			lambda_T = i_z->calculateEndpointRateAwayFromSequence(tree, k_0, T, dt, event_site);
 			new_event->Q.idot = i_z->evolvingSequence->Qidot;
 			new_event->Q.idot_k__T__ = lambda_T;
-cerr << "New event: "  << new_event->Print_Event() << endl;
+			//cerr << "New event: "  << new_event->Print_Event() << endl;
 			(*events).push_back(new_event);
 			cerr << "EVO subst pos: " << event_site << " " << event << "|" << stateCharacters.at(k_0->seq_evo.at(event_site).returnState()) << ":  "; //XOUT
 			if (nij) {
@@ -784,6 +785,7 @@ PathProposal::EmulateStep(
 
 //	cerr << "Pre-looping thru events:" << endl;
 	cerr << "  Qi. = " << i_z->evolvingSequence->Qidot << endl;
+	if (print_stepwise_rates) cout << print_stepwise_rates << " " << i_z->evolvingSequence->Qidot << endl;
 //	cerr << "  Qi.|k(" << T-t_0 << ") = " << lambda_T << endl;
 
 	//////////
@@ -807,6 +809,7 @@ PathProposal::EmulateStep(
 		lambda_T = i_z->calculateEndpointRateAwayFromSequence(tree, k_0, T, (*et)->eventTime, (*et)->MSA_positions.at(0) );
 		(*et)->Q.idot = i_z->evolvingSequence->Qidot;
 		(*et)->Q.idot_k__T__ = lambda_T;
+		if (print_stepwise_rates) cout << print_stepwise_rates << " " << i_z->evolvingSequence->Qidot << endl;
 //		cerr << "EMU: " << i_z->printSequence(true) << "  Qi. = " << i_z->evolvingSequence->Qidot << endl;
 //		cerr << "  Qi.|k(" << T-(*et)->eventTime << ") = " << lambda_T << endl;
 //		cout << "DT:" << (*et)->eventTime << endl;			//XOUT
@@ -940,7 +943,7 @@ PathProbability::EPCProbability (
 			dt = (*it)->eventTime - (*prev2it)->eventTime;
 			if (dt == 0) dt = numeric_limits<double>::min();
 			log_sum_epc	+= EPC_Step((*it)->Q.ij_k__T__, (*prev2it)->Q.idot_k__T__, (*it)->Q.i2k, (*prev2it)->eventTime, dt,	T);
-			cerr << " = " << log_sum_epc << endl;
+			//cerr << " = " << log_sum_epc << endl;
 		}
 		t_z = (*prev2it)->eventTime;
 		i_z_Qidot_k__T__ = (*prev2it)->Q.idot_k__T__;
@@ -966,7 +969,7 @@ PathProbability::EPC_NoEvent(
 								   )
 {
 	if (dt == 0) dt = numeric_limits<double>::min();
-	cerr << -Qidot_k__T__ << " * " << dt;
+	//cerr << -Qidot_k__T__ << " * " << dt;
 	return -Qidot_k__T__ * dt;
 }
 
@@ -992,7 +995,7 @@ PathProbability::EPC_Step(
 	if (exp_value > -115) // -115: 50 decimal places of accuracy; -230: 100 decimal places.
 		if (Qi2k != 0) 
 			overstep_penalty = log( 1 - exp( exp_value ) );
-	cerr <<	"log(" << Qij_k__T__  << ") - (" << Qidot_k__T__ << " * " << dt << ") - " << overstep_penalty;
+	//cerr <<	"log(" << Qij_k__T__  << ") - (" << Qidot_k__T__ << " * " << dt << ") - " << overstep_penalty;
 	return 	log( Qij_k__T__ ) - (Qidot_k__T__ * dt) - overstep_penalty;
 }
 

@@ -65,6 +65,7 @@ bool	optimize = true;
 bool	rasmus_independent_proposals;
 bool 	MCMC_sample_evenly = false;
 bool	Qd=true, Pc=true, nij=false;
+int 	print_stepwise_rates = 0;
 
 // MAIN prototypes
 void setRates(list<inTree*>& inputTrees,seqGenOptions *options);

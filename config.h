@@ -76,7 +76,7 @@
 #define PACKAGE_NAME "indel-seq-gen"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "indel-seq-gen 2.2.13"
+#define PACKAGE_STRING "indel-seq-gen 2.2.14"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "indel-seq-gen"
@@ -85,13 +85,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.2.13"
+#define PACKAGE_VERSION "2.2.14"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "2.2.13"
+#define VERSION "2.2.14"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
