@@ -782,7 +782,6 @@ PathProposal::EmulateStep(
 	begin_event = branch_terminal_event(k_0->mytipNo, BRANCH_BEGIN, k_0->DistanceFromRoot, k_0->bipartition, t_0, T); 
 	begin_event->assign_Q(i_z, i_z->seq_evo.at(0), SUBSTITUTION, num_diff);
 
-
 //	cerr << "Pre-looping thru events:" << endl;
 	cerr << "  Qi. = " << i_z->evolvingSequence->Qidot << endl;
 	if (print_stepwise_rates) cout << print_stepwise_rates << " " << i_z->evolvingSequence->Qidot << endl;
@@ -809,7 +808,7 @@ PathProposal::EmulateStep(
 		lambda_T = i_z->calculateEndpointRateAwayFromSequence(tree, k_0, T, (*et)->eventTime, (*et)->MSA_positions.at(0) );
 		(*et)->Q.idot = i_z->evolvingSequence->Qidot;
 		(*et)->Q.idot_k__T__ = lambda_T;
-		if (print_stepwise_rates) cout << print_stepwise_rates << " " << i_z->evolvingSequence->Qidot << endl;
+		if (print_stepwise_rates) cout << print_stepwise_rates << " " << (*et)->eventTime << " " << i_z->evolvingSequence->Qidot << endl;
 //		cerr << "EMU: " << i_z->printSequence(true) << "  Qi. = " << i_z->evolvingSequence->Qidot << endl;
 //		cerr << "  Qi.|k(" << T-(*et)->eventTime << ") = " << lambda_T << endl;
 //		cout << "DT:" << (*et)->eventTime << endl;			//XOUT

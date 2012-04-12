@@ -186,7 +186,9 @@ Statistics::MCMC_run(
 	work = tree->copyNode(i_0);
 	delete (*mcmc.current->epc_events.begin()); delete (*mcmc.current->epc_events.rbegin());
 	mcmc.current->epc_events.pop_front(); mcmc.current->epc_events.pop_back();
+	print_stepwise_rates = 1;
 	mcmc.current->EmulateStep(tree, work, k_0, t_0, T, &mcmc.current->epc_events);
+	print_stepwise_rates = 0;
 	cerr << "--------------------------------------------------------" << endl;
 	cerr << " Calculation of original path" << endl;
 	cerr << "--------------------------------------------------------" << endl;
@@ -208,19 +210,18 @@ Statistics::MCMC_run(
 		cerr << "****** STEP " << i << " *** STEP " << i << " *** STEP " << i << "************************************************" << endl;
 		cerr << "***********************************************************************************" << endl;
 
-		cout << i << "  ";
+		//cout << i << "  ";
 		if (rasmus_independent_proposals) 
 			mcmc_chain_forward.push_back( mcmc.rasmus_resample(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		else {
 			// Output the forward probability of the ith sample from the MCMC chain. //
 			if (i % 100 == 0) {
 				print_stepwise_rates = i;
-				
-				mcmc.current->EmulateStep(tree, work, k_0, t_0, T, &mcmc.current->epc_events);
+				mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, -1, T, mcmc_chain_forward.back()) );
 				print_stepwise_rates = 0;
 			} else mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		}
-		cout << "  " << mcmc_chain_forward.back() << endl;
+		//cout << "  " << mcmc_chain_forward.back() << endl;
 
 		if (i % cycle_sample_length == 0) tree->global_alignment->cleanArray(mcmc.current->epc_events);	
 		cerr << "DONE." << endl;
@@ -318,7 +319,7 @@ Statistics::MCMC::rasmus_resample(
 	delete work->evolvingSequence;
 	delete work;
 
-	cout << "  " << current->epc_events.size()-2;
+	//cout << "  " << current->epc_events.size()-2;
 
 	return return_probability;
 }
@@ -379,7 +380,7 @@ Statistics::MCMC::resample_subpath(
 
 	list<eventTrack*>::iterator xf = proposed->epc_events.begin(); xf++;
 	list<eventTrack*>::reverse_iterator xb = proposed->epc_events.rbegin(); xb++;
-	cout << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
+	//cout << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
 	cerr << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
 
 	// Set up nodes
@@ -469,7 +470,7 @@ Statistics::MCMC::resample_subpath(
 	work->resetSequence(i_B);
 	tree->dep.front()->context.set_sequence_indices(work);
 	
-	cout << "  " << work->evolvingSequence->compare_sequence(i_E->evolvingSequence);	// Gets the number of differences. If times are really short, and no differences are observed, this may explain some problems that the method is having.
+	//cout << "  " << work->evolvingSequence->compare_sequence(i_E->evolvingSequence);	// Gets the number of differences. If times are really short, and no differences are observed, this may explain some problems that the method is having.
 	
 	proposed->EvolveStep(tree, work, i_E, t_B, t_E, &proposed_subpath_events);
 	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)
@@ -488,7 +489,7 @@ Statistics::MCMC::resample_subpath(
 	// Both paths emulated. Now we should be able to calculate both the forward and epc probabilities. Check full events, first.
 	current_subpath->EmulateStep(tree, work, i_E, t_B, t_E, &current_subpath_events);
 
-	cout << "  " << current_subpath_events.size() << "," << proposed_subpath_events.size();
+	//cout << "  " << current_subpath_events.size() << "," << proposed_subpath_events.size();
 
 	//if (current_subpath_events.size() == 2 && proposed_subpath_events.size() == 4) {
 	//	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)
@@ -523,7 +524,7 @@ Statistics::MCMC::resample_subpath(
 		//cout << "i_B: " << i_B->printSequence() << endl;
 		//cout << "i_E: " << i_E->printSequence() << endl;
 
-		cout << " A";
+		//cout << " A";
 
 		// Get the beginning and end events for both the current and proposed paths.
 		work->resetSequence(i_B);
@@ -590,7 +591,7 @@ Statistics::MCMC::resample_subpath(
 
 		accepted_subpath_times << " " << t_B << " " << t_E << endl;
 	} else {
-		cout << " R";
+		//cout << " R";
 		for (list<eventTrack*>::iterator iit = proposed_subpath_events.begin(); iit != proposed_subpath_events.end(); ++iit)
 			delete (*iit);
 		return_probability = current_cycle_probability;
@@ -610,7 +611,7 @@ Statistics::MCMC::resample_subpath(
 	delete work->evolvingSequence;
 	delete work;
 
-	cout << "  " << current->epc_events.size()-2;
+	//cout << "  " << current->epc_events.size()-2;
 
 	return return_probability;
 }
