@@ -59,13 +59,13 @@ unsigned int		numStates_squared;
 unsigned int		numStates_cubed;
 int 	changed_site=0;
 int		prev_state = 0;
-bool	forward_simulation = false;
 bool	fast_simulation = true;
 bool	optimize = true;
 bool	rasmus_independent_proposals;
 bool 	MCMC_sample_evenly = false;
 bool	Qd=true, Pc=true, nij=false;
 int 	print_stepwise_rates = 0;
+bool	forward_simulation = false;
 
 // MAIN prototypes
 void setRates(list<inTree*>& inputTrees,seqGenOptions *options);
@@ -93,6 +93,9 @@ size_t trimMSA(vector<vector<char> >& print, vector<bool>& empty_columns, seqGen
 void fiddle_with_trees(list<inTree*>& inTrees, seqGenOptions *options);
 void QuickTest();
 
+int point_to_me (int return_val) { cerr << "pointed to me." << endl; return return_val; }
+int point2me (int return_val) { cerr << "you chose me." << endl; return return_val; }
+
 ////////////////////////////////////////
 ////////////////////////////////////////
 
@@ -102,6 +105,20 @@ int main(int argc, char *argv[])
 	double totalSecs;
 	vector<ofstream*> simulation_output_streams;
 
+/*	int (*ptr2func)(int) = NULL;
+	
+	ptr2func = &point_to_me;
+	
+	int check = (*ptr2func)(5);
+	cerr << check << endl;
+
+	ptr2func = &point2me;
+
+	check = (*ptr2func)(10);
+	cerr << check << endl;
+	
+	exit(0);
+*/
 	//QuickTest();
 	//////////
 	/// Major player variables.
@@ -289,6 +306,13 @@ void Simulate(
 				options->SpoolWarnings("Cannot write ancestral sequences unless all partition tree topologies are equivalent.");
 				break;
 			}
+		}
+	}
+
+	// Set the function pointers.
+	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+		for (list<TNode*>::iterator jt = (*it)->nodeList.begin(); jt != (*it)->nodeList.end(); ++jt) {
+			(*jt)->Qptr.rate_init.set_Qptr(Qd, Pc, nij);
 		}
 	}
 

@@ -58,6 +58,9 @@ if ($INDEPENDENT_SITES) {
 	$fwd_command .= "< $filename.tree";
 	print "$fwd_command\n ";
 	$return_val_fwd = `./$indel_seq_gen $fwd_command`;
+	open OUT, ">$filename.fwd";
+	print OUT "$return_val_fwd\n";
+	close OUT;
 
 	#exit(0);		## While testing new dependency model. ##
 

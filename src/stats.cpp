@@ -215,11 +215,7 @@ Statistics::MCMC_run(
 			mcmc_chain_forward.push_back( mcmc.rasmus_resample(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		else {
 			// Output the forward probability of the ith sample from the MCMC chain. //
-			if (i % 100 == 0) {
-				print_stepwise_rates = i;
-				mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, -1, T, mcmc_chain_forward.back()) );
-				print_stepwise_rates = 0;
-			} else mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
+			mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		}
 		//cout << "  " << mcmc_chain_forward.back() << endl;
 
@@ -364,13 +360,6 @@ Statistics::MCMC::resample_subpath(
 	//////////
 	if (MCMC_sample_evenly) {
 		double RN = rndu();
-//		if (RN < 0.5) { t_E = t_B; t_B = t_0; }
-//		else { t_B = t_E; t_E = T; }
-
-//		t_E = t_B; t_B = t_0;	// First interval
-//		t_B = t_E; t_E = T;		// third interval
-//		;						// second interval
-		
 		// Interval 123 combined
 		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
 		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }

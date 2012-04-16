@@ -287,6 +287,7 @@ void ForwardSimulation::gillespie(
 		if (!evolving_to_equilibrium) {	//XOUT
 			cerr << "---------- Time left: " << branch_len-dt << "/" << branch_len << "----------"; //XOUT
 			cerr << "Qi.: " << des->evolvingSequence->Qidot; //XOUT
+			cout << dt << " " << des->evolvingSequence->Qidot << endl;
 //			cout << "DT:" << dt << endl;	//XOUT
 //			cout << "LAMBDA_T:" << lambda_T << endl;			//XOUT
 //			cout << "Qi.:" << des->evolvingSequence->Qidot << endl;	//XOUT
