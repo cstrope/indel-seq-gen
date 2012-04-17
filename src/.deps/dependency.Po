@@ -1,4 +1,4 @@
-dependency.o: dependency.cpp dependency.h tree.h \
+dependency.o: dependency.cpp dependency.h model.h \
  /opt/local/include/gcc46/c++/string \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h \
@@ -60,17 +60,15 @@ dependency.o: dependency.cpp dependency.h tree.h \
  /opt/local/include/gcc46/c++/initializer_list \
  /opt/local/include/gcc46/c++/bits/basic_string.tcc \
  /opt/local/include/gcc46/c++/cstring /usr/include/string.h \
+ /usr/include/math.h /usr/include/architecture/i386/math.h eigen.h \
  /opt/local/include/gcc46/c++/vector \
  /opt/local/include/gcc46/c++/bits/stl_construct.h \
  /opt/local/include/gcc46/c++/bits/stl_uninitialized.h \
  /opt/local/include/gcc46/c++/bits/stl_vector.h \
  /opt/local/include/gcc46/c++/bits/stl_bvector.h \
  /opt/local/include/gcc46/c++/bits/vector.tcc \
- /opt/local/include/gcc46/c++/list \
- /opt/local/include/gcc46/c++/bits/stl_list.h \
- /opt/local/include/gcc46/c++/bits/list.tcc \
- /opt/local/include/gcc46/c++/fstream \
- /opt/local/include/gcc46/c++/istream /opt/local/include/gcc46/c++/ios \
+ /opt/local/include/gcc46/c++/iostream \
+ /opt/local/include/gcc46/c++/ostream /opt/local/include/gcc46/c++/ios \
  /opt/local/include/gcc46/c++/bits/ios_base.h \
  /opt/local/include/gcc46/c++/bits/locale_classes.h \
  /opt/local/include/gcc46/c++/bits/locale_classes.tcc \
@@ -84,23 +82,24 @@ dependency.o: dependency.cpp dependency.h tree.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/ctype_inline.h \
  /opt/local/include/gcc46/c++/bits/locale_facets.tcc \
  /opt/local/include/gcc46/c++/bits/basic_ios.tcc \
- /opt/local/include/gcc46/c++/ostream \
  /opt/local/include/gcc46/c++/bits/ostream.tcc \
- /opt/local/include/gcc46/c++/bits/istream.tcc \
+ /opt/local/include/gcc46/c++/istream \
+ /opt/local/include/gcc46/c++/bits/istream.tcc evolve.h \
+ /opt/local/include/gcc46/c++/bitset /opt/local/include/gcc46/c++/fstream \
  /opt/local/include/gcc46/c++/bits/codecvt.h \
  /opt/local/include/gcc46/c++/cstdio \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/basic_file.h \
  /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++io.h \
  /opt/local/include/gcc46/c++/bits/fstream.tcc \
- /opt/local/include/gcc46/c++/iostream \
- /opt/local/include/gcc46/c++/limits gamma.h model.h /usr/include/math.h \
- /usr/include/architecture/i386/math.h eigen.h evolve.h \
- /opt/local/include/gcc46/c++/bitset /opt/local/include/gcc46/c++/sstream \
+ /opt/local/include/gcc46/c++/sstream \
  /opt/local/include/gcc46/c++/bits/sstream.tcc \
+ /opt/local/include/gcc46/c++/list \
+ /opt/local/include/gcc46/c++/bits/stl_list.h \
+ /opt/local/include/gcc46/c++/bits/list.tcc \
  /opt/local/include/gcc46/c++/iomanip /opt/local/include/gcc46/c++/memory \
  /opt/local/include/gcc46/c++/bits/stl_tempbuf.h \
  /opt/local/include/gcc46/c++/bits/stl_raw_storage_iter.h \
- /opt/local/include/gcc46/c++/backward/auto_ptr.h insert_freqs.h \
+ /opt/local/include/gcc46/c++/backward/auto_ptr.h gamma.h insert_freqs.h \
  /opt/local/include/gcc46/c++/cstdlib motif.h \
  /opt/local/include/gcc46/c++/set \
  /opt/local/include/gcc46/c++/bits/stl_tree.h \
@@ -109,7 +108,8 @@ dependency.o: dependency.cpp dependency.h tree.h \
  inTree.h /opt/local/include/gcc46/c++/map \
  /opt/local/include/gcc46/c++/bits/stl_map.h \
  /opt/local/include/gcc46/c++/bits/stl_multimap.h \
- /opt/local/include/gcc46/c++/cmath inClade.h twister.h seqGenOptions.h \
+ /opt/local/include/gcc46/c++/cmath inClade.h tree.h \
+ /opt/local/include/gcc46/c++/limits twister.h seqGenOptions.h \
  ../config.h propose_path.h stats.h \
  /opt/local/include/gcc46/c++/algorithm \
  /opt/local/include/gcc46/c++/utility \
@@ -124,7 +124,7 @@ dependency.o: dependency.cpp dependency.h tree.h \
 
 dependency.h:
 
-tree.h:
+model.h:
 
 /opt/local/include/gcc46/c++/string:
 
@@ -304,6 +304,12 @@ tree.h:
 
 /usr/include/string.h:
 
+/usr/include/math.h:
+
+/usr/include/architecture/i386/math.h:
+
+eigen.h:
+
 /opt/local/include/gcc46/c++/vector:
 
 /opt/local/include/gcc46/c++/bits/stl_construct.h:
@@ -316,15 +322,9 @@ tree.h:
 
 /opt/local/include/gcc46/c++/bits/vector.tcc:
 
-/opt/local/include/gcc46/c++/list:
+/opt/local/include/gcc46/c++/iostream:
 
-/opt/local/include/gcc46/c++/bits/stl_list.h:
-
-/opt/local/include/gcc46/c++/bits/list.tcc:
-
-/opt/local/include/gcc46/c++/fstream:
-
-/opt/local/include/gcc46/c++/istream:
+/opt/local/include/gcc46/c++/ostream:
 
 /opt/local/include/gcc46/c++/ios:
 
@@ -356,11 +356,17 @@ tree.h:
 
 /opt/local/include/gcc46/c++/bits/basic_ios.tcc:
 
-/opt/local/include/gcc46/c++/ostream:
-
 /opt/local/include/gcc46/c++/bits/ostream.tcc:
 
+/opt/local/include/gcc46/c++/istream:
+
 /opt/local/include/gcc46/c++/bits/istream.tcc:
+
+evolve.h:
+
+/opt/local/include/gcc46/c++/bitset:
+
+/opt/local/include/gcc46/c++/fstream:
 
 /opt/local/include/gcc46/c++/bits/codecvt.h:
 
@@ -372,27 +378,15 @@ tree.h:
 
 /opt/local/include/gcc46/c++/bits/fstream.tcc:
 
-/opt/local/include/gcc46/c++/iostream:
-
-/opt/local/include/gcc46/c++/limits:
-
-gamma.h:
-
-model.h:
-
-/usr/include/math.h:
-
-/usr/include/architecture/i386/math.h:
-
-eigen.h:
-
-evolve.h:
-
-/opt/local/include/gcc46/c++/bitset:
-
 /opt/local/include/gcc46/c++/sstream:
 
 /opt/local/include/gcc46/c++/bits/sstream.tcc:
+
+/opt/local/include/gcc46/c++/list:
+
+/opt/local/include/gcc46/c++/bits/stl_list.h:
+
+/opt/local/include/gcc46/c++/bits/list.tcc:
 
 /opt/local/include/gcc46/c++/iomanip:
 
@@ -403,6 +397,8 @@ evolve.h:
 /opt/local/include/gcc46/c++/bits/stl_raw_storage_iter.h:
 
 /opt/local/include/gcc46/c++/backward/auto_ptr.h:
+
+gamma.h:
 
 insert_freqs.h:
 
@@ -431,6 +427,10 @@ inTree.h:
 /opt/local/include/gcc46/c++/cmath:
 
 inClade.h:
+
+tree.h:
+
+/opt/local/include/gcc46/c++/limits:
 
 twister.h:
 

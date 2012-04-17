@@ -29,8 +29,8 @@
 #include <assert.h>
 #include "evolve.h"
 #include "inTree.h"
-#include "tree.h"
 #include "model.h"
+#include "tree.h"
 
 using namespace std;
 

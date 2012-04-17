@@ -1,8 +1,7 @@
 getopt.o getopt.o: getopt.c ../config.h getopt.h /usr/include/stdlib.h \
   /usr/include/Availability.h /usr/include/AvailabilityInternal.h \
   /usr/include/_types.h /usr/include/sys/_types.h \
-  /usr/include/sys/cdefs.h /usr/include/sys/_symbol_aliasing.h \
-  /usr/include/sys/_posix_availability.h /usr/include/machine/_types.h \
+  /usr/include/sys/cdefs.h /usr/include/machine/_types.h \
   /usr/include/i386/_types.h /usr/include/sys/wait.h \
   /usr/include/sys/signal.h /usr/include/sys/appleapiopts.h \
   /usr/include/machine/signal.h /usr/include/i386/signal.h \
@@ -18,8 +17,7 @@ getopt.o getopt.o: getopt.c ../config.h getopt.h /usr/include/stdlib.h \
   /usr/include/unistd.h /usr/include/sys/unistd.h \
   /usr/include/sys/select.h /usr/include/sys/_select.h \
   /usr/include/ctype.h /usr/include/runetype.h /usr/include/string.h \
-  /usr/include/strings.h /usr/include/secure/_string.h gettext.h \
-  getopt_int.h
+  /usr/include/secure/_string.h gettext.h getopt_int.h
 
 ../config.h:
 
@@ -36,10 +34,6 @@ getopt.h:
 /usr/include/sys/_types.h:
 
 /usr/include/sys/cdefs.h:
-
-/usr/include/sys/_symbol_aliasing.h:
-
-/usr/include/sys/_posix_availability.h:
 
 /usr/include/machine/_types.h:
 
@@ -104,8 +98,6 @@ unistd.h:
 /usr/include/runetype.h:
 
 /usr/include/string.h:
-
-/usr/include/strings.h:
 
 /usr/include/secure/_string.h:
 

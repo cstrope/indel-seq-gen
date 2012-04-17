@@ -1,94 +1,8 @@
-// Dependency matrix inputs file.
-// Each dependency should be described with a single matrix. Two items need to // be specified:
-// (1) Matrix specification
-//   a. Modifications to the global matrix
-//     Nucleotide R matrix
-//     \  ac ag at
-//     ca \  cg ct
-//     ga gc \  gt
-//     ta tc tg \
-//
-//     Command: 
-//     RMATMOD \ @ac @ag @at @ca \ @cg @ct @ga @gc \ @gt @ta @tc @tg \
-//     
-//     where '@' is the corresponding value in the Q matrix of the global Q.
-//     For example, the CpG example, where CpGs change at 10X the normal rate
-//     RMATMOD \ @ @ @ @ \ @ @*10 @ @ \ @ @ @ @ \
-//     RMATMOD \ @ @ @ @ \ @ @ @*10 @ \ @ @ @ @ \
-//
-//   b. Input of a new matrix, specify parameters of new matrix, frequencies
-//     Command:
-//     NEWRMAT F84(kappa=2) 0.1 0.4 0.4 0.1
-//
-//     where F84 is the matrix, which requires kappa to be specified, and the
-//     nucleotide frequencies are given to the matrix in the order
-//       pi_A   pi_C   pi_G   pi_T
-//
-//     Note that only matrices that allow the frequencies to be specified are
-//     accepted. Thus, to specify the JC69 matrix, use F81 0.25 0.25 0.25 0.25,
-//     and likewise for other nucleotide (or AA, or even possibly codon, later)
-//     matrices.
-//
-// (2) Rule for application of the dependency matrix
-//   a. Markovian model
-//     Command:
-//     MARKOV(ORDER) X*|X* <PATTERN_FREQ>
-//
-//     where X is any residue and the X* term refers to the regular expression
-//     of 0 or more X's. In this case, the X's refer to the pattern for which
-//     the Markov rule takes effect. The symbol '|' thus refers to the position
-//     for which we are calculating the rate. ORDER refes to the order of the
-//     Markov process. Thus, this Markov model allows for dependency for 
-//     preceding and proceeding patterns. Finally, PATTERN_FREQ is an optional
-//     specification that supplies the stationary frequency of the X* pattern,
-//     for cases in which the dependency is not applicable (see example b.).
-//
-//
-// (*) EXAMPLES
-// Following are examples for the usage of the items described above.
-//
-//   a. CpG model, where CpGs change at a rate of 10X faster than the normal
-//      rate.
-//     DEPENDENCY MARKOV(1) C| RMATMOD \@@@@\@@*10@@\@@@@\
-//     DEPENDENCY MARKOV(1) |G RMATMOD \@@@@\@@@*10@\@@@@\
-//
-//     - DEPENDENCY marks the beginning of a new dependency rule. 
-//
-//     - MARKOV(1) C| specifies a 1st-order Markov process, where if the current
-//     position is preceded by a C, apply the dependency matrix. In this case, 
-//     if this is true, then @ct is multiplied by 10.
-//
-//     - MARKOV(1) |G specifies a 1st-order Markov process, where if the current
-//     position is followed by a G, apply the dependency matrix. In this case,
-//     if this is true, then @ga is multiplied by 10.
-//
-//     -- NOTE that if the C is not followed by a G, the rates for the position
-//     remain the same as the global model.
-//
-//
-//   b. 3rd-order Markov process applied globally on the sequence
-//     DEPENDENCY MARKOV(3) AAA| NEWRMAT FREQ=0.01 F84(kappa=2) 0.1 0.3 0.5 0.1
-//     DEPENDENCY MARKOV(3) AAC| NEWRMAT FREQ=0.02 F84(kappa=2) 0.2 0.2 0.2 0.4
-//     DEPENDENCY MARKOV(3) AAG| NEWRMAT FREQ=0.01 F84(kappa=2) 0.1 0.1 0.1 0.7
-//         .         .        .    .        .           .        .   .   .   .
-//         .         .        .    .        .           .        .   .   .   .
-//         .         .        .    .        .           .        .   .   .   .
-//     DEPENDENCY MARKOV(3) TTT| NEWRMAT FREQ=0.05 F84(kappa=2) 0.3 0.3 0.3 0.1
-//
-//     - This specifies all 64 3mers of nucleotides. Each 3mer defines a
-//     a dependency in this model, where the dependency is the transition
-//     probabilities from an F84 matrix with kappa=2, and nucleotide freqs
-//     pi_A pi_C pi_G pi_T. The first 3mer on the 5' side of the sequence is
-//     assigned a probability as assigned by FREQ, otherwise the probability
-//     of a site depends on the 3mer preceding it, which defines the new rate
-//     matrix.
-//
-
 #ifndef _DEPENCENCY_H_
 #define _DEPENDENCY_H_
 
-#include "tree.h"
 #include "model.h"
+#include "tree.h"
 
 extern int changed_site;
 extern bool fast_simulation;
@@ -97,6 +11,7 @@ extern bool optimize;
 using namespace std;
 
 class TNode;
+class RateMatrix;
 
 class LookUp : private Counter<LookUp>
 {

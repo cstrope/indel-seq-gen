@@ -1088,5 +1088,5 @@ void RateMatrix::printRoot()
 		cerr << Root[i] << " ";
 	}
 	cerr << endl;
-
 }
+

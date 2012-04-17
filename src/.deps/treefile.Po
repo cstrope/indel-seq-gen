@@ -126,7 +126,7 @@ treefile.o: treefile.cpp \
  /opt/local/include/gcc46/c++/bits/stl_algo.h \
  /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
  /opt/local/include/gcc46/c++/bits/stl_heap.h forward_simulation.h \
- prosite_motif.h dependency.h
+ prosite_motif.h dependency.h rate_type.h
 
 /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/limits.h:
 
@@ -487,3 +487,5 @@ forward_simulation.h:
 prosite_motif.h:
 
 dependency.h:
+
+rate_type.h:

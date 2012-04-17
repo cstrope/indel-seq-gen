@@ -120,7 +120,7 @@ main.o: main.cpp /opt/local/include/gcc46/c++/cstdio \
  trace.h random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- /usr/include/sys/types.h paleo.h dependency.h
+ /usr/include/sys/types.h paleo.h dependency.h rate_type.h
 
 /opt/local/include/gcc46/c++/cstdio:
 
@@ -471,3 +471,5 @@ random.h:
 paleo.h:
 
 dependency.h:
+
+rate_type.h:

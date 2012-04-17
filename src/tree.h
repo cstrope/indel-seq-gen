@@ -82,6 +82,7 @@ class RateMatrix;
 class Likelihood;
 class Dependency;
 class eventTrack;
+//class setRates;
 class setRates;
 
 //////////
@@ -135,51 +136,6 @@ private:
 template<typename T> 
 size_t Counter<T>::count = 0;	// Set all counters to 0.
 
-
-class setRates : private Counter<setRates>
-{
-public:
-	using Counter<setRates>::howMany;
-
-	class rate_initialization
-	{
-	public:
-		RateMatrix QdPc(TTree *tree, TNode *k_0, double T, double at_dt, int event_site);
-		RateMatrix QdP (TTree *tree, TNode *k_0, double T, double at_dt, int event_site);
-		RateMatrix QPc (TTree *tree, TNode *k_0, double T, double at_dt, int event_site);
-		RateMatrix QP  (TTree *tree, TNode *k_0, double T, double at_dt, int event_site);
-		RateMatrix QN  (TTree *tree, TNode *k_0, double T, double at_dt, int event_site);
-
-		rate_initialization() : ptr2init(NULL)
-		{ }
-		set_Qinit(bool Qd, bool Pc, bool Nij) 
-		{ 
-			if (Qd && Pc) ptr2init = &QdPc;
-			else if (Qd && !Pc) ptr2init = &QdP; 
-			else if (!Qd && Pc) ptr2init = &QPc; 
-			else if (!Qd && Nij) ptr2init = &QN; 
-			else ptr2init = &QP;
-		}	
-	private:
-		RateMatrix (*ptr2init)(TTree, TNode, double, double, int);
-	} rate_init;
-
-	class rate_update
-	{
-	public:
-		void (*ptr2update)(RateMatrix, vector<Site>::iterator, double, double);
-
-		void QdPc(RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
-		void QdP (RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
-		void QPc (RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
-		void QP  (RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
-		void QN  (RateMatrix *rates, vector<Site>::iterator site, double T,	double at_dt);
-
-		rate_update() : ptr2update(NULL)
-		{ }
-	} update;
-};
-
 class TNode : private Counter<TNode> 
 {
 public:
@@ -199,6 +155,9 @@ public:
 	Branch *branch;
 	int mytipNo;
 	int ancestorNo;
+	setRates *Qptr;
+//	RateMatrix (*ptr2init)(TTree*, TNode*, double, double, int);
+//	void (*ptr2update)(RateMatrix*, vector<Site>::iterator, double, double);
 
 	//////////
 	/// Should these belong to the TNode... Only time (and the amount of effort needed to move 
@@ -279,8 +238,7 @@ public:
 	double Rij (TTree *tree, unsigned int position, unsigned int end_position);
 	void resetSequence(TNode *node);
 	void printForwardRateAway();
-
-	setRates Qptr;
+	//void set_Qptr(bool Qd, bool Pc, bool Nij);
 	//////////
 };
 

@@ -41,6 +41,7 @@
 #include "dependency.h"
 #include "propose_path.h"
 #include "stats.h"
+#include "rate_type.h"
 
 using namespace std;
 
@@ -66,6 +67,9 @@ bool 	MCMC_sample_evenly = false;
 bool	Qd=true, Pc=true, nij=false;
 int 	print_stepwise_rates = 0;
 bool	forward_simulation = false;
+RateMatrix (*ptr2init)(TTree*, TNode*, TNode*, double, double, int);
+void (*ptr2update)(RateMatrix*, TNode*, vector<Site>::iterator, double, double);
+
 
 // MAIN prototypes
 void setRates(list<inTree*>& inputTrees,seqGenOptions *options);
@@ -310,11 +314,23 @@ void Simulate(
 	}
 
 	// Set the function pointers.
-	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
-		for (list<TNode*>::iterator jt = (*it)->nodeList.begin(); jt != (*it)->nodeList.end(); ++jt) {
-			(*jt)->Qptr.rate_init.set_Qptr(Qd, Pc, nij);
-		}
-	}
+	//for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
+	//	for (list<TNode*>::iterator jt = (*it)->my_tree->nodeList.begin(); jt != (*it)->my_tree->nodeList.end(); ++jt) {
+	//		(*jt)->set_Qptr(Qd, Pc, nij);
+	//	}
+	//}
+
+	if (Qd && Pc) ptr2init = &iQdPc;
+	else if (Qd && !Pc) ptr2init = &iQdP; 
+	else if (!Qd && Pc) ptr2init = &iQPc; 
+	else if (!Qd && nij) ptr2init = &iQN; 
+	else ptr2init = &iQP;
+
+	if (Qd && Pc) ptr2update = &uQdPc;
+	else if (Qd && !Pc) ptr2update = &uQdP; 
+	else if (!Qd && Pc) ptr2update = &uQPc; 
+	else if (!Qd && nij) ptr2update = &uQN; 
+	else ptr2update = &uQP;
 
 	if (!options->quiet && !options->path_proposal) {
 		if (options->fileFormat == NEXUSFormat) 

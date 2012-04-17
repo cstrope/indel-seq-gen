@@ -20,6 +20,7 @@
 #include "prosite_motif.h"
 #include "dependency.h"
 #include "stats.h"
+#include "rate_type.h"
 
 char treeErrorMsg[256];
 int treeError;
@@ -35,15 +36,13 @@ extern int changed_site;
 extern bool optimize;
 extern bool Pc, Qd, nij;
 extern bool forward_simulation;
+extern RateMatrix (*ptr2init)(TTree*, TNode*, TNode*, double, double, int);
+extern void (*ptr2update)(RateMatrix*, TNode*, vector<Site>::iterator, double, double);
 
 //double CUM_SUM_CHK = 0;
 
 int TauIJ_calls = 0;
 int TauIJ2_calls = 0;
-
-RateMatrix (*cERAFS_init)(TTree *tree, TNode *des, double T, double at_dt, int event_site) = NULL;
-//double (*cERAFS_update)(TTree *tree, TNode *des, double T, double at_dt, int event_site) = NULL;
-
 
 /* functions */
 
@@ -62,7 +61,8 @@ TNode::TNode(
 	    nodeEnv(NULL),
 		node_name(""),
 		branch (new Branch()),
-	    mytipNo(-1)
+	    mytipNo(-1),
+	    Qptr(new setRates())
 {
 	clade_label.clear();
 	tree->numNodes++;
@@ -83,7 +83,8 @@ TNode::TNode()
 		node_name(""),
 	    nodeEnv(NULL),
 		branch (new Branch()),
-	    mytipNo(-1)
+	    mytipNo(-1),
+	    Qptr(new setRates())
 {
 	clade_label.clear();
 	bipartition.clear();
@@ -1065,14 +1066,13 @@ TNode::calculateEndpointRateAwayFromSequence(
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
 
 	RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
-
-	//RateMatrix temp_rates = (*Qptr.rate_init)(tree, k_0, T, at_dt, event_site);
+	//RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
-	//CUM_SUM_CHK = 0;
 	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
-		update_rate_matrices(&temp_rates, it, T, at_dt);
+		//update_rate_matrices(&temp_rates, it, T, at_dt);
+		(*ptr2update)(&temp_rates, this, it, T, at_dt);
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
 	}
 	
@@ -1080,7 +1080,6 @@ TNode::calculateEndpointRateAwayFromSequence(
 	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
 	evolvingSequence->Qidot = forward_site_sum_away;
 	cerr << " Qi.|k(t): " << evolvingSequence->Qidot_k__T__ << "         Qi: " << evolvingSequence->Qidot << endl; //XOUT
-//	cerr << "CUM_SUM_CHK = " << CUM_SUM_CHK << endl;
 
 	return cumulative_site_sum_away;
 }
@@ -1158,7 +1157,6 @@ TNode::initialize_rate_matrices(
 			}
 			cerr << endl;
 		}
-		//exit(0);
 	} else if (!Pc) {	// Independent sites, need to scale the branch length for dependent sites.
 		// setPij uses the Root and Cijk matrices, already set up for branch->rates
 		branch->rates->setPij(seq_evo.front(), branch->S*(T-at_dt), nodeEnv->rateHetero);	// setPij dependes on the root Matrix
@@ -1172,165 +1170,8 @@ TNode::initialize_rate_matrices(
 		}
 	}
 	
-	
 	return initial_rates;
 }
-
-
-RateMatrix
-setRates::rate_initialization::QN(
-								  TTree *tree,
-				   				  TNode *k_0,
-				   				  double T,
-				  	 			  double at_dt,
-				   				  int event_site
-								 )
-{
-	RateMatrix initial_rates(*k_0->branch->rates);
-
-	//////////
-	/// Independent sites: Copy the global model in for each site.
-	//////////
-	for (vector<Site>::iterator it = k_0->seq_evo.begin(); it != k_0->seq_evo.end(); ++it) 
-		(*it).e_QijDt = k_0->branch->rates->Qij;
-
-	vector<double> nij_row_sum (numStates, 0);
-	int i = 0;
-	vector<double>::iterator jt = nij_row_sum.begin();
-	for (vector<double>::iterator it = k_0->branch->nij.begin(); it != k_0->branch->nij.end(); ++it, ++i) {
-		if (i == numStates) { ++jt; i = 0; }
-		(*jt) += (*it);
-	}
-
-	vector<double>::iterator pt = initial_rates.Pij.at(0).begin();	// Using nij, cannot use categories... yet. //
-	jt = nij_row_sum.begin();
-	i = 0;
-	for (vector<double>::iterator it = k_0->branch->nij.begin(); it != k_0->branch->nij.end(); ++it, ++pt, ++i) {
-		if (i == numStates) { ++jt; i = 0; }
-		(*pt) = (*it) / (*jt);
-	}
-
-	k_0->branch->rates->setPij(k_0->seq_evo.front(), k_0->branch->S*(T-at_dt), k_0->nodeEnv->rateHetero);	// setPij dependes on the root Matrix
-
-	pt = initial_rates.Pij.at(0).begin();
-	cerr << endl << "Transition Probabilities using nij." << endl;
-	for (i = 0; i < numStates; ++i) {
-		for (int j = 0; j < numStates; ++j) {
-			cerr << k_0->branch->rates->Pij.at(0).at(i*numStates+j) << " (" << initial_rates.Pij.at(0).at(i*numStates+j) << ") " << endl;
-		}
-		cerr << endl;
-	}
-
-	return initial_rates;
-}
-
-RateMatrix
-setRates::rate_initialization::QPc(
-								   TTree *tree,
-				   				   TNode *k_0,
-				   				   double T,
-				  	 			   double at_dt,
-				   				   int event_site
-								  )
-{
-	RateMatrix initial_rates(*k_0->branch->rates);
-	unsigned int end_site;
-
-	//////////
-	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
-	/// affected by a change for subsequent calculation of the site-specific transition matrices.
-	//////////
-	k_0->set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
-	k_0->site_specific_Qmat(tree, event_site, end_site);
-
-	return initial_rates;
-}
-
-RateMatrix
-setRates::rate_initialization::QP(
-								  TTree *tree,
-				   				  TNode *k_0,
-				   				  double T,
-				  	 			  double at_dt,
-				   				  int event_site
-								 )
-{
-	RateMatrix initial_rates(*k_0->branch->rates);
-	//////////
-	/// Independent sites: Copy the global model in for each site.
-	//////////
-	for (vector<Site>::iterator it = k_0->seq_evo.begin(); it != k_0->seq_evo.end(); ++it) 
-		(*it).e_QijDt = k_0->branch->rates->Qij;
-
-	// setPij uses the Root and Cijk matrices, already set up for branch->rates
-	k_0->branch->rates->setPij(k_0->seq_evo.front(), k_0->branch->S*(T-at_dt), k_0->nodeEnv->rateHetero);	// setPij dependes on the root Matrix
-	// Transfer independent rates into the initial_rates holding the dependent Qij's.
-	vector<vector<double> >::iterator ppt = initial_rates.Pij.begin(); 
-	for (vector<vector<double> >::iterator PPt = k_0->branch->rates->Pij.begin(); PPt != k_0->branch->rates->Pij.end(); ++PPt, ++ppt) {
-		vector<double>::iterator pt = (*ppt).begin();
-		for(vector<double>::iterator Pt = (*PPt).begin(); Pt != (*PPt).end(); ++Pt, ++pt) {
-			(*pt) = (*Pt);
-		}
-	}
-
-	return initial_rates;
-}
-
-RateMatrix
-setRates::rate_initialization::QdPc(
-									TTree *tree,
-				   				 	TNode *k_0,
-				   				 	double T,
-				  	 			 	double at_dt,
-				   				 	int event_site
-				  				   )
-{
-	RateMatrix initial_rates(*k_0->branch->rates);
-	unsigned int end_site;
-
-	//////////
-	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
-	/// affected by a change for subsequent calculation of the site-specific transition matrices.
-	//////////
-	k_0->set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
-	k_0->site_specific_Qmat(tree, event_site, end_site);
-
-	return initial_rates;
-}
-
-RateMatrix
-setRates::rate_initialization::QdP(
-								   TTree *tree,
-			 				 	   TNode *k_0,
-				   				   double T,
-				   				   double at_dt,
-				   				   int event_site
-				 			      )
-{
-	RateMatrix initial_rates(*k_0->branch->rates);
-	unsigned int end_site;
-
-	//////////
-	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
-	/// affected by a change for subsequent calculation of the site-specific transition matrices.
-	//////////
-	k_0->set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
-	k_0->site_specific_Qmat(tree, event_site, end_site);
-
-	// setPij uses the Root and Cijk matrices, already set up for branch->rates
-	k_0->branch->rates->setPij(k_0->seq_evo.front(), k_0->branch->S*(T-at_dt), k_0->nodeEnv->rateHetero);	// setPij dependes on the root Matrix
-	// Transfer independent rates into the initial_rates holding the dependent Qij's.
-	vector<vector<double> >::iterator ppt = initial_rates.Pij.begin(); 
-	for (vector<vector<double> >::iterator PPt = k_0->branch->rates->Pij.begin(); PPt != k_0->branch->rates->Pij.end(); ++PPt, ++ppt) {
-		vector<double>::iterator pt = (*ppt).begin();
-		for(vector<double>::iterator Pt = (*PPt).begin(); Pt != (*PPt).end(); ++Pt, ++pt) {
-			(*pt) = (*Pt);
-		}
-	}
-
-	return initial_rates;
-}
-
 
 void
 TNode::update_rate_matrices(
@@ -1340,8 +1181,6 @@ TNode::update_rate_matrices(
 							double at_dt
 						   )
 {
-	cerr << "QD: " << Qd << "    PC: " << Pc << endl;
-
 	if (Qd && Pc) {
 		/// Calculating and passing the site-specific transition probabilities.
 		(*rates).Qij = (*site).e_QijDt;							// Entire Qij matrix. For exponentiating.
@@ -1358,7 +1197,6 @@ TNode::update_rate_matrices(
 	} else {
 		/// Passing global probabilities. This route is a great deal faster.
 	}
-
 }
 
 void 
