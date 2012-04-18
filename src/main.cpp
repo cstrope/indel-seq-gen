@@ -321,15 +321,15 @@ void Simulate(
 	//}
 
 	if (Qd && Pc) ptr2init = &iQdPc;
-	else if (Qd && !Pc) ptr2init = &iQdP; 
+	else if (Qd && !Pc && !nij) ptr2init = &iQdP; 
 	else if (!Qd && Pc) ptr2init = &iQPc; 
-	else if (!Qd && nij) ptr2init = &iQN; 
+	else if (Qd && nij) ptr2init = &iQN; 
 	else ptr2init = &iQP;
 
 	if (Qd && Pc) ptr2update = &uQdPc;
-	else if (Qd && !Pc) ptr2update = &uQdP; 
+	else if (Qd && !Pc && !nij) ptr2update = &uQdP; 
 	else if (!Qd && Pc) ptr2update = &uQPc; 
-	else if (!Qd && nij) ptr2update = &uQN; 
+	else if (Qd && nij) ptr2update = &uQN; 
 	else ptr2update = &uQP;
 
 	if (!options->quiet && !options->path_proposal) {

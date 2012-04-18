@@ -11,8 +11,16 @@ iQN(
 	int event_site
    )
 {
+	RateMatrix initial_rates(*i_z->branch->rates);
 	i_z->setRateAway(TIME_RELATIVE_STEPS);	// Resets site_sum_away, allocates e_QijDt.
-	RateMatrix initial_rates(*k_0->branch->rates);
+	unsigned int end_site;
+
+	//////////
+	/// Dependent sites. Recalculate Q matrices for positions at the beginning of the branch or
+	/// affected by a change for subsequent calculation of the site-specific transition matrices.
+	//////////
+	i_z->set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
+	i_z->site_specific_Qmat(tree, event_site, end_site);
 
 	//////////
 	/// Independent sites: Copy the global model in for each site.
@@ -20,6 +28,8 @@ iQN(
 	for (vector<Site>::iterator it = k_0->seq_evo.begin(); it != k_0->seq_evo.end(); ++it) 
 		(*it).e_QijDt = k_0->branch->rates->Qij;
 
+	vector<Site>::iterator target_it = k_0->seq_evo.begin();
+	int seq_pos = 0;
 	vector<double> nij_row_sum (numStates, 0);
 	int i = 0;
 	vector<double>::iterator jt = nij_row_sum.begin();

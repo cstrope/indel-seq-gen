@@ -1065,8 +1065,8 @@ TNode::calculateEndpointRateAwayFromSequence(
 	unsigned int end_site;
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
 
-	RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
-	//RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
+	//RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
+	RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
