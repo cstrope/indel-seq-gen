@@ -10,12 +10,12 @@ extern int  print_stepwise_rates;
 
 vector<double> t_path_start (100001, 0);
 vector<double> t_path_end (100001, 0);
-stringstream accepted_subpath_times;	// To compare function vs. current representations. // 
+stringstream subpath_times;	// To compare function vs. current representations. // 
 
 SampleStatistics::SampleStatistics() : forward_probability(0), epc_probability(0), w_i(0), numEvents(0), P_path (new PathProbability()) { }
 
 void 
-SampleStatistics::calculateStatistics (
+SampleStatistics::calculateStatistics(
 									  		list<eventTrack*> *events
 									  	   )
 {
@@ -156,6 +156,7 @@ void
 Statistics::MCMC_run(
 					 TTree *tree,
 					 int number_of_steps, 
+					 string outfile,
 					 PathProposal *path
 					)
 {
@@ -167,11 +168,13 @@ Statistics::MCMC_run(
 	double cP, cJ, pP, pJ;
 	stringstream report;
 	vector<double> mcmc_chain_forward;
-	int accepted = 0;
 	double post_subpath_event_time;
 	int cycle_sample_length = 1;
+	ofstream *mcmc_out;
 
-	string outfile_name = "outfile.mcmc_run";
+	string mcmc_outfilename = outfile + ".paths";	
+	mcmc_out = new ofstream(mcmc_outfilename.c_str(), ios::trunc | ios::out);
+	//tree->write_tree();
 
 	//////////
 	/// Set originally simulated path to the current path (along with events).
@@ -186,7 +189,7 @@ Statistics::MCMC_run(
 	work = tree->copyNode(i_0);
 	delete (*mcmc.current->epc_events.begin()); delete (*mcmc.current->epc_events.rbegin());
 	mcmc.current->epc_events.pop_front(); mcmc.current->epc_events.pop_back();
-	print_stepwise_rates = 1;
+	//print_stepwise_rates = 1;
 	mcmc.current->EmulateStep(tree, work, k_0, t_0, T, &mcmc.current->epc_events);
 	print_stepwise_rates = 0;
 	cerr << "--------------------------------------------------------" << endl;
@@ -205,22 +208,31 @@ Statistics::MCMC_run(
 	//cout << "i_0: " << i_0->printSequence(true) << endl;
 	//cout << "k_0: " << k_0->printSequence(true) << endl;
 
+	bool accepted;
 	for (int i = 0; i < number_of_steps; i++) {
 		cerr << "***********************************************************************************" << endl;
 		cerr << "****** STEP " << i << " *** STEP " << i << " *** STEP " << i << "************************************************" << endl;
 		cerr << "***********************************************************************************" << endl;
 
+		accepted = false;
 		//cout << i << "  ";
 		if (rasmus_independent_proposals) 
 			mcmc_chain_forward.push_back( mcmc.rasmus_resample(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		else {
 			// Output the forward probability of the ith sample from the MCMC chain. //
-			mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
+			mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back(), &accepted) );
 		}
 		//cout << "  " << mcmc_chain_forward.back() << endl;
 
+		if (accepted) {
+			*mcmc_out << ">" << i << endl;
+			mcmc.current->write_path(*mcmc_out);
+		}
+
 		if (i % cycle_sample_length == 0) tree->global_alignment->cleanArray(mcmc.current->epc_events);	
 		cerr << "DONE." << endl;
+
+		if (i > 1000 && i % 100 == 0) { cout << ">" << endl; mcmc.current->Print_Path_Events(); }
 
 	}
 
@@ -238,9 +250,261 @@ Statistics::MCMC_run(
 	Leakage();
 
 	cerr << "Times on branch of accepted proposals: " << endl;
-	cerr << accepted_subpath_times.str() << endl;
+	cerr << subpath_times.str() << endl;
+	cout << subpath_times.str() << endl;
 
+	delete mcmc_out;
 	exit(0);
+}
+
+double
+Statistics::MCMC::resample_subpath(
+								   TTree *tree,
+								   TNode *i_0,
+								   TNode *k_0,
+								   double t_0,
+								   double T,
+								   double current_cycle_probability,
+								   bool *accepted
+								  )
+{
+	double t_B, t_E;						/// The two times between which we want to simulate.
+	TNode *i_B, *i_E, *work;				/// Virtual nodes within the branch that we are simulating, one at t_B and one at t_E.
+	list<eventTrack*>::iterator e_B, e_E;	/// Iterators into the event history marking the begin and end times.
+	list<eventTrack*> proposed_subpath_events, current_subpath_events;
+	double cP, cJ, pP, pJ;
+	double return_probability;
+	double post_subpath_event_time;
+	bool error_debug = false;
+	enum { i2k, k2i };
+	int directionality;
+
+	cP = cJ = pP = pJ = 0;	// This resets P(\rho) and J(\rho | \rho'), P(\rho') and J(\rho | \rho') to zero for this proposal step.
+	// Create a PathProposal object for this round of proposals.
+	proposed = setPath(current);
+
+	double RN;
+	RN = rndu();
+	if (RN < 0.5) directionality = i2k;
+	else directionality = k2i;
+
+	//////////
+	/// Setup all necessary sequences for a resimulation of subpath.
+	//////////
+	// 4TREE: Select branch.
+	// Collect events that occurred on branch.
+	t_B = t_0 + rndu() * (T-t_0) + t_0;
+	t_E = t_0 + rndu() * (T-t_0) + t_0;
+	if (t_B > t_E && directionality == i2k) swap(t_B, t_E);	// STL swap routine.
+	if (t_B > t_E) swap(t_B, t_E);	// For now, until backward paths work.
+
+	//////////
+	/// Subpath sampling test:
+	/// 1/3 probability of t_0->t_B
+	/// 1/3 probability of t_B->t_E
+	/// 1/3 probability of t_E->T
+	//////////
+	if (MCMC_sample_evenly) {
+		RN = rndu();
+		// Interval 123 combined
+		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
+		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }
+	}
+
+	if (t_0 == -1) { t_B = 0; t_E = T; }
+
+	list<eventTrack*>::iterator xf = proposed->epc_events.begin(); xf++;
+	list<eventTrack*>::reverse_iterator xb = proposed->epc_events.rbegin(); xb++;
+	cerr << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
+
+	// Set up nodes
+	i_B = tree->copyNode(i_0);
+	work = tree->copyNode(i_0);
+
+	//////////
+	/// Set path pointers in sequence time.
+	//////////
+	//// 3-8-2012: SPEED THIS UP!!!! e_E CAN BE SET starting FROM E_B.
+	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
+
+	i_E = tree->copyNode(i_B);
+	e_B--;
+	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, e_B, &(proposed->epc_events));
+	e_B++;
+
+	if ( e_E == proposed->epc_events.end() ) post_subpath_event_time = T;
+	else { e_E++; post_subpath_event_time = (*e_E)->eventTime; e_E--; }
+
+	/// Current setup
+	/// eventID:     0     1   2         3  45      6         7       8
+	/// Branch:  t_0 |-----|---|--*------|--||------|--*------|-------|T
+	///                          t_B    e_B                  e_E
+	/// Set to the event AFTER t_E (ID=7), outside of subpath. e_B set to event after t_B (ID=3), which is correct.
+	/// One consideration: Is this event at the end of the path?
+	work->resetSequence(i_B);	// Set scratch sequence to begin state.
+
+	//////////
+	/// p = path; p'= proposed path; p_L, p_M, p_R = probabilities of left, middle, and right subpaths;
+	///
+	/// After randomly choosing the subpath interval, we now simulate a new subpath, in the end getting
+	/// current_path = { p_L, p_M, p_R }
+	/// proposed_path = { p_L, p'_M, p_R }
+	/// where
+	///	 |  p_L     |  p_M   |        p_R         |
+	///  |          | subpath|					  |
+	///  |----------|--------|--------------------|
+	///  |         t_B      t_E					  |
+	///  |  p_L     |  p'_M  |        p_R		  |
+	///
+	/// We use the probabilities of p_M and p'_M as the indicator of accepting the proposed path,
+	/// since p_L and p_R cancel out.
+	///
+	///  P(p)  = P(p_L) x P(p_M|p_L)  x P(p_R|p_M)
+	///  P(p') = P(p_L) x P(p'_M|p_L) x P(p_R|p'_M)
+	//////////
+	cerr << "(SUB)PATH SETUP: " << t_0 << " --> " << t_B << "  " << t_E << "<- " << T << endl;
+
+	list<eventTrack*>::iterator pt, ct;
+	//////////
+	/// PROPOSED SUBPATH
+	//////////
+	// Set the site-state likelihoods for the subpath. 
+	for (vector<Site>::iterator qt = i_E->seq_evo.begin(); qt != i_E->seq_evo.end(); ++qt)
+		(*qt).L_i.Li_xi_.at( (*qt).returnState() ) = 1;
+	// Propose events for the subpath. Do not need to emulate path, since the proposal step will calculate
+	// the probabilities of the events (Qij, Qi., Qij|k(t), Qi.|k(t)).
+	proposed_subpath_events.clear();
+	work->resetSequence(i_B);
+	tree->dep.front()->context.set_sequence_indices(work);
+	
+	proposed->EvolveStep(tree, work, i_E, t_B, t_E, &proposed_subpath_events);
+	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)
+		(*pt)->Compute_MSA_Positions(tree, 0);
+
+	//////////
+	/// CURRENT SUBPATH
+	//////////
+	// Excise the events that were proposed for the previous round in the subpath.
+	current_subpath_events.clear();
+	if (e_B != e_E) current_subpath_events.assign(e_B, e_E);
+	// i_B holds the state at the beginning of the subpath, work is a scratch sequence. Reset
+	// work to appropriate sequence for emulations.
+	work->resetSequence(i_B);
+	PathProposal *current_subpath = new PathProposal(*current);
+	// Both paths emulated. Now we should be able to calculate both the forward and epc probabilities. Check full events, first.
+	current_subpath->EmulateStep(tree, work, i_E, t_B, t_E, &current_subpath_events);
+
+	// Calculate probabilities.
+	pP = proposed->P_path.ForwardProbability(proposed_subpath_events);
+	pJ = proposed->P_path.EPCProbability(proposed_subpath_events);
+	cP = current_subpath->P_path.ForwardProbability(current_subpath_events);
+	cJ = current_subpath->P_path.EPCProbability(current_subpath_events);
+	// current_subpath_events has eventTracks from mcmc.current sandwiched by independent front and back eventTrack pointers from emulateStep. //
+
+	// Clear up first and last events (non-subst events)
+	delete (*current_subpath_events.begin()); delete (*current_subpath_events.rbegin());
+
+	// Emulate the two subpaths to get their forward probability (P(p)) and their EPC probabilities
+	// (J(p|p')) necessary to calculate r = min{1, (P(p')/J(p'|p)) / (P(p)/J(p|p'))
+	bool accept_new_path = accept_proposal(cP, cJ, pP, pJ);
+
+	// Now that events have been emulated, probabilities have been calculated, and path has been accepted,
+	// modify the times of the proposed path to add in the beginning of the subpath interval.
+	subpath_times << " " << t_B << " " << t_E;
+	if ( accept_new_path ) {
+		list<eventTrack*>::iterator current_start, current_end, proposed_start, proposed_end;
+		//cout << "Time resimulated: " << t_B << "..." << t_E << endl;//cout << "i_B: " << i_B->printSequence() << endl;//cout << "i_E: " << i_E->printSequence() << endl;//cout << " A";
+
+		// Get the beginning and end events for both the current and proposed paths.
+		work->resetSequence(i_B);
+		current_start = current->setSequenceAtTimePoint(tree, i_B, t_B, current->epc_events.begin(), &(current->epc_events));
+		work->resetSequence(i_E);
+		current_end = current->setSequenceAtTimePoint(tree, i_E, t_E, current->epc_events.begin(), &(current->epc_events));
+		work->resetSequence(i_B);
+		proposed_start = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
+		work->resetSequence(i_E);
+		proposed_end = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
+
+		//cerr << "Time resimulated: " << t_B << "..." << t_E << endl;
+		//cerr << "current_event start iterator eventTime:  " << (*current_start)->eventTime << endl;
+		//cerr << "current_event end iterator eventTime:    " << (*current_end)->eventTime << endl;
+		//cerr << "proposed_event start iterator eventTime: " << (*proposed_start)->eventTime << endl;
+		//cerr << "proposed_event end iterator eventTime:   " << (*proposed_end)->eventTime << endl;
+		//cerr   << "*P(p):    " << cP << endl << "*J(p|p'): " << cJ << endl << "*P(p'):   " << pP << endl << "*J(p'|p): " << pJ << endl;
+		for (list<eventTrack*>::iterator erase_it = proposed_start; erase_it != proposed_end; ++erase_it)
+			delete (*erase_it);
+		proposed->epc_events.erase(proposed_start, proposed_end);
+		delete (*proposed_subpath_events.begin()); delete (*proposed_subpath_events.rbegin());
+		proposed_subpath_events.pop_front(); proposed_subpath_events.pop_back();
+		proposed->epc_events.insert(proposed_end, proposed_subpath_events.begin(), proposed_subpath_events.end());
+
+		for (list<eventTrack*>::iterator iiit = current->epc_events.begin(); iiit != current->epc_events.end(); ++iiit)
+			delete (*iiit);
+		delete current;
+		current = setPath(proposed);
+
+		//if (error_debug) {
+		//	cout << "ERROR DEBUG: pP = " << pP << " cP = " << cP << endl;
+		//
+		//	cout << "// PROPOSED EVENTS TO INSERT INTO SUBPATH //" << endl;
+		//	for (list<eventTrack*>::iterator yt = proposed_subpath_events.begin(); yt != proposed_subpath_events.end(); ++yt)
+		//		cout << (*yt)->Print_Event();
+		//	cout << "// PROPOSED SUBPATH //" << endl;
+		//	proposed->Print_Path_Events();
+		//
+		//	// Don't do this. If error_debug is set, 
+		//	//cout << "// CURRENT EVENTS IN SUBPATH //" << endl;
+		//	//for (list<eventTrack*>::iterator yt = current_subpath_events.begin(); yt != current_subpath_events.end(); ++yt)
+		//	//	cout << (*yt)->Print_Event();
+		//	cout << "// CURRENT SUBPATH //" << endl;
+		//	current->Print_Path_Events();
+		//}
+
+		return_probability = current_cycle_probability + pP - cP;
+		//cerr << "Forward fullpath difference: " << forward_prob_fullpath << "   subpath: " << cP - pP << endl;
+		//cerr << "Forward probability: " << current_cycle_probability << " + " << pP << " - " << cP << " = " << return_probability << endl;
+
+		//current->Print_Path_Events();
+
+		/// Checking routine, to see if the values from the subpath insertion are correct.
+		//double fwd_curr = current->P_path.ForwardProbability(current->epc_events);
+		//double fwd_prop = proposed->P_path.ForwardProbability(proposed->epc_events);
+		//double forward_prob_fullpath = fwd_curr - fwd_prop;
+		//if (forward_prob != fwd_prop) {
+		//	cerr << "Not equal, step " << i << endl;
+		//	cerr << "Forward: " << return_probability << "    " << fwd_prop << endl;
+		//	cerr << "     Differences: " << forward_prob_fullpath << " vs: " << cP-pP << endl;
+	
+		//	exit(0);
+		//}
+
+		*accepted = true;
+		subpath_times << " A" << endl;
+	} else {
+		//cout << " R";
+		for (list<eventTrack*>::iterator iit = proposed_subpath_events.begin(); iit != proposed_subpath_events.end(); ++iit)
+			delete (*iit);
+		return_probability = current_cycle_probability;
+		subpath_times << " R" << endl;
+	}
+
+	delete current_subpath;
+	for (list<eventTrack*>::iterator it = proposed->epc_events.begin(); it != proposed->epc_events.end(); ++it)
+		delete (*it);
+	delete proposed;	// Speed up: don't need to delete this on an accepted path.
+	i_B->Remove_Objects();
+	delete i_B->evolvingSequence;
+	delete i_B;
+	i_E->Remove_Objects();
+	delete i_E->evolvingSequence;
+	delete i_E;
+	work->Remove_Objects();
+	delete work->evolvingSequence;
+	delete work;
+
+	//cout << "  " << current->epc_events.size()-2;
+
+	return return_probability;
 }
 
 double
@@ -311,291 +575,6 @@ Statistics::MCMC::rasmus_resample(
 	for (list<eventTrack*>::iterator jjjt = proposed->epc_events.begin(); jjjt != proposed->epc_events.end(); ++jjjt) 
 		delete (*jjjt);
 	delete proposed;
-	work->Remove_Objects();
-	delete work->evolvingSequence;
-	delete work;
-
-	//cout << "  " << current->epc_events.size()-2;
-
-	return return_probability;
-}
-
-double
-Statistics::MCMC::resample_subpath(
-								   TTree *tree,
-								   TNode *i_0,
-								   TNode *k_0,
-								   double t_0,
-								   double T,
-								   double current_cycle_probability
-								  )
-{
-	double t_B, t_E;	/// The two times between which we want to simulate.
-	TNode *i_B, *i_E, *work;	/// Virtual nodes within the branch that we are simulating, one at t_B and one at t_E.
-	list<eventTrack*>::iterator e_B, e_E;	/// Iterators into the event history marking the begin and end times.
-	list<eventTrack*> proposed_subpath_events, current_subpath_events;
-	double cP, cJ, pP, pJ;
-	double return_probability;
-	double post_subpath_event_time;
-	bool error_debug = false;
-
-	cP = cJ = pP = pJ = 0;	// This resets P(\rho) and J(\rho | \rho'), P(\rho') and J(\rho | \rho') to zero for this proposal step.
-	// Create a PathProposal object for this round of proposals.
-	proposed = setPath(current);
-
-	//////////
-	/// Setup all necessary sequences for a resimulation of subpath.
-	//////////
-	// 4TREE: Select branch.
-	// Collect events that occurred on branch.
-	t_B = t_0 + rndu() * (T-t_0) + t_0;
-	t_E = t_0 + rndu() * (T-t_0) + t_0;
-	if (t_B > t_E) swap(t_B, t_E);	// STL swap routine.
-
-	//////////
-	/// Subpath sampling test:
-	/// 1/3 probability of t_0->t_B
-	/// 1/3 probability of t_B->t_E
-	/// 1/3 probability of t_E->T
-	//////////
-	if (MCMC_sample_evenly) {
-		double RN = rndu();
-		// Interval 123 combined
-		if (RN < 1.0/3.0) { t_E = t_B; t_B = t_0; }
-		else if (RN > 2.0/3.0) { t_B = t_E; t_E = T; }
-	}
-
-	if (t_0 == -1) { t_B = 0; t_E = T; }
-
-	list<eventTrack*>::iterator xf = proposed->epc_events.begin(); xf++;
-	list<eventTrack*>::reverse_iterator xb = proposed->epc_events.rbegin(); xb++;
-	//cout << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
-	cerr << t_B << "  " << t_E << "  " << "  " << (*xf)->eventTime << "  " << (*xb)->eventTime;
-
-	// Set up nodes
-	i_B = tree->copyNode(i_0);
-//	i_E = tree->copyNode(i_0);
-	work = tree->copyNode(i_0);
-
-	//////////
-	/// Set path pointers in sequence time.
-	//////////
-	//// 3-8-2012: SPEED THIS UP!!!! e_E CAN BE SET starting FROM E_B.
-	e_B = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
-//	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
-
-	i_E = tree->copyNode(i_B);
-	e_B--;
-	e_E = proposed->setSequenceAtTimePoint(tree, i_E, t_E, e_B, &(proposed->epc_events));
-	e_B++;
-
-	//vector<Site>::iterator at, bt;
-	//at = i_E->seq_evo.begin();
-	//bt = i_E2->seq_evo.begin();
-	//bool states_differ = false;
-	//int sequence_site = 0;
-	//for (; at != i_E->seq_evo.end(); ++at, ++bt, ++sequence_site) {
-	//	if ((*at).returnState() != (*bt).returnState()) {
-	//		cerr << "States differ between sequences at site " << sequence_site << "." << endl;
-	//		states_differ = true;
-	//	}
-	//}
-	//if (e_E != e_E2) { cerr << "two approaches not equivalent." << endl; }
-	//if (states_differ) {
-	//	cerr << i_E->printSequence(true) << endl;
-	//	cerr << i_E2->printSequence(true) << endl;
-	//	exit(0);
-	//}
-
-	if ( e_E == proposed->epc_events.end() ) post_subpath_event_time = T;
-	else { e_E++; post_subpath_event_time = (*e_E)->eventTime; e_E--; }
-
-	/// Current setup
-	/// eventID:     0     1   2         3  45      6         7       8
-	/// Branch:  t_0 |-----|---|--*------|--||------|--*------|-------|T
-	///                          t_B    e_B                  e_E
-	/// Set to the event AFTER t_E (ID=7), outside of subpath. e_B set to event after t_B (ID=3), which is correct.
-	/// One consideration: Is this event at the end of the path?
-	work->resetSequence(i_B);	// Set scratch sequence to begin state.
-
-	//////////
-	/// p = path; p'= proposed path; p_L, p_M, p_R = probabilities of left, middle, and right subpaths;
-	///
-	/// After randomly choosing the subpath interval, we now simulate a new subpath, in the end getting
-	/// current_path = { p_L, p_M, p_R }
-	/// proposed_path = { p_L, p'_M, p_R }
-	/// where
-	///	 |  p_L     |  p_M   |        p_R         |
-	///  |          | subpath|					  |
-	///  |----------|--------|--------------------|
-	///  |         t_B      t_E					  |
-	///  |  p_L     |  p'_M  |        p_R		  |
-	///
-	/// We use the probabilities of p_M and p'_M as the indicator of accepting the proposed path,
-	/// since p_L and p_R cancel out.
-	///
-	///  P(p)  = P(p_L) x P(p_M|p_L)  x P(p_R|p_M)
-	///  P(p') = P(p_L) x P(p'_M|p_L) x P(p_R|p'_M)
-	//////////
-
-	cerr << "(SUB)PATH SETUP: " << t_0 << " --> " << t_B << "  " << t_E << "<- " << T << endl;
-	//cerr << "i_0: " << i_0->printSequence(true) << endl;
-	//cerr << "i_B: " << i_B->printSequence(true) << endl;
-	//cerr << "  Rate away from sequence: " << i_B->evolvingSequence->Qidot << endl;
-	//cerr << "i_E: " << i_E->printSequence(true) << endl;
-	//cerr << "  Rate away from sequence: " << i_E->evolvingSequence->Qidot << endl;
-	//cerr << "k_0: " << k_0->printSequence(true) << endl;
-
-	list<eventTrack*>::iterator pt, ct;
-	//////////
-	/// PROPOSED SUBPATH
-	//////////
-	// Set the site-state likelihoods for the subpath. 
-	for (vector<Site>::iterator qt = i_E->seq_evo.begin(); qt != i_E->seq_evo.end(); ++qt)
-		(*qt).L_i.Li_xi_.at( (*qt).returnState() ) = 1;
-	// Propose events for the subpath. Do not need to emulate path, since the proposal step will calculate
-	// the probabilities of the events (Qij, Qi., Qij|k(t), Qi.|k(t)).
-	proposed_subpath_events.clear();
-	work->resetSequence(i_B);
-	tree->dep.front()->context.set_sequence_indices(work);
-	
-	//cout << "  " << work->evolvingSequence->compare_sequence(i_E->evolvingSequence);	// Gets the number of differences. If times are really short, and no differences are observed, this may explain some problems that the method is having.
-	
-	proposed->EvolveStep(tree, work, i_E, t_B, t_E, &proposed_subpath_events);
-	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)
-		(*pt)->Compute_MSA_Positions(tree, 0);
-
-	//////////
-	/// CURRENT SUBPATH
-	//////////
-	// Excise the events that were proposed for the previous round in the subpath.
-	current_subpath_events.clear();
-	if (e_B != e_E) current_subpath_events.assign(e_B, e_E);
-	// i_B holds the state at the beginning of the subpath, work is a scratch sequence. Reset
-	// work to appropriate sequence for emulations.
-	work->resetSequence(i_B);
-	PathProposal *current_subpath = new PathProposal(*current);
-	// Both paths emulated. Now we should be able to calculate both the forward and epc probabilities. Check full events, first.
-	current_subpath->EmulateStep(tree, work, i_E, t_B, t_E, &current_subpath_events);
-
-	//cout << "  " << current_subpath_events.size() << "," << proposed_subpath_events.size();
-
-	//if (current_subpath_events.size() == 2 && proposed_subpath_events.size() == 4) {
-	//	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)
-	//		cout << "pt: " << (*pt)->Print_Event();
-	//	cout << "---------------------------------------------------------" << endl;
-	//	for (ct = current_subpath_events.begin(); ct != current_subpath_events.end(); ++ct)
-	//		cout << "ct: " << (*ct)->Print_Event();
-	//	cout << "---------------------------------------------------------" << endl;
-	//	error_debug = true;
-	//}
-
-	// Calculate probabilities.
-	pP = proposed->P_path.ForwardProbability(proposed_subpath_events);
-	pJ = proposed->P_path.EPCProbability(proposed_subpath_events);
-	cP = current_subpath->P_path.ForwardProbability(current_subpath_events);
-	cJ = current_subpath->P_path.EPCProbability(current_subpath_events);
-	// current_subpath_events has eventTracks from mcmc.current sandwiched by independent front and back eventTrack pointers from emulateStep. //
-
-	// Clear up first and last events (non-subst events)
-	delete (*current_subpath_events.begin()); delete (*current_subpath_events.rbegin());
-
-	// Emulate the two subpaths to get their forward probability (P(p)) and their EPC probabilities
-	// (J(p|p')) necessary to calculate r = min{1, (P(p')/J(p'|p)) / (P(p)/J(p|p'))
-	bool accept_new_path = accept_proposal(cP, cJ, pP, pJ);
-
-	// Now that events have been emulated, probabilities have been calculated, and path has been accepted,
-	// modify the times of the proposed path to add in the beginning of the subpath interval.
-	if ( accept_new_path ) {
-		list<eventTrack*>::iterator current_start, current_end, proposed_start, proposed_end;
-
-		//cout << "Time resimulated: " << t_B << "..." << t_E << endl;
-		//cout << "i_B: " << i_B->printSequence() << endl;
-		//cout << "i_E: " << i_E->printSequence() << endl;
-
-		//cout << " A";
-
-		// Get the beginning and end events for both the current and proposed paths.
-		work->resetSequence(i_B);
-		current_start = current->setSequenceAtTimePoint(tree, i_B, t_B, current->epc_events.begin(), &(current->epc_events));
-		work->resetSequence(i_E);
-		current_end = current->setSequenceAtTimePoint(tree, i_E, t_E, current->epc_events.begin(), &(current->epc_events));
-		work->resetSequence(i_B);
-		proposed_start = proposed->setSequenceAtTimePoint(tree, i_B, t_B, proposed->epc_events.begin(), &(proposed->epc_events));
-		work->resetSequence(i_E);
-		proposed_end = proposed->setSequenceAtTimePoint(tree, i_E, t_E, proposed->epc_events.begin(), &(proposed->epc_events));
-
-		//cerr << "Time resimulated: " << t_B << "..." << t_E << endl;
-		//cerr << "current_event start iterator eventTime:  " << (*current_start)->eventTime << endl;
-		//cerr << "current_event end iterator eventTime:    " << (*current_end)->eventTime << endl;
-		//cerr << "proposed_event start iterator eventTime: " << (*proposed_start)->eventTime << endl;
-		//cerr << "proposed_event end iterator eventTime:   " << (*proposed_end)->eventTime << endl;
-		//cerr   << "*P(p):    " << cP << endl << "*J(p|p'): " << cJ << endl << "*P(p'):   " << pP << endl << "*J(p'|p): " << pJ << endl;
-		for (list<eventTrack*>::iterator erase_it = proposed_start; erase_it != proposed_end; ++erase_it)
-			delete (*erase_it);
-		proposed->epc_events.erase(proposed_start, proposed_end);
-		delete (*proposed_subpath_events.begin()); delete (*proposed_subpath_events.rbegin());
-		proposed_subpath_events.pop_front(); proposed_subpath_events.pop_back();
-		proposed->epc_events.insert(proposed_end, proposed_subpath_events.begin(), proposed_subpath_events.end());
-
-		for (list<eventTrack*>::iterator iiit = current->epc_events.begin(); iiit != current->epc_events.end(); ++iiit)
-			delete (*iiit);
-		delete current;
-		current = setPath(proposed);
-
-		//if (error_debug) {
-		//	cout << "ERROR DEBUG: pP = " << pP << " cP = " << cP << endl;
-		//
-		//	cout << "// PROPOSED EVENTS TO INSERT INTO SUBPATH //" << endl;
-		//	for (list<eventTrack*>::iterator yt = proposed_subpath_events.begin(); yt != proposed_subpath_events.end(); ++yt)
-		//		cout << (*yt)->Print_Event();
-		//	cout << "// PROPOSED SUBPATH //" << endl;
-		//	proposed->Print_Path_Events();
-		//
-		//	// Don't do this. If error_debug is set, 
-		//	//cout << "// CURRENT EVENTS IN SUBPATH //" << endl;
-		//	//for (list<eventTrack*>::iterator yt = current_subpath_events.begin(); yt != current_subpath_events.end(); ++yt)
-		//	//	cout << (*yt)->Print_Event();
-		//	cout << "// CURRENT SUBPATH //" << endl;
-		//	current->Print_Path_Events();
-		//}
-
-		return_probability = current_cycle_probability + pP - cP;
-		//cerr << "Forward fullpath difference: " << forward_prob_fullpath << "   subpath: " << cP - pP << endl;
-		//cerr << "Forward probability: " << current_cycle_probability << " + " << pP << " - " << cP << " = " << return_probability << endl;
-
-		//current->Print_Path_Events();
-
-		/// Checking routine, to see if the values from the subpath insertion are correct.
-		//double fwd_curr = current->P_path.ForwardProbability(current->epc_events);
-		//double fwd_prop = proposed->P_path.ForwardProbability(proposed->epc_events);
-		//double forward_prob_fullpath = fwd_curr - fwd_prop;
-		//if (forward_prob != fwd_prop) {
-		//	cerr << "Not equal, step " << i << endl;
-		//	cerr << "Forward: " << return_probability << "    " << fwd_prop << endl;
-		//	cerr << "     Differences: " << forward_prob_fullpath << " vs: " << cP-pP << endl;
-	
-		//	exit(0);
-		//}
-
-		accepted_subpath_times << " " << t_B << " " << t_E << endl;
-	} else {
-		//cout << " R";
-		for (list<eventTrack*>::iterator iit = proposed_subpath_events.begin(); iit != proposed_subpath_events.end(); ++iit)
-			delete (*iit);
-		return_probability = current_cycle_probability;
-	}
-
-	delete current_subpath;
-	for (list<eventTrack*>::iterator it = proposed->epc_events.begin(); it != proposed->epc_events.end(); ++it)
-		delete (*it);
-	delete proposed;	// Speed up: don't need to delete this on an accepted path.
-	i_B->Remove_Objects();
-	delete i_B->evolvingSequence;
-	delete i_B;
-	i_E->Remove_Objects();
-	delete i_E->evolvingSequence;
-	delete i_E;
 	work->Remove_Objects();
 	delete work->evolvingSequence;
 	delete work;

@@ -217,7 +217,7 @@ PathProposal::Evolve(
 	for (vector<Taxon*>::iterator it = taxa.begin(); it != taxa.end(); ++it) 
 		delete (*it);
 
-	cout << "EVENTS:" << eventNo << endl;	//XOUT
+//	cout << "EVENTS:" << eventNo << endl;	//XOUT
 	cerr << "EVENTS:" << eventNo << endl;	//XOUT
 }
 
@@ -1195,6 +1195,15 @@ getBranchEvents(
 	}
 	branch_events.push_back(*it);
 	return branch_events;
+}
+
+void 
+PathProposal::write_path(ofstream& stream)
+{
+	list<eventTrack*>::iterator it = epc_events.begin(); it++;
+	for (; it != epc_events.end(); ++it) {
+		stream << (*it)->write_path_event();
+	}
 }
 
 void 

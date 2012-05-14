@@ -196,6 +196,25 @@ string eventTrack::Print_Event()
 	return event.str();
 }
 
+string eventTrack::write_path_event()
+{
+	stringstream event;
+	
+	event << eventTime;
+	if (eventType != FOSSIL && eventType != BRANCH_BEGIN && eventType != NO_EVENT && eventType != BRANCH_END) {
+		for (vector<int>::iterator it = MSA_positions.begin(); it != MSA_positions.end(); ++it) {
+			if (it != MSA_positions.begin()) event << ":";
+			event << (*it);
+		}
+	} else event << "X";
+
+	event << "," << size 
+		  << "," << Q.idot 
+		  << "," << Q.idot_k__T__ << endl;
+
+	return event.str();
+}
+
 void 
 eventTrack::ratesAway::assign (
 									long double idot_in, 

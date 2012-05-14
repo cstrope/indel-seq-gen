@@ -140,8 +140,6 @@ public:
 	void setMultiStateCharacters();
 	void apply_branchScales(double scalar);
 	double apply2Subtree(TNode *node, double scalar);
-	void printTree();
-	void printSubtree(TNode *node);
 	void nameAncestralNodes();
 	void nameAncestralNode(int *nodeno, TNode *node);
 

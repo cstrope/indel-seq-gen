@@ -54,6 +54,7 @@ public:
 	{ }
 
 	void Print_Path_Events();
+	void write_path(ofstream& stream);
 	void setNodeSequences(TTree *tree);
 	void setUnspecifiedNodeSequences(TTree *tree, int sequence_length);
 	void parseEndpointInfile(string& filename);

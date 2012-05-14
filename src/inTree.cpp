@@ -119,28 +119,6 @@ void inTree::PrintSubtree(
 	}
 }
 
-void inTree::printTree( )
-{
-	int nodeNo = my_tree->numTips + 2;
-
-	cout << "Partition " << treeNum << endl;
-	printSubtree(my_tree->root->branch1);
-	printSubtree(my_tree->root->branch2);
-
-}
-
-void inTree::printSubtree(
-						  TNode *node
-						) 
-{
-	node->report(); cerr << endl;
-	node->branch->report();
-	if(node->tipNo==-1) {
-		printSubtree(node->branch1);
-		printSubtree(node->branch2);
-	}
-}
-
 void inTree::nameAncestralNodes()
 {
 	int tipno = my_tree->numTips + 1;

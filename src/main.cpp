@@ -654,7 +654,7 @@ void Path_Proposal(
 			// If MCMC, need to perform some steps to set up path and run MCMC.
 			if (options->num_mcmc_steps) {
 				(*it)->path->epc_events.assign((*events).begin(), (*events).end());
-				stats->MCMC_run((*it)->my_tree, options->num_mcmc_steps, (*it)->path);
+				stats->MCMC_run((*it)->my_tree, options->num_mcmc_steps, options->output_files, (*it)->path);
 			}
 		}
 

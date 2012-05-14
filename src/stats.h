@@ -98,7 +98,7 @@ public:
 	}importance_sampling;
 
 
-	void MCMC_run(TTree *tree, int num_steps, PathProposal *path);
+	void MCMC_run(TTree *tree, int num_steps, string out_file, PathProposal *path);
 	class MCMC : private Counter<MCMC>
 	{
 	public:
@@ -112,7 +112,7 @@ public:
 		bool   accept_proposal(double P, double J, double Pstar, double Jstar);
 
 		// Routines for MCMC step types.
-		double	resample_subpath(TTree *tree, TNode *i_0, TNode *k_0, double t_0, double T, double current_cycle_probability);
+		double	resample_subpath(TTree *tree, TNode *i_0, TNode *k_0, double t_0, double T, double current_cycle_probability, bool *accepted);
 		double	rasmus_resample(TTree *tree, TNode *i_0, TNode *k_0, double t_0, double T, double current_cycle_probability);
 	}mcmc;
 

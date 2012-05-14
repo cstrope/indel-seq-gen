@@ -41,7 +41,7 @@ my @ret_split;
 #		10.0
 		;
 		
-my $filename = "mcmc$MCMC-bl$branch_length-ds$dependence_superscript-$EPC_SAMPLE_TYPE$EVEN_SAMPLING-$RANDOM_SEED";
+my $filename = "results_dir/mcmc$MCMC-bl$branch_length-ds$dependence_superscript-$EPC_SAMPLE_TYPE$EVEN_SAMPLING-$RANDOM_SEED";
 my $indel_seq_gen = "isg-test-one";
 
 open OUTt, ">$filename.tree";

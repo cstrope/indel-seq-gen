@@ -91,6 +91,7 @@ public:
 	eventTrack(int events_to_track);
 
 	string Print_Event();
+	string write_path_event();
 	string Print_Short_Event();
 	void assign_Q(TNode *node, Site& event_site, int action, int number_of_differences_between_sequences);
 	int Compute_MSA_Positions(TTree *tree, int start_msa_pos);

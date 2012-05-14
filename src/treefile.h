@@ -48,4 +48,3 @@ char ReadToNextChar(string& tree_str, int *pos);
 void ReadUntil(string& tree_str, int *pos, char stopChar, const char *what);
 
 #endif /* _TREEFILE_H_ */
-
