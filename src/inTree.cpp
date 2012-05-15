@@ -54,6 +54,7 @@ inTree::inTree(
 	tree.clear();
 	input_MA.clear();
 	input_MA_motifs.clear();
+	my_tree->treeNum = num;
 }
 
 void inTree::perturbTree(
@@ -447,8 +448,11 @@ double inTree::apply2Subtree(
 void inTree::Define_Ancestors( void ) 
 {
 	int node_num = -1;
+	stringstream x;
 
 	my_tree->root->mytipNo = node_num++;
+	x << my_tree->root->mytipNo;
+	my_tree->root->node_name = x.str();
 	Define_Anc(my_tree->root, my_tree->root->branch1, &node_num);
 	Define_Anc(my_tree->root, my_tree->root->branch2, &node_num);
 	if (!my_tree->rooted)
@@ -461,9 +465,13 @@ void inTree::Define_Anc(
 						int *node_num
 					   ) 
 {
+	stringstream x;
 	des->anc = anc;
 	des->mytipNo = (*node_num)++;
 	if (des->branch1 != NULL) {
+		// Node has no name of it's own, name it the tipno
+		x << des->mytipNo;
+		des->node_name = x.str();
 		Define_Anc(des, des->branch1, node_num);
 		Define_Anc(des, des->branch2, node_num);
 	}

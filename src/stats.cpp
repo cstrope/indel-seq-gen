@@ -174,7 +174,7 @@ Statistics::MCMC_run(
 
 	string mcmc_outfilename = outfile + ".paths";	
 	mcmc_out = new ofstream(mcmc_outfilename.c_str(), ios::trunc | ios::out);
-	//tree->write_tree();
+	tree->write_tree(*mcmc_out, false);
 
 	//////////
 	/// Set originally simulated path to the current path (along with events).
@@ -186,6 +186,10 @@ Statistics::MCMC_run(
 
 	TNode *i_0 = tree->root;	// tree->root is temporary. Use this while we are working only on the single branch.
 	TNode *k_0 = tree->root->branch1;
+
+	i_0->write_sequence(*mcmc_out);
+	k_0->write_sequence(*mcmc_out);
+
 	work = tree->copyNode(i_0);
 	delete (*mcmc.current->epc_events.begin()); delete (*mcmc.current->epc_events.rbegin());
 	mcmc.current->epc_events.pop_front(); mcmc.current->epc_events.pop_back();
@@ -224,16 +228,18 @@ Statistics::MCMC_run(
 		}
 		//cout << "  " << mcmc_chain_forward.back() << endl;
 
-		if (accepted) {
-			*mcmc_out << ">" << i << endl;
-			mcmc.current->write_path(*mcmc_out);
-		}
+		if (accepted) mcmc.current->write_path(*mcmc_out, i);
 
+		// Global array is keeping track of all substitutions. Site changes will make many substitutions
+		// obselete, so remove those. Keeps global arrays reasonably small-sized to speed up computation.
 		if (i % cycle_sample_length == 0) tree->global_alignment->cleanArray(mcmc.current->epc_events);	
+
+		//if (i > 1000 && i % 100 == 0) { 
+			// This would be to print out every 100th path state. For 5-14 10000_path...
+			//cout << ">" << endl; 
+			//mcmc.current->Print_Path_Events(); 
+		//}
 		cerr << "DONE." << endl;
-
-		if (i > 1000 && i % 100 == 0) { cout << ">" << endl; mcmc.current->Print_Path_Events(); }
-
 	}
 
 	work->Remove_Objects();
@@ -481,7 +487,6 @@ Statistics::MCMC::resample_subpath(
 		*accepted = true;
 		subpath_times << " A" << endl;
 	} else {
-		//cout << " R";
 		for (list<eventTrack*>::iterator iit = proposed_subpath_events.begin(); iit != proposed_subpath_events.end(); ++iit)
 			delete (*iit);
 		return_probability = current_cycle_probability;

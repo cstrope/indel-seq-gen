@@ -2713,6 +2713,13 @@ TNode::resetSequence( TNode *node )
 	for (; my != seq_evo.end(); ++my, ++it) (*my).setState((*it).returnState());
 }
 
+void
+TNode::write_sequence( ofstream& out )
+{
+	out << ">" << node_name << endl;
+	out << printSequence(true) << endl;
+}
+
 TNode*
 TTree::copyNode( TNode *copy_node )
 {
@@ -3077,6 +3084,49 @@ TTree::report_sequences( void )
 			else cerr << "TTree::report_sequences -> sequence state \"" << (*jt).returnState() << "\" set." << endl;
 		}
 		cerr << endl;
+	}
+}
+
+void 
+TTree::write_tree(
+				  ofstream& out, 
+				  bool scale
+				 )
+{
+	int nodeNo = numTips + 2;
+
+	if (scale) out << "Partition " << treeNum << endl;
+	out << "(";
+	write_subtree(root->branch1,out, false, &nodeNo, false, scale);
+	out << ",";
+	write_subtree(root->branch2,out, false, &nodeNo, false, scale);
+	out << ")";
+	if (scale) out << numTips+1;
+	out << ";" << endl;
+}
+
+void TTree::write_subtree(
+						  TNode *node, 
+						  ofstream& out, 
+						  bool writeAncestors, 
+						  int *nodeNo, 
+						  bool time_rel,
+						  bool scale
+						 )
+{
+	int my_nodeNo;
+	if(node->tipNo==-1) {
+		my_nodeNo = *nodeNo;
+		(*nodeNo)++;
+		out << "(";
+		write_subtree(node->branch1,out, writeAncestors, nodeNo, time_rel, scale);
+		out << ",";
+		write_subtree(node->branch2,out, writeAncestors, nodeNo, time_rel, scale);
+		out << ")";
+		if (scale) out << my_nodeNo;
+		out << ":" << ((time_rel) ? node->branch->branch0_time_relative_length : node->branch->anc_length() );
+	} else {
+		out << names.at(node->tipNo) << ":" << ((time_rel) ? node->branch->branch0_time_relative_length : node->branch->anc_length() );
 	}
 }
 

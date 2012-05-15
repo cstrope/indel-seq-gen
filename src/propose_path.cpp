@@ -1198,8 +1198,9 @@ getBranchEvents(
 }
 
 void 
-PathProposal::write_path(ofstream& stream)
+PathProposal::write_path(ofstream& stream, int pathID)
 {
+	stream << "#" << pathID << endl;
 	list<eventTrack*>::iterator it = epc_events.begin(); it++;
 	for (; it != epc_events.end(); ++it) {
 		stream << (*it)->write_path_event();

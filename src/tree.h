@@ -238,6 +238,7 @@ public:
 	double Rij (TTree *tree, unsigned int position, unsigned int end_position);
 	void resetSequence(TNode *node);
 	void printForwardRateAway();
+	void write_sequence(ofstream& out);
 	//void set_Qptr(bool Qd, bool Pc, bool Nij);
 	//////////
 };
@@ -306,6 +307,7 @@ public:
 	list<inClade*> treeEnv;
 	bool epc_root_is_set;
 	list<Dependency*> dep;
+	int treeNum;		// The partition that this tree is assigned to.
 	
 	// Global arrays
 	globalArray				*global_alignment;
@@ -332,6 +334,8 @@ public:
 	void sample_root_sequence();
 	list<inMotif*> DrawMotifs(string& root_sequence, double proportion_motifs);
 	TTree();
+	void write_tree(ofstream& out, bool scale);
+	void write_subtree(TNode *node, ofstream& out, bool writeAncestors, int *nodeNo, bool time_rel, bool scale);
 };
 
 class globalArray : private Counter<globalArray>

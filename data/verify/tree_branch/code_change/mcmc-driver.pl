@@ -66,7 +66,7 @@ if ($INDEPENDENT_SITES) {
 
 	print STDERR "----- END-POINT CONDITIONED RUN -------------\n";
 	my $epc_command = "";
-	$epc_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -O $order -D $filename.sim.dep -E $filename.sim.ma ";
+	$epc_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -e $filename -O $order -D $filename.sim.dep -E $filename.sim.ma ";
 	if ($EMULATE) {
 		$epc_command .= " -M $filename.sim.trace ";
 	} else {
