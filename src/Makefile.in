@@ -32,7 +32,7 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = indel-seq-gen$(EXEEXT)
+bin_PROGRAMS = indel-seq-gen$(EXEEXT) iSG_assess$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -49,6 +49,16 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_iSG_assess_OBJECTS = motif.$(OBJEXT) inTree.$(OBJEXT) \
+	seqGenOptions.$(OBJEXT) main.$(OBJEXT) evolve.$(OBJEXT) \
+	model.$(OBJEXT) eigen.$(OBJEXT) treefile.$(OBJEXT) \
+	gamma.$(OBJEXT) random.$(OBJEXT) insert_freqs.$(OBJEXT) \
+	trace.$(OBJEXT) inClade.$(OBJEXT) paleo.$(OBJEXT) \
+	propose_path.$(OBJEXT) stats.$(OBJEXT) dependency.$(OBJEXT) \
+	forward_simulation.$(OBJEXT) twister.$(OBJEXT) \
+	rate_type.$(OBJEXT)
+iSG_assess_OBJECTS = $(am_iSG_assess_OBJECTS)
+iSG_assess_DEPENDENCIES = $(top_builddir)/lib/libgnu.a
 am_indel_seq_gen_OBJECTS = motif.$(OBJEXT) inTree.$(OBJEXT) \
 	seqGenOptions.$(OBJEXT) main.$(OBJEXT) evolve.$(OBJEXT) \
 	model.$(OBJEXT) eigen.$(OBJEXT) treefile.$(OBJEXT) \
@@ -72,8 +82,8 @@ COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(indel_seq_gen_SOURCES)
-DIST_SOURCES = $(indel_seq_gen_SOURCES)
+SOURCES = $(iSG_assess_SOURCES) $(indel_seq_gen_SOURCES)
+DIST_SOURCES = $(iSG_assess_SOURCES) $(indel_seq_gen_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -210,6 +220,8 @@ top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I$(top_builddir)/lib -I$(top_srcdir)/lib
 indel_seq_gen_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h gamma.cpp gamma.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h twister.h twister.cpp rate_type.h rate_type.cpp
 indel_seq_gen_LDADD = $(top_builddir)/lib/libgnu.a
+iSG_assess_SOURCES = motif.h motif.cpp inTree.cpp inTree.h seqGenOptions.cpp seqGenOptions.h main.cpp evolve.cpp evolve.h model.cpp model.h eigen.cpp eigen.h treefile.cpp treefile.h tree.h gamma.cpp gamma.h random.cpp random.h insert_freqs.cpp insert_freqs.h trace.cpp trace.h inClade.cpp inClade.h prosite_motif.h paleo.h paleo.cpp propose_path.cpp propose_path.h stats.cpp stats.h dependency.h dependency.cpp forward_simulation.cpp forward_simulation.h twister.h twister.cpp rate_type.h rate_type.cpp
+iSG_assess_LDADD = $(top_builddir)/lib/libgnu.a
 all: all-am
 
 .SUFFIXES:
@@ -281,6 +293,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+iSG_assess$(EXEEXT): $(iSG_assess_OBJECTS) $(iSG_assess_DEPENDENCIES) 
+	@rm -f iSG_assess$(EXEEXT)
+	$(CXXLINK) $(iSG_assess_OBJECTS) $(iSG_assess_LDADD) $(LIBS)
 indel-seq-gen$(EXEEXT): $(indel_seq_gen_OBJECTS) $(indel_seq_gen_DEPENDENCIES) 
 	@rm -f indel-seq-gen$(EXEEXT)
 	$(CXXLINK) $(indel_seq_gen_OBJECTS) $(indel_seq_gen_LDADD) $(LIBS)
