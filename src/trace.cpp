@@ -212,6 +212,8 @@ string eventTrack::write_path_event()
 		  << "," << Q.idot 
 		  << "," << Q.idot_k__T__ << endl;
 
+	cerr << event.str() << endl;
+
 	return event.str();
 }
 
