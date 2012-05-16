@@ -228,7 +228,9 @@ Statistics::MCMC_run(
 		}
 		//cout << "  " << mcmc_chain_forward.back() << endl;
 
-		if (accepted) mcmc.current->write_path(*mcmc_out, i);
+		if (accepted) {
+			mcmc.current->write_path(*mcmc_out, i);
+		}
 
 		// Global array is keeping track of all substitutions. Site changes will make many substitutions
 		// obselete, so remove those. Keeps global arrays reasonably small-sized to speed up computation.

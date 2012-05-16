@@ -200,7 +200,7 @@ string eventTrack::write_path_event()
 {
 	stringstream event;
 	
-	event << eventTime;
+	event << eventTime << ",";
 	if (eventType != FOSSIL && eventType != BRANCH_BEGIN && eventType != NO_EVENT && eventType != BRANCH_END) {
 		for (vector<int>::iterator it = MSA_positions.begin(); it != MSA_positions.end(); ++it) {
 			if (it != MSA_positions.begin()) event << ":";
@@ -211,8 +211,6 @@ string eventTrack::write_path_event()
 	event << "," << size 
 		  << "," << Q.idot 
 		  << "," << Q.idot_k__T__ << endl;
-
-	cerr << event.str() << endl;
 
 	return event.str();
 }
