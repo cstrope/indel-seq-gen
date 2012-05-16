@@ -88,12 +88,50 @@ use strict;
 						   $nextpath_cycle
 						  );
 		## Should have path to profile && cycle of interest.
-		print "$current_cycle $nextpath_cycle\n"; sleep(1);
-
-		&add_to_profile($i_0, $t_0, $T, $path, \@average_path, $time_increment);
+		print "$current_cycle $nextpath_cycle\n"; 
+		&add_to_profile($i_0, $t_0, $T, $path, \@average_path, $time_increment, $time_bins);
 	}
+	
+	&normalize_profile(\@average_path, $time_bins, $sequence_size, $numStates);
+	&print_profile(\@average_path);
+}	### End main ###
+
+sub print_profile
+{
+	my ($prof_ref, $time_bins, $sequence_size, $numStates) = @_;
+	
+	open OUT, ">avg_path.stat";
+
+	for my $i ( 0 .. $time_bins ) {
+		for my $j (0 .. $sequence_size-1) {
+			my $num_hits = 0;
+			for my $k (0 .. $numStates) {
+				print OUT "$i $j $k $prof_ref->[$i][$j][$k]\n";
+			}
+		}
+	}
+	close OUT;
 }
 
+sub normalize_profile
+{
+	my ($prof_ref, $time_bins, $sequence_size, $numStates) = @_;
+
+	for my $i ( 0 .. $time_bins ) {
+		for my $j (0 .. $sequence_size-1) {
+			my $num_hits = 0;
+			for my $k (0 .. $numStates) {
+				$num_hits += $prof_ref->[$i][$j][$k];
+			}
+
+			if ($num_hits != 0) {
+				for my $k (0 .. $numStates) {
+					$prof_ref->[$i][$j][$k] /= $num_hits;
+				}
+			}
+		}
+	}
+}
 
 sub add_to_profile
 {
@@ -103,14 +141,15 @@ sub add_to_profile
 		$T,					## End time.
 		$path_to_add, 		## Path from $i_0--->$k_0
 		$profile_array_ref, ## 3D array, from above.
-		$dt					## Amount of time to increment at each step.
+		$dt,				## Amount of time to increment at each step.
+		$total_time_bins	## To increment the array at the proper point.
 	   ) = @_;
 	
 	my @path_events = split /\n/, $path_to_add;
-	pop @path_events;		## dummy event (array end);
-	pop @path_events;		## branch_end event, gives no info.
+	pop @path_events;		## Branch ending event. ##
 	my @work_sequence = split //, $i_0;
 	my $last_event_ptr = 0;
+	my ($prof_site_idx) = (0);
 
 	my ($t, $change, $Qidot, $site, $Qidot_k);
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
@@ -119,19 +158,40 @@ sub add_to_profile
 		while ($t < $time_bin and $last_event_ptr < (scalar @path_events) ) {
 			## Make change to sequence
 			my @nucl_pair = split //, $change;
-			if ($work_sequence[$site] ne $nucl_pair[0]) {
-				print "Odd... $work_sequence[$site] != $nucl_pair[0].\n";
-			} else {
-				$work_sequence[$site] = $nucl_pair[1];
-			}
+			if ($work_sequence[$site] ne $nucl_pair[0]) { die "Odd... $work_sequence[$site] != $nucl_pair[0].\n"; } 
+			else { $work_sequence[$site] = $nucl_pair[1]; }
+
+			&increment_profile($profile_array_ref, \@work_sequence, $time_bin * $total_time_bins);
 
 			## Finished event, get data of next event.
 			$last_event_ptr++;
 			($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
-			print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n"; sleep(0.1);
+			#print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n";
 		}
 	}
-	exit(0);
+}
+
+sub increment_profile
+{
+	my ($prof_ref, $seqdata_ref, $time_idx) = @_;
+	
+	for my $i (0 .. @{ $seqdata_ref }-2) {
+		$prof_ref->[$time_idx] [$i] [&pattern_idx($seqdata_ref->[$i])]++;
+		#print "prof_ref->[$time_idx][$i][(&pattern_idx($seqdata_ref->[$i]))]++\n";
+	}
+}
+
+sub pattern_idx
+{
+	my ($pattern) = @_;
+	my @elements = split //, $pattern;
+	
+	## Naturally, this will have to be better done for higher order Markov models.
+	if ($elements[0] eq "A") { return 0; }
+	if ($elements[0] eq "C") { return 1; }
+	if ($elements[0] eq "G") { return 2; }
+	if ($elements[0] eq "T") { return 3; }
+	else { die "Unknown element for pattern index: \"$elements[0]\"\n"; }
 }
 
 #########
@@ -140,8 +200,6 @@ sub add_to_profile
 sub get_next_sample
 {
 	my ($fh, $current_cycle, $sample_each_x_cycles, $path, $next_path_cycle) = @_;
-
- 	print "get_next_sample: $current_cycle, $sample_each_x_cycles, $next_path_cycle \n";
 
 	$current_cycle += $sample_each_x_cycles;
 
