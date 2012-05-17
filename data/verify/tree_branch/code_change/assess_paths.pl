@@ -11,6 +11,12 @@ $numStates = 4; 	## For now, assume nucleotides. Can change to codons or higher 
 my ($t_0, $T) = (0, 1);		## Known, for the time being. ##
 my $time_bins = 1000;
 my $time_increment = ($T - $t_0) / $time_bins;
+my $max_path_diff = 0;
+my $min_diff = 1;
+my $max_diff = 0;
+my $num_sampled_paths = 0;
+my @all_path_diff = ();
+my @distance_matrix = ();
 
 { ######### MAIN #########
 	my (@average_path);
@@ -34,8 +40,49 @@ my $time_increment = ($T - $t_0) / $time_bins;
 	seek $infile, 0, 0;
 	&read_init($infile);	## Set to first path ##
 	&compare_to_average_path(\@average_path, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
-	
+	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
+	print STDERR "\nu: $mean s: $stdev\n";
+
+	##########
+	## Third pass through data, running individual sequence paths against individual sequence path.
+	##########
+	seek $infile, 0, 0;
+	&read_init($infile);	## Set to first path ##
+	&build_distance_matrix();
+	&compare_individual_paths(\@distance_matrix, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
+	print STDERR "\nu: $mean s: $stdev\n";
+		
 } ### End main ###
+
+sub compare_to_average_path
+{
+	my ($profile_ref, $fh, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample) = @_;
+
+	my ($path, $current_cycle, $nextpath_cycle) = &advance_to_first_sample($fh, $initial_cycle, $first_cycle_to_sample);
+	## Next sample is set to -1 when there are no more paths to be read from MCMC
+	## After reading to the next path, we will have the next pathID (cycle for which it was accepted),
+	## and the previous path (since next pathID will be larger than the current cycle).
+	my (@seq1_work, @seq2_work);
+	while ($nextpath_cycle != -1) {
+		### Set the work sequence to the initial state ###
+		@seq1_work = split //, $i_0;
+		@seq2_work = split //, $i_0;
+		### Get the next path ###
+		($path, $nextpath_cycle, $current_cycle) 
+		= &get_next_sample(
+						   $fh, 
+						   $current_cycle, 
+						   $sample_each_x_cycles, 
+						   $path, 
+						   $nextpath_cycle
+						  );
+		## Should have path to profile && cycle of interest.
+		print "$current_cycle "; 
+		&compare_to_profile($i_0, $t_0, $T, $path, $profile_ref, $time_increment, $time_bins);
+	}
+}
+
 
 sub advance_to_first_sample
 {
@@ -87,7 +134,7 @@ sub compare_to_average_path
 						   $nextpath_cycle
 						  );
 		## Should have path to profile && cycle of interest.
-		print "$current_cycle $nextpath_cycle\n"; 
+		print "$current_cycle "; 
 		&compare_to_profile($i_0, $t_0, $T, $path, $profile_ref, $time_increment, $time_bins);
 	}
 }
@@ -110,6 +157,8 @@ sub compare_to_profile
 	my $last_event_ptr = 0;
 	my ($prof_site_idx) = (0);
 
+	my $path_diff = 0;
+	$max_path_diff = 0;
 	my ($t, $change, $Qidot, $site, $Qidot_k);
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 	for (my $time_bin = $t_0; $last_event_ptr < (scalar @path_events); $time_bin += $dt) {
@@ -120,7 +169,7 @@ sub compare_to_profile
 			if ($work_sequence[$site] ne $nucl_pair[0]) { die "Odd... $work_sequence[$site] != $nucl_pair[0].\n"; } 
 			else { $work_sequence[$site] = $nucl_pair[1]; }
 
-			&increment_profile($profile_array_ref, \@work_sequence, $time_bin * $total_time_bins);
+			$path_diff += &profile_diff($profile_array_ref, \@work_sequence, $time_bin * $total_time_bins);
 
 			## Finished event, get data of next event.
 			$last_event_ptr++;
@@ -128,8 +177,27 @@ sub compare_to_profile
 			#print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n";
 		}
 	}
+
+	$num_sampled_paths++;
+	$path_diff /= (scalar @path_events) * 1000; # 1000 is sequence length...
+	$all_path_diff[$num_sampled_paths] = $path_diff;
+	if ($path_diff > $max_diff) { $max_diff = $path_diff; }
+	if ($path_diff < $min_diff) { $min_diff = $path_diff; }
+	print " $path_diff\n";
 }
 
+sub profile_diff
+{
+	my ($prof_ref, $seqdata_ref, $time_idx) = @_;
+	
+	my $diff = 0;
+	for my $i (0 .. @{ $seqdata_ref }-2) {
+		$diff += 1 - $prof_ref->[$time_idx] [$i] [&pattern_idx($seqdata_ref->[$i])];
+		$max_path_diff++;
+	}
+
+	return $diff;
+}
 
 sub calculate_average_path
 {
@@ -153,7 +221,7 @@ sub calculate_average_path
 						   $nextpath_cycle
 						  );
 		## Should have path to profile && cycle of interest.
-		print "$current_cycle $nextpath_cycle\n"; 
+		print STDERR "$current_cycle $nextpath_cycle\n"; 
 		&add_to_profile($i_0, $t_0, $T, $path, $profile_ref, $time_increment, $time_bins);
 	}
 }
@@ -187,7 +255,6 @@ sub read_init
 	my $tree = <$fh>;
 	my $sequence_data = "";
 	my $initial_cycle;
-	print "$tree\n";
 
 	### Read to the first path. after the tree & before the first path comes the end-point sequences. ###
 	($sequence_data, $initial_cycle) = &get_next_path($fh);
@@ -216,12 +283,9 @@ sub print_profile
 	open OUT, ">avg_path.stat";
 
 	for my $i ( 0 .. $time_bins ) {
-		if ($i > 498 && $i < 502) {
-			for my $j (0 .. $sequence_size-1) {
-				for my $k (0 .. $numStates) {
-					print "$i $j $k $prof_ref->[$i][$j][$k]\n";
-					print OUT "$i $j $k $prof_ref->[$i][$j][$k]\n";
-				}
+		for my $j (0 .. $sequence_size-1) {
+			for my $k (0 .. $numStates) {
+				print OUT "$i $j $k $prof_ref->[$i][$j][$k]\n";
 			}
 		}
 	}
@@ -348,4 +412,25 @@ sub get_next_path
 	chomp($pathID);
 
 	return ($path, $pathID);	
+}
+
+sub mu_sigma
+{
+	my ($ref) = @_;
+	
+	my ($average, $stdev);
+	
+	for my $i (0 .. @{ $ref }-1) {
+		$average += $ref->[$i];
+	}
+
+	$average /= scalar(@{ $ref });
+
+	for my $i (0 .. @{ $ref }-1) {
+		$stdev += ($average - $ref->[$i]) * ($average - $ref->[$i]);
+	}
+	
+	$stdev /= scalar(@{ $ref });
+
+	return ($average, sqrt($stdev));
 }
