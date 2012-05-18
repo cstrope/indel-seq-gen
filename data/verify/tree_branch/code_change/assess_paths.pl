@@ -37,50 +37,175 @@ my @distance_matrix = ();
 	##########
 	## Second pass through data, running individual sequence paths against average sequence path.
 	##########
-	seek $infile, 0, 0;
-	&read_init($infile);	## Set to first path ##
-	&compare_to_average_path(\@average_path, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
-	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
-	print STDERR "\nu: $mean s: $stdev\n";
+#	seek $infile, 0, 0;
+#	&read_init($infile);	## Set to first path ##
+#	&compare_to_average_path(\@average_path, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+#	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
+#	print STDERR "\nu: $mean s: $stdev\n";
 
 	##########
 	## Third pass through data, running individual sequence paths against individual sequence path.
 	##########
+	open my $col_infile, '<', $filename or die "Cannot open file $filename: $?\n";	## Infile for 2nd seq. ##
 	seek $infile, 0, 0;
 	&read_init($infile);	## Set to first path ##
-	&build_distance_matrix();
-	&compare_individual_paths(\@distance_matrix, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
-	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
-	print STDERR "\nu: $mean s: $stdev\n";
+	&build_distance_matrix(\@distance_matrix, $num_sampled_paths);
+	&compare_individual_paths(\@distance_matrix, $infile, $col_infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+	#my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
+	#print STDERR "\nu: $mean s: $stdev\n";
 		
 } ### End main ###
 
-sub compare_to_average_path
+sub build_distance_matrix
 {
-	my ($profile_ref, $fh, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample) = @_;
+	my ($distmat_ref, $num_paths) = @_;
+	my @array;
+	for my $i ( 0 .. $num_paths ) {
+		$distmat_ref->[$i] = [ @array ];
+		for my $j ( 0 .. $num_paths ) {
+			$distmat_ref->[$i][$j] = 0;
+		}
+	}
+}
 
-	my ($path, $current_cycle, $nextpath_cycle) = &advance_to_first_sample($fh, $initial_cycle, $first_cycle_to_sample);
+##########
+### Compare each individual path against all other paths. Build the distance matrix.
+sub compare_individual_paths
+{
+	my ($distmat_ref, 
+		$rowfh,
+		$colfh,
+		$i_0, 
+		$t_0, 
+		$T, 
+		$time_increment, 
+		$time_bins, 
+		$initial_cycle, 
+		$first_cycle_to_sample
+	   ) = @_;
+
+	my ($row_idx, $col_idx) = (0,0);	## Row and column index for the dist matrix. ##
+
+	my ($rpath, $rcurrent_cycle, $rnextpath_cycle) 
+	= &advance_to_first_sample(
+							   $rowfh, 
+							   $initial_cycle, 
+							   $first_cycle_to_sample
+							  );
 	## Next sample is set to -1 when there are no more paths to be read from MCMC
 	## After reading to the next path, we will have the next pathID (cycle for which it was accepted),
 	## and the previous path (since next pathID will be larger than the current cycle).
 	my (@seq1_work, @seq2_work);
-	while ($nextpath_cycle != -1) {
-		### Set the work sequence to the initial state ###
-		@seq1_work = split //, $i_0;
-		@seq2_work = split //, $i_0;
+	for ($row_idx = 0; $rnextpath_cycle != -1; $row_idx++) {
 		### Get the next path ###
-		($path, $nextpath_cycle, $current_cycle) 
-		= &get_next_sample(
-						   $fh, 
-						   $current_cycle, 
-						   $sample_each_x_cycles, 
-						   $path, 
-						   $nextpath_cycle
-						  );
-		## Should have path to profile && cycle of interest.
-		print "$current_cycle "; 
-		&compare_to_profile($i_0, $t_0, $T, $path, $profile_ref, $time_increment, $time_bins);
+		($rpath, $rnextpath_cycle, $rcurrent_cycle) = &get_next_sample(
+						   											   $rowfh, 
+																       $rcurrent_cycle, 
+										 						       $sample_each_x_cycles, 
+						  										 	   $rpath, 
+						   											   $rnextpath_cycle
+							 									      );
+		## Place column pointer on "diagonal" of the dist matrix (point to same record as row). ##
+		seek $colfh, 0, 0;
+		my ($cpath, $cnextpath_cycle, $ccurrent_cycle)
+		= &advance_to_first_sample(
+								   $colfh,
+								   $initial_cycle,
+								   $first_cycle_to_sample
+								  );
+		&compare_sequences($i_0, $t_0, $T, $rpath, $cpath, \@distance_matrix, $row_idx, $col_idx, $time_increment, $time_bins);
+		for ($col_idx = 1; $cnextpath_cycle != -1; $col_idx++) {
+			### Get next path ###
+			($cpath, $cnextpath_cycle, $ccurrent_cycle) = &get_next_sample(
+							   											   $colfh, 
+																	       $ccurrent_cycle, 
+											 						       $sample_each_x_cycles, 
+							  										 	   $cpath, 
+							   											   $cnextpath_cycle
+								 									   	  );
+			### Compare sampled sequences ###
+			&compare_sequences($i_0, $t_0, $T, $rpath, $cpath, \@distance_matrix, $row_idx, $col_idx, $time_increment, $time_bins);
+		}
 	}
+}
+
+sub compare_sequences
+{
+	my (
+		$i_0,				## Begin sequence.
+		$t_0, 				## Start time of i_0 (begin time before time_bin increments).
+		$T,					## End time.
+		$path1, 			## Row path from $i_0--->$k_0
+		$path2, 			## Col path from $i_0--->$k_0
+		$distmat_ref, 		## 2D array, distance matrix.
+		$row_idx,			## Row index
+		$col_idx,			## Column index
+		$dt,				## Amount of time to increment at each step.
+		$total_time_bins	## To increment the array at the proper point.
+	   ) = @_;
+	
+
+	my @path1_events = split /\n/, $path1;
+	my @seq1 = split //, $i_0;
+
+	my @path2_events = split /\n/, $path2;
+	my @seq2 = split //, $i_0;
+
+	pop @path1_events;
+	pop @path2_events;
+	
+	my $rlast_event_ptr = 0;
+	my $clast_event_ptr = 0;
+	my ($prof_site_idx) = (0);
+	my $path_diff = 0;
+	$max_path_diff = 0;
+
+	## Get first event data for both row and column sequence indices
+	my ($rt, $rsite, $rchange, $rQidot, $rQidot_k) = split(",", $path1_events[$rlast_event_ptr]);
+	my ($ct, $csite, $cchange, $cQidot, $cQidot_k) = split(",", $path2_events[$clast_event_ptr]);
+
+	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
+		## Catch row sequence up to the times.
+		#print "time ---> $time_bin ... ";
+		#print " r$rt ";
+		while ($rt < $time_bin and $rlast_event_ptr < @path1_events ) {
+			## Make change to sequence
+			my @nucl_pair = split //, $rchange;
+			if ($seq1[$rsite] ne $nucl_pair[0]) { die "Odd... $seq1[$rsite] != $nucl_pair[0].\n"; } 
+			else { $seq1[$rsite] = $nucl_pair[1]; }
+			$rlast_event_ptr++;
+			($rt, $rsite, $rchange, $rQidot, $rQidot_k) = split(",", $path1_events[$rlast_event_ptr]);
+			#print " $rt ";
+		}
+		#print " XXX c$ct";
+		## Catch row sequence up to the times.
+		while ($ct < $time_bin and $clast_event_ptr < @path2_events ) {
+			## Make change to sequence
+			my @nucl_pair = split //, $cchange;
+			if ($seq2[$csite] ne $nucl_pair[0]) { die "Odd... $seq2[$csite] != $nucl_pair[0].\n"; } 
+			else { $seq2[$csite] = $nucl_pair[1]; }
+			$clast_event_ptr++;
+			($ct, $csite, $cchange, $cQidot, $cQidot_k) = split(",", $path2_events[$clast_event_ptr]);
+			#print " $ct ";
+		}
+
+		#print "\n";
+
+		## Add sequence differences to the distance matrix ##
+		$distmat_ref->[$row_idx][$col_idx] += &seq_diff(\@seq1, \@seq2);
+	}
+
+	print "SCORING FOR ROW:$row_idx COL:$col_idx --> $distmat_ref->[$row_idx][$col_idx]\n";
+}
+
+sub seq_diff
+{
+	my ($seq1_ref, $seq2_ref) = @_;
+	my $diff = 0;
+	for my $i (0 .. @{ $seq1_ref }-2) {
+		if ($seq1_ref->[$i] ne $seq2_ref->[$i]) { $diff++; }
+	}
+	return $diff;	
 }
 
 
@@ -162,6 +287,7 @@ sub compare_to_profile
 	my ($t, $change, $Qidot, $site, $Qidot_k);
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 	for (my $time_bin = $t_0; $last_event_ptr < (scalar @path_events); $time_bin += $dt) {
+#	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
 		## Catch work sequence up to the times.
 		while ($t < $time_bin and $last_event_ptr < (scalar @path_events) ) {
 			## Make change to sequence
@@ -179,7 +305,7 @@ sub compare_to_profile
 	}
 
 	$num_sampled_paths++;
-	$path_diff /= (scalar @path_events) * 1000; # 1000 is sequence length...
+	#$path_diff /= (scalar @path_events) * 1000; # 1000 is sequence length...
 	$all_path_diff[$num_sampled_paths] = $path_diff;
 	if ($path_diff > $max_diff) { $max_diff = $path_diff; }
 	if ($path_diff < $min_diff) { $min_diff = $path_diff; }
