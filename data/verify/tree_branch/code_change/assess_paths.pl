@@ -113,6 +113,7 @@ sub compare_individual_paths
 								   $initial_cycle,
 								   $first_cycle_to_sample
 								  );
+		$col_idx = 0;
 		&compare_sequences($i_0, $t_0, $T, $rpath, $cpath, \@distance_matrix, $row_idx, $col_idx, $time_increment, $time_bins);
 		for ($col_idx = 1; $cnextpath_cycle != -1; $col_idx++) {
 			### Get next path ###
@@ -208,7 +209,6 @@ sub seq_diff
 	return $diff;	
 }
 
-
 sub advance_to_first_sample
 {
 	my ($fh, $initial_cycle, $first_cycle_to_sample) = @_;
@@ -286,8 +286,7 @@ sub compare_to_profile
 	$max_path_diff = 0;
 	my ($t, $change, $Qidot, $site, $Qidot_k);
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
-	for (my $time_bin = $t_0; $last_event_ptr < (scalar @path_events); $time_bin += $dt) {
-#	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
+	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
 		## Catch work sequence up to the times.
 		while ($t < $time_bin and $last_event_ptr < (scalar @path_events) ) {
 			## Make change to sequence
