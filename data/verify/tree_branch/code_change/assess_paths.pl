@@ -37,11 +37,10 @@ my @distance_matrix = ();
 	##########
 	## Second pass through data, running individual sequence paths against average sequence path.
 	##########
-#	seek $infile, 0, 0;
-#	&read_init($infile);	## Set to first path ##
-#	&compare_to_average_path(\@average_path, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
-#	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
-#	print STDERR "\nu: $mean s: $stdev\n";
+	seek $infile, 0, 0;
+	&read_init($infile);	## Set to first path ##
+	&compare_to_average_path(\@average_path, $infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+	my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
 
 	##########
 	## Third pass through data, running individual sequence paths against individual sequence path.
@@ -51,9 +50,8 @@ my @distance_matrix = ();
 	&read_init($infile);	## Set to first path ##
 	&build_distance_matrix(\@distance_matrix, $num_sampled_paths);
 	&compare_individual_paths(\@distance_matrix, $infile, $col_infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
-	#my ($mean, $stdev) = &mu_sigma(\@all_path_diff);
-	#print STDERR "\nu: $mean s: $stdev\n";
-		
+
+	print STDERR "\navg sequence mean: $mean stdev: $stdev\n";
 } ### End main ###
 
 sub build_distance_matrix
@@ -167,8 +165,6 @@ sub compare_sequences
 
 	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
 		## Catch row sequence up to the times.
-		#print "time ---> $time_bin ... ";
-		#print " r$rt ";
 		while ($rt < $time_bin and $rlast_event_ptr < @path1_events ) {
 			## Make change to sequence
 			my @nucl_pair = split //, $rchange;
@@ -176,9 +172,7 @@ sub compare_sequences
 			else { $seq1[$rsite] = $nucl_pair[1]; }
 			$rlast_event_ptr++;
 			($rt, $rsite, $rchange, $rQidot, $rQidot_k) = split(",", $path1_events[$rlast_event_ptr]);
-			#print " $rt ";
 		}
-		#print " XXX c$ct";
 		## Catch row sequence up to the times.
 		while ($ct < $time_bin and $clast_event_ptr < @path2_events ) {
 			## Make change to sequence
@@ -187,16 +181,13 @@ sub compare_sequences
 			else { $seq2[$csite] = $nucl_pair[1]; }
 			$clast_event_ptr++;
 			($ct, $csite, $cchange, $cQidot, $cQidot_k) = split(",", $path2_events[$clast_event_ptr]);
-			#print " $ct ";
 		}
-
-		#print "\n";
 
 		## Add sequence differences to the distance matrix ##
 		$distmat_ref->[$row_idx][$col_idx] += &seq_diff(\@seq1, \@seq2);
 	}
 
-	print "SCORING FOR ROW:$row_idx COL:$col_idx --> $distmat_ref->[$row_idx][$col_idx]\n";
+	print "$row_idx $col_idx $distmat_ref->[$row_idx][$col_idx]\n";
 }
 
 sub seq_diff
@@ -288,19 +279,18 @@ sub compare_to_profile
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
 		## Catch work sequence up to the times.
-		while ($t < $time_bin and $last_event_ptr < (scalar @path_events) ) {
+		while ($t < $time_bin and $last_event_ptr < @path_events ) {
 			## Make change to sequence
 			my @nucl_pair = split //, $change;
 			if ($work_sequence[$site] ne $nucl_pair[0]) { die "Odd... $work_sequence[$site] != $nucl_pair[0].\n"; } 
 			else { $work_sequence[$site] = $nucl_pair[1]; }
-
-			$path_diff += &profile_diff($profile_array_ref, \@work_sequence, $time_bin * $total_time_bins);
 
 			## Finished event, get data of next event.
 			$last_event_ptr++;
 			($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 			#print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n";
 		}
+		$path_diff += &profile_diff($profile_array_ref, \@work_sequence, $time_bin * $total_time_bins);
 	}
 
 	$num_sampled_paths++;
