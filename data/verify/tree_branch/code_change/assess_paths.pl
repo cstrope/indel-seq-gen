@@ -45,11 +45,11 @@ my @distance_matrix = ();
 	##########
 	## Third pass through data, running individual sequence paths against individual sequence path.
 	##########
-	open my $col_infile, '<', $filename or die "Cannot open file $filename: $?\n";	## Infile for 2nd seq. ##
-	seek $infile, 0, 0;
-	&read_init($infile);	## Set to first path ##
-	&build_distance_matrix(\@distance_matrix, $num_sampled_paths);
-	&compare_individual_paths(\@distance_matrix, $infile, $col_infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+#	open my $col_infile, '<', $filename or die "Cannot open file $filename: $?\n";	## Infile for 2nd seq. ##
+#	seek $infile, 0, 0;
+#	&read_init($infile);	## Set to first path ##
+#	&build_distance_matrix(\@distance_matrix, $num_sampled_paths);
+#	&compare_individual_paths(\@distance_matrix, $infile, $col_infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
 
 	print STDERR "\navg sequence mean: $mean stdev: $stdev\n";
 } ### End main ###
@@ -294,7 +294,12 @@ sub compare_to_profile
 	}
 
 	$num_sampled_paths++;
-	#$path_diff /= (scalar @path_events) * 1000; # 1000 is sequence length...
+
+	##########
+	### Normalize value by dividing by independent variables (sequence length, # time bins)
+	##########
+	$path_diff /= $total_time_bins * 1000; # 1000 is sequence length...
+
 	$all_path_diff[$num_sampled_paths] = $path_diff;
 	if ($path_diff > $max_diff) { $max_diff = $path_diff; }
 	if ($path_diff < $min_diff) { $min_diff = $path_diff; }
