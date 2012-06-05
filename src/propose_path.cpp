@@ -526,6 +526,7 @@ PathProposal::EvolveStep(
 	// Indel routine	
 	//  * Should codonRates affect the probability of an indel occurring?
 	//////////
+	cout << lambda_T << endl;	///TESTING_ONLY: FOR HEAT MAP.pl
 	cerr << i_z->printBipartition() << "(0)  lambda_T(epc): " << lambda_T << endl; //XOUT
 	//i_z->branch->rates->printCategories();
 

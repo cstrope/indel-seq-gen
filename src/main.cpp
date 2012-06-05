@@ -160,7 +160,9 @@ int main(int argc, char *argv[])
 			);
 
 
+cerr << "Before output streams." << endl;
 	closeOutputStreams(inputTrees, simulation_output_streams, options->output_file_flags);
+cerr << "Before warnings spool" << endl;
 	options->SpoolWarnings("",true);
 
 	//////////
@@ -173,6 +175,7 @@ int main(int argc, char *argv[])
 	totalSecs = (double)(clock() - totalStart) / CLOCKS_PER_SEC;
 	fprintf(stderr,"Time taken: %G seconds\n", totalSecs);
 	
+cerr << "Returned." << endl;	
 	return EXIT_SUCCESS;
 }
 
@@ -598,7 +601,7 @@ void Simulate(
 	if (options->path_proposal) {
 		stats.setWeights();
 		stats.reportStatistics();
-		stats.calc_ESS();
+		//stats.calc_ESS();
 	}
 
 	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
@@ -616,6 +619,8 @@ void Simulate(
 		delete (*it)->my_tree;
 		delete (*it);
 	}
+
+cerr << "Exiting Simulate" << endl;
 	if (options->deposit_fossils) delete paleontologicalProcess;
 }
 
