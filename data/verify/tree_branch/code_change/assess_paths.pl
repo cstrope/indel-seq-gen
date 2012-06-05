@@ -2,14 +2,14 @@
 use strict;
 
 ##########
-## Assess paths from iSG runs.
+## Assess paths from iSG runs. <filename> = XXXXXX.epc.paths
 ##########
 if (@ARGV != 4) { die "Usage: perl assess_paths <delta_t> <path_filename> <first_cycle_to_sample> <sample_each_x_cycles>\n"; }
 my ($delta_t, $filename, $first_cycle_to_sample, $sample_each_x_cycles) = @ARGV;
 my ($numStates);
 $numStates = 4; 	## For now, assume nucleotides. Can change to codons or higher order contexts later. ##
 my ($t_0, $T) = (0, 1);		## Known, for the time being. ##
-my $time_bins = 1000;
+my $time_bins = 10000;
 my $time_increment = ($T - $t_0) / $time_bins;
 my $max_path_diff = 0;
 my $min_diff = 1;
