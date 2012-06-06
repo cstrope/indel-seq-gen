@@ -175,7 +175,7 @@ cerr << "Before warnings spool" << endl;
 	totalSecs = (double)(clock() - totalStart) / CLOCKS_PER_SEC;
 	fprintf(stderr,"Time taken: %G seconds\n", totalSecs);
 	
-cerr << "Returned." << endl;	
+	//Leakage();
 	return EXIT_SUCCESS;
 }
 
