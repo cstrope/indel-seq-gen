@@ -1,104 +1,90 @@
-gamma.o gamma.o: gamma.cpp /usr/include/math.h \
-  /usr/include/architecture/i386/math.h /usr/include/sys/cdefs.h \
-  /usr/include/sys/_symbol_aliasing.h \
-  /usr/include/sys/_posix_availability.h /usr/include/c++/4.2.1/iostream \
-  /usr/include/c++/4.2.1/bits/c++config.h \
-  /usr/include/c++/4.2.1/bits/os_defines.h ../lib/unistd.h \
-  /usr/include/unistd.h /usr/include/_types.h /usr/include/sys/_types.h \
-  /usr/include/machine/_types.h /usr/include/i386/_types.h \
-  /usr/include/sys/unistd.h /usr/include/Availability.h \
-  /usr/include/AvailabilityInternal.h /usr/include/sys/select.h \
-  /usr/include/sys/appleapiopts.h /usr/include/sys/_structs.h \
-  /usr/include/sys/_select.h /usr/include/stdlib.h \
-  /usr/include/sys/wait.h /usr/include/sys/signal.h \
-  /usr/include/machine/signal.h /usr/include/i386/signal.h \
-  /usr/include/i386/_structs.h /usr/include/machine/_structs.h \
-  /usr/include/mach/i386/_structs.h /usr/include/sys/resource.h \
-  /usr/include/machine/endian.h /usr/include/i386/endian.h \
-  /usr/include/sys/_endian.h /usr/include/libkern/_OSByteOrder.h \
-  /usr/include/libkern/i386/_OSByteOrder.h /usr/include/alloca.h \
-  /usr/include/machine/types.h /usr/include/i386/types.h \
-  /usr/include/i386/_types.h /usr/include/c++/4.2.1/bits/cpu_defines.h \
-  /usr/include/c++/4.2.1/ostream /usr/include/c++/4.2.1/ios \
-  /usr/include/c++/4.2.1/iosfwd /usr/include/c++/4.2.1/bits/c++locale.h \
-  /usr/include/c++/4.2.1/clocale /usr/include/locale.h \
-  /usr/include/_locale.h /usr/include/c++/4.2.1/cstring \
-  /usr/include/c++/4.2.1/cstddef \
-  /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/stddef.h \
-  /usr/include/string.h /usr/include/strings.h \
-  /usr/include/c++/4.2.1/cstdio /usr/include/stdio.h \
-  /usr/include/c++/4.2.1/cstdarg \
-  /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/stdarg.h \
-  /usr/include/c++/4.2.1/bits/c++io.h /usr/include/c++/4.2.1/bits/gthr.h \
-  /usr/include/c++/4.2.1/bits/gthr-default.h /usr/include/pthread.h \
-  /usr/include/pthread_impl.h /usr/include/sched.h /usr/include/time.h \
-  /usr/include/_structs.h /usr/include/c++/4.2.1/cctype \
-  /usr/include/ctype.h /usr/include/runetype.h \
-  /usr/include/c++/4.2.1/bits/stringfwd.h \
-  /usr/include/c++/4.2.1/bits/postypes.h /usr/include/c++/4.2.1/cwchar \
-  /usr/include/c++/4.2.1/ctime /usr/include/wchar.h \
-  /usr/include/_wctype.h /usr/include/stdint.h \
-  /usr/include/c++/4.2.1/bits/functexcept.h \
-  /usr/include/c++/4.2.1/exception_defines.h \
-  /usr/include/c++/4.2.1/exception \
-  /usr/include/c++/4.2.1/bits/char_traits.h \
-  /usr/include/c++/4.2.1/bits/stl_algobase.h \
-  /usr/include/c++/4.2.1/climits \
-  /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/limits.h \
-  /usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/syslimits.h \
-  /Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/include/limits.h \
-  /Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/include/syslimits.h \
-  /usr/include/limits.h /usr/include/machine/limits.h \
-  /usr/include/i386/limits.h /usr/include/i386/_limits.h \
-  /usr/include/sys/syslimits.h /usr/include/c++/4.2.1/cstdlib \
-  /usr/include/c++/4.2.1/bits/stl_pair.h \
-  /usr/include/c++/4.2.1/bits/cpp_type_traits.h \
-  /usr/include/c++/4.2.1/ext/type_traits.h /usr/include/c++/4.2.1/utility \
-  /usr/include/c++/4.2.1/bits/stl_relops.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator_base_types.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator_base_funcs.h \
-  /usr/include/c++/4.2.1/bits/concept_check.h \
-  /usr/include/c++/4.2.1/bits/stl_iterator.h \
-  /usr/include/c++/4.2.1/debug/debug.h \
-  /usr/include/c++/4.2.1/bits/localefwd.h \
-  /usr/include/c++/4.2.1/bits/ios_base.h \
-  /usr/include/c++/4.2.1/ext/atomicity.h \
-  /usr/include/c++/4.2.1/bits/atomic_word.h \
-  /usr/include/c++/4.2.1/bits/locale_classes.h \
-  /usr/include/c++/4.2.1/string /usr/include/c++/4.2.1/memory \
-  /usr/include/c++/4.2.1/bits/allocator.h \
-  /usr/include/c++/4.2.1/bits/c++allocator.h \
-  /usr/include/c++/4.2.1/ext/new_allocator.h /usr/include/c++/4.2.1/new \
-  /usr/include/c++/4.2.1/bits/stl_construct.h \
-  /usr/include/c++/4.2.1/bits/stl_uninitialized.h \
-  /usr/include/c++/4.2.1/bits/stl_raw_storage_iter.h \
-  /usr/include/c++/4.2.1/limits \
-  /usr/include/c++/4.2.1/bits/ostream_insert.h \
-  /usr/include/c++/4.2.1/bits/stl_function.h \
-  /usr/include/c++/4.2.1/bits/basic_string.h \
-  /usr/include/c++/4.2.1/algorithm /usr/include/c++/4.2.1/bits/stl_algo.h \
-  /usr/include/c++/4.2.1/bits/stl_heap.h \
-  /usr/include/c++/4.2.1/bits/stl_tempbuf.h \
-  /usr/include/c++/4.2.1/bits/basic_string.tcc \
-  /usr/include/c++/4.2.1/streambuf \
-  /usr/include/c++/4.2.1/bits/streambuf.tcc \
-  /usr/include/c++/4.2.1/bits/basic_ios.h \
-  /usr/include/c++/4.2.1/bits/streambuf_iterator.h \
-  /usr/include/c++/4.2.1/bits/locale_facets.h \
-  /usr/include/c++/4.2.1/cwctype /usr/include/wctype.h \
-  /usr/include/c++/4.2.1/bits/ctype_base.h \
-  /usr/include/c++/4.2.1/bits/ctype_inline.h \
-  /usr/include/c++/4.2.1/bits/codecvt.h \
-  /usr/include/c++/4.2.1/bits/time_members.h \
-  /usr/include/c++/4.2.1/bits/messages_members.h \
-  /usr/include/c++/4.2.1/bits/basic_ios.tcc \
-  /usr/include/c++/4.2.1/bits/ostream.tcc /usr/include/c++/4.2.1/locale \
-  /usr/include/c++/4.2.1/bits/locale_facets.tcc \
-  /usr/include/c++/4.2.1/typeinfo /usr/include/c++/4.2.1/istream \
-  /usr/include/c++/4.2.1/bits/istream.tcc twister.h gamma.h \
-  /usr/include/c++/4.2.1/vector /usr/include/c++/4.2.1/bits/stl_vector.h \
-  /usr/include/c++/4.2.1/bits/stl_bvector.h \
-  /usr/include/c++/4.2.1/bits/vector.tcc
+gamma.o: gamma.cpp /usr/include/math.h \
+ /usr/include/architecture/i386/math.h /usr/include/sys/cdefs.h \
+ /opt/local/include/gcc46/c++/iostream \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/cpu_defines.h \
+ /opt/local/include/gcc46/c++/ostream /opt/local/include/gcc46/c++/ios \
+ /opt/local/include/gcc46/c++/iosfwd \
+ /opt/local/include/gcc46/c++/bits/stringfwd.h \
+ /opt/local/include/gcc46/c++/bits/postypes.h \
+ /opt/local/include/gcc46/c++/cwchar /usr/include/wchar.h \
+ /usr/include/_types.h /usr/include/sys/_types.h \
+ /usr/include/machine/_types.h /usr/include/i386/_types.h \
+ /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h \
+ /usr/include/stdio.h /usr/include/time.h /usr/include/_structs.h \
+ /usr/include/sys/_structs.h /usr/include/_wctype.h /usr/include/ctype.h \
+ /usr/include/runetype.h /opt/local/include/gcc46/c++/exception \
+ /opt/local/include/gcc46/c++/bits/char_traits.h \
+ /opt/local/include/gcc46/c++/bits/stl_algobase.h \
+ /opt/local/include/gcc46/c++/bits/functexcept.h \
+ /opt/local/include/gcc46/c++/bits/exception_defines.h \
+ /opt/local/include/gcc46/c++/bits/cpp_type_traits.h \
+ /opt/local/include/gcc46/c++/ext/type_traits.h \
+ /opt/local/include/gcc46/c++/ext/numeric_traits.h \
+ /opt/local/include/gcc46/c++/bits/stl_pair.h \
+ /opt/local/include/gcc46/c++/bits/move.h \
+ /opt/local/include/gcc46/c++/bits/concept_check.h \
+ /opt/local/include/gcc46/c++/bits/stl_iterator_base_types.h \
+ /opt/local/include/gcc46/c++/bits/stl_iterator_base_funcs.h \
+ /opt/local/include/gcc46/c++/bits/stl_iterator.h \
+ /opt/local/include/gcc46/c++/debug/debug.h \
+ /opt/local/include/gcc46/c++/bits/localefwd.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++locale.h \
+ /opt/local/include/gcc46/c++/clocale /usr/include/locale.h \
+ /usr/include/_locale.h /opt/local/include/gcc46/c++/cctype \
+ /opt/local/include/gcc46/c++/bits/ios_base.h \
+ /opt/local/include/gcc46/c++/ext/atomicity.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/gthr.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/gthr-default.h \
+ /usr/include/pthread.h /usr/include/pthread_impl.h /usr/include/sched.h \
+ ../lib/unistd.h /usr/include/unistd.h /usr/include/sys/unistd.h \
+ /usr/include/sys/select.h /usr/include/sys/appleapiopts.h \
+ /usr/include/sys/_select.h /usr/include/stdlib.h \
+ /usr/include/Availability.h /usr/include/AvailabilityInternal.h \
+ /usr/include/sys/wait.h /usr/include/sys/signal.h \
+ /usr/include/machine/signal.h /usr/include/i386/signal.h \
+ /usr/include/i386/_structs.h /usr/include/machine/_structs.h \
+ /usr/include/mach/i386/_structs.h /usr/include/sys/resource.h \
+ /usr/include/machine/endian.h /usr/include/i386/endian.h \
+ /usr/include/sys/_endian.h /usr/include/libkern/_OSByteOrder.h \
+ /usr/include/libkern/i386/_OSByteOrder.h /usr/include/alloca.h \
+ /usr/include/machine/types.h /usr/include/i386/types.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/atomic_word.h \
+ /opt/local/include/gcc46/c++/bits/locale_classes.h \
+ /opt/local/include/gcc46/c++/string \
+ /opt/local/include/gcc46/c++/bits/allocator.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h \
+ /opt/local/include/gcc46/c++/ext/new_allocator.h \
+ /opt/local/include/gcc46/c++/new \
+ /opt/local/include/gcc46/c++/bits/ostream_insert.h \
+ /opt/local/include/gcc46/c++/bits/cxxabi_forced.h \
+ /opt/local/include/gcc46/c++/bits/stl_function.h \
+ /opt/local/include/gcc46/c++/backward/binders.h \
+ /opt/local/include/gcc46/c++/bits/range_access.h \
+ /opt/local/include/gcc46/c++/bits/basic_string.h \
+ /opt/local/include/gcc46/c++/initializer_list \
+ /opt/local/include/gcc46/c++/bits/basic_string.tcc \
+ /opt/local/include/gcc46/c++/bits/locale_classes.tcc \
+ /opt/local/include/gcc46/c++/streambuf \
+ /opt/local/include/gcc46/c++/bits/streambuf.tcc \
+ /opt/local/include/gcc46/c++/bits/basic_ios.h \
+ /opt/local/include/gcc46/c++/bits/locale_facets.h \
+ /opt/local/include/gcc46/c++/cwctype /usr/include/wctype.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/ctype_base.h \
+ /opt/local/include/gcc46/c++/bits/streambuf_iterator.h \
+ /opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/ctype_inline.h \
+ /opt/local/include/gcc46/c++/bits/locale_facets.tcc \
+ /opt/local/include/gcc46/c++/bits/basic_ios.tcc \
+ /opt/local/include/gcc46/c++/bits/ostream.tcc \
+ /opt/local/include/gcc46/c++/istream \
+ /opt/local/include/gcc46/c++/bits/istream.tcc twister.h gamma.h \
+ /opt/local/include/gcc46/c++/vector \
+ /opt/local/include/gcc46/c++/bits/stl_construct.h \
+ /opt/local/include/gcc46/c++/bits/stl_uninitialized.h \
+ /opt/local/include/gcc46/c++/bits/stl_vector.h \
+ /opt/local/include/gcc46/c++/bits/stl_bvector.h \
+ /opt/local/include/gcc46/c++/bits/vector.tcc
 
 /usr/include/math.h:
 
@@ -106,19 +92,27 @@ gamma.o gamma.o: gamma.cpp /usr/include/math.h \
 
 /usr/include/sys/cdefs.h:
 
-/usr/include/sys/_symbol_aliasing.h:
+/opt/local/include/gcc46/c++/iostream:
 
-/usr/include/sys/_posix_availability.h:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++config.h:
 
-/usr/include/c++/4.2.1/iostream:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/os_defines.h:
 
-/usr/include/c++/4.2.1/bits/c++config.h:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/cpu_defines.h:
 
-/usr/include/c++/4.2.1/bits/os_defines.h:
+/opt/local/include/gcc46/c++/ostream:
 
-../lib/unistd.h:
+/opt/local/include/gcc46/c++/ios:
 
-/usr/include/unistd.h:
+/opt/local/include/gcc46/c++/iosfwd:
+
+/opt/local/include/gcc46/c++/bits/stringfwd.h:
+
+/opt/local/include/gcc46/c++/bits/postypes.h:
+
+/opt/local/include/gcc46/c++/cwchar:
+
+/usr/include/wchar.h:
 
 /usr/include/_types.h:
 
@@ -128,21 +122,95 @@ gamma.o gamma.o: gamma.cpp /usr/include/math.h \
 
 /usr/include/i386/_types.h:
 
+/opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdarg.h:
+
+/usr/include/stdio.h:
+
+/usr/include/time.h:
+
+/usr/include/_structs.h:
+
+/usr/include/sys/_structs.h:
+
+/usr/include/_wctype.h:
+
+/usr/include/ctype.h:
+
+/usr/include/runetype.h:
+
+/opt/local/include/gcc46/c++/exception:
+
+/opt/local/include/gcc46/c++/bits/char_traits.h:
+
+/opt/local/include/gcc46/c++/bits/stl_algobase.h:
+
+/opt/local/include/gcc46/c++/bits/functexcept.h:
+
+/opt/local/include/gcc46/c++/bits/exception_defines.h:
+
+/opt/local/include/gcc46/c++/bits/cpp_type_traits.h:
+
+/opt/local/include/gcc46/c++/ext/type_traits.h:
+
+/opt/local/include/gcc46/c++/ext/numeric_traits.h:
+
+/opt/local/include/gcc46/c++/bits/stl_pair.h:
+
+/opt/local/include/gcc46/c++/bits/move.h:
+
+/opt/local/include/gcc46/c++/bits/concept_check.h:
+
+/opt/local/include/gcc46/c++/bits/stl_iterator_base_types.h:
+
+/opt/local/include/gcc46/c++/bits/stl_iterator_base_funcs.h:
+
+/opt/local/include/gcc46/c++/bits/stl_iterator.h:
+
+/opt/local/include/gcc46/c++/debug/debug.h:
+
+/opt/local/include/gcc46/c++/bits/localefwd.h:
+
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++locale.h:
+
+/opt/local/include/gcc46/c++/clocale:
+
+/usr/include/locale.h:
+
+/usr/include/_locale.h:
+
+/opt/local/include/gcc46/c++/cctype:
+
+/opt/local/include/gcc46/c++/bits/ios_base.h:
+
+/opt/local/include/gcc46/c++/ext/atomicity.h:
+
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/gthr.h:
+
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/gthr-default.h:
+
+/usr/include/pthread.h:
+
+/usr/include/pthread_impl.h:
+
+/usr/include/sched.h:
+
+../lib/unistd.h:
+
+/usr/include/unistd.h:
+
 /usr/include/sys/unistd.h:
-
-/usr/include/Availability.h:
-
-/usr/include/AvailabilityInternal.h:
 
 /usr/include/sys/select.h:
 
 /usr/include/sys/appleapiopts.h:
 
-/usr/include/sys/_structs.h:
-
 /usr/include/sys/_select.h:
 
 /usr/include/stdlib.h:
+
+/usr/include/Availability.h:
+
+/usr/include/AvailabilityInternal.h:
 
 /usr/include/sys/wait.h:
 
@@ -176,222 +244,78 @@ gamma.o gamma.o: gamma.cpp /usr/include/math.h \
 
 /usr/include/i386/types.h:
 
-/usr/include/i386/_types.h:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/atomic_word.h:
 
-/usr/include/c++/4.2.1/bits/cpu_defines.h:
+/opt/local/include/gcc46/c++/bits/locale_classes.h:
 
-/usr/include/c++/4.2.1/ostream:
+/opt/local/include/gcc46/c++/string:
 
-/usr/include/c++/4.2.1/ios:
+/opt/local/include/gcc46/c++/bits/allocator.h:
 
-/usr/include/c++/4.2.1/iosfwd:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/c++allocator.h:
 
-/usr/include/c++/4.2.1/bits/c++locale.h:
+/opt/local/include/gcc46/c++/ext/new_allocator.h:
 
-/usr/include/c++/4.2.1/clocale:
+/opt/local/include/gcc46/c++/new:
 
-/usr/include/locale.h:
+/opt/local/include/gcc46/c++/bits/ostream_insert.h:
 
-/usr/include/_locale.h:
+/opt/local/include/gcc46/c++/bits/cxxabi_forced.h:
 
-/usr/include/c++/4.2.1/cstring:
+/opt/local/include/gcc46/c++/bits/stl_function.h:
 
-/usr/include/c++/4.2.1/cstddef:
+/opt/local/include/gcc46/c++/backward/binders.h:
 
-/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/stddef.h:
+/opt/local/include/gcc46/c++/bits/range_access.h:
 
-/usr/include/string.h:
+/opt/local/include/gcc46/c++/bits/basic_string.h:
 
-/usr/include/strings.h:
+/opt/local/include/gcc46/c++/initializer_list:
 
-/usr/include/c++/4.2.1/cstdio:
+/opt/local/include/gcc46/c++/bits/basic_string.tcc:
 
-/usr/include/stdio.h:
+/opt/local/include/gcc46/c++/bits/locale_classes.tcc:
 
-/usr/include/c++/4.2.1/cstdarg:
+/opt/local/include/gcc46/c++/streambuf:
 
-/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/stdarg.h:
+/opt/local/include/gcc46/c++/bits/streambuf.tcc:
 
-/usr/include/c++/4.2.1/bits/c++io.h:
+/opt/local/include/gcc46/c++/bits/basic_ios.h:
 
-/usr/include/c++/4.2.1/bits/gthr.h:
+/opt/local/include/gcc46/c++/bits/locale_facets.h:
 
-/usr/include/c++/4.2.1/bits/gthr-default.h:
-
-/usr/include/pthread.h:
-
-/usr/include/pthread_impl.h:
-
-/usr/include/sched.h:
-
-/usr/include/time.h:
-
-/usr/include/_structs.h:
-
-/usr/include/c++/4.2.1/cctype:
-
-/usr/include/ctype.h:
-
-/usr/include/runetype.h:
-
-/usr/include/c++/4.2.1/bits/stringfwd.h:
-
-/usr/include/c++/4.2.1/bits/postypes.h:
-
-/usr/include/c++/4.2.1/cwchar:
-
-/usr/include/c++/4.2.1/ctime:
-
-/usr/include/wchar.h:
-
-/usr/include/_wctype.h:
-
-/usr/include/stdint.h:
-
-/usr/include/c++/4.2.1/bits/functexcept.h:
-
-/usr/include/c++/4.2.1/exception_defines.h:
-
-/usr/include/c++/4.2.1/exception:
-
-/usr/include/c++/4.2.1/bits/char_traits.h:
-
-/usr/include/c++/4.2.1/bits/stl_algobase.h:
-
-/usr/include/c++/4.2.1/climits:
-
-/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/limits.h:
-
-/usr/llvm-gcc-4.2/bin/../lib/gcc/i686-apple-darwin11/4.2.1/include/syslimits.h:
-
-/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/include/limits.h:
-
-/Applications/Xcode.app/Contents/Developer/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/include/syslimits.h:
-
-/usr/include/limits.h:
-
-/usr/include/machine/limits.h:
-
-/usr/include/i386/limits.h:
-
-/usr/include/i386/_limits.h:
-
-/usr/include/sys/syslimits.h:
-
-/usr/include/c++/4.2.1/cstdlib:
-
-/usr/include/c++/4.2.1/bits/stl_pair.h:
-
-/usr/include/c++/4.2.1/bits/cpp_type_traits.h:
-
-/usr/include/c++/4.2.1/ext/type_traits.h:
-
-/usr/include/c++/4.2.1/utility:
-
-/usr/include/c++/4.2.1/bits/stl_relops.h:
-
-/usr/include/c++/4.2.1/bits/stl_iterator_base_types.h:
-
-/usr/include/c++/4.2.1/bits/stl_iterator_base_funcs.h:
-
-/usr/include/c++/4.2.1/bits/concept_check.h:
-
-/usr/include/c++/4.2.1/bits/stl_iterator.h:
-
-/usr/include/c++/4.2.1/debug/debug.h:
-
-/usr/include/c++/4.2.1/bits/localefwd.h:
-
-/usr/include/c++/4.2.1/bits/ios_base.h:
-
-/usr/include/c++/4.2.1/ext/atomicity.h:
-
-/usr/include/c++/4.2.1/bits/atomic_word.h:
-
-/usr/include/c++/4.2.1/bits/locale_classes.h:
-
-/usr/include/c++/4.2.1/string:
-
-/usr/include/c++/4.2.1/memory:
-
-/usr/include/c++/4.2.1/bits/allocator.h:
-
-/usr/include/c++/4.2.1/bits/c++allocator.h:
-
-/usr/include/c++/4.2.1/ext/new_allocator.h:
-
-/usr/include/c++/4.2.1/new:
-
-/usr/include/c++/4.2.1/bits/stl_construct.h:
-
-/usr/include/c++/4.2.1/bits/stl_uninitialized.h:
-
-/usr/include/c++/4.2.1/bits/stl_raw_storage_iter.h:
-
-/usr/include/c++/4.2.1/limits:
-
-/usr/include/c++/4.2.1/bits/ostream_insert.h:
-
-/usr/include/c++/4.2.1/bits/stl_function.h:
-
-/usr/include/c++/4.2.1/bits/basic_string.h:
-
-/usr/include/c++/4.2.1/algorithm:
-
-/usr/include/c++/4.2.1/bits/stl_algo.h:
-
-/usr/include/c++/4.2.1/bits/stl_heap.h:
-
-/usr/include/c++/4.2.1/bits/stl_tempbuf.h:
-
-/usr/include/c++/4.2.1/bits/basic_string.tcc:
-
-/usr/include/c++/4.2.1/streambuf:
-
-/usr/include/c++/4.2.1/bits/streambuf.tcc:
-
-/usr/include/c++/4.2.1/bits/basic_ios.h:
-
-/usr/include/c++/4.2.1/bits/streambuf_iterator.h:
-
-/usr/include/c++/4.2.1/bits/locale_facets.h:
-
-/usr/include/c++/4.2.1/cwctype:
+/opt/local/include/gcc46/c++/cwctype:
 
 /usr/include/wctype.h:
 
-/usr/include/c++/4.2.1/bits/ctype_base.h:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/ctype_base.h:
 
-/usr/include/c++/4.2.1/bits/ctype_inline.h:
+/opt/local/include/gcc46/c++/bits/streambuf_iterator.h:
 
-/usr/include/c++/4.2.1/bits/codecvt.h:
+/opt/local/include/gcc46/c++//x86_64-apple-darwin10/bits/ctype_inline.h:
 
-/usr/include/c++/4.2.1/bits/time_members.h:
+/opt/local/include/gcc46/c++/bits/locale_facets.tcc:
 
-/usr/include/c++/4.2.1/bits/messages_members.h:
+/opt/local/include/gcc46/c++/bits/basic_ios.tcc:
 
-/usr/include/c++/4.2.1/bits/basic_ios.tcc:
+/opt/local/include/gcc46/c++/bits/ostream.tcc:
 
-/usr/include/c++/4.2.1/bits/ostream.tcc:
+/opt/local/include/gcc46/c++/istream:
 
-/usr/include/c++/4.2.1/locale:
-
-/usr/include/c++/4.2.1/bits/locale_facets.tcc:
-
-/usr/include/c++/4.2.1/typeinfo:
-
-/usr/include/c++/4.2.1/istream:
-
-/usr/include/c++/4.2.1/bits/istream.tcc:
+/opt/local/include/gcc46/c++/bits/istream.tcc:
 
 twister.h:
 
 gamma.h:
 
-/usr/include/c++/4.2.1/vector:
+/opt/local/include/gcc46/c++/vector:
 
-/usr/include/c++/4.2.1/bits/stl_vector.h:
+/opt/local/include/gcc46/c++/bits/stl_construct.h:
 
-/usr/include/c++/4.2.1/bits/stl_bvector.h:
+/opt/local/include/gcc46/c++/bits/stl_uninitialized.h:
 
-/usr/include/c++/4.2.1/bits/vector.tcc:
+/opt/local/include/gcc46/c++/bits/stl_vector.h:
+
+/opt/local/include/gcc46/c++/bits/stl_bvector.h:
+
+/opt/local/include/gcc46/c++/bits/vector.tcc:
