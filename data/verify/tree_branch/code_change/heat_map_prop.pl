@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 
-### For this one, need to use iSG-test-one, for reasons pointed in propose_path.cpp.
+### For this one, need to use iSG-test-two, for reasons pointed in propose_path.cpp.
 
 ##########
 ### Plan: make heat map of subst. pr. for sequence at specific points during the run when
@@ -37,9 +37,9 @@ my $seq_size = (scalar @tmp);
 my @heat_map = ();		## Variable to keep the heat map info (the Pr. of sequence Qi.)
 my @Qidot = ();			## Just to make sure, get baseline. Should be same for all.
 
-my $indel_seq_gen = "isg-test-one";
+my $indel_seq_gen = "isg-test-two";
 
-my $filename = "results_dir/heat_map_$branch_length-$increment";
+my $filename = "results_dir/heat_map_$branch_length-$increment-prop";
 
 ########## Need .sim.dep and .sim.ma file for runs. #########
 ### Output JC69 dependency file. ###
@@ -54,7 +54,7 @@ print OUT ">T_2\n$des\n";
 close OUT;
 ########## Data for run is done. #########
 
-open OUTPUT, ">$filename-$seqlen-$numdiff.results";
+open OUTPUT, ">$filename-$seqlen-$numdiff-prop.results";
 print OUTPUT "dat-$seqlen-$numdiff";
 print OUTPUT "\n";
 for my $t ( ($begin * ($branch_length/$increment)) .. ($end * (($branch_length/$increment))) ) {
@@ -75,8 +75,7 @@ for my $t ( ($begin * ($branch_length/$increment)) .. ($end * (($branch_length/$
 	my @each_line = split /\n/, $return_val_epc;
 	#print OUTPUT "" . ($branch_length - $t*$increment) . ",$each_line[0]";
 	print OUTPUT "$each_line[0]\n";
-	print "X$each_line[0] X$each_line[1] X$each_line[2] ...\n";
-	$heat_map[$t] = $each_line[0];
+	print "X$each_line[0] X$each_line[1] X$each_line[2] X$each_line[3]\n";
 }
 
 close OUTPUT;

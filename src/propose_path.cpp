@@ -526,15 +526,23 @@ PathProposal::EvolveStep(
 	// Indel routine	
 	//  * Should codonRates affect the probability of an indel occurring?
 	//////////
-	cout << lambda_T << endl << flush;	///TESTING_ONLY: FOR HEAT MAP.pl    isg-test-one
+	//cout << lambda_T << endl << flush;	///TESTING_ONLY: FOR HEAT MAP.pl    isg-test-one
 	cerr << lambda_T << endl;	
 
 	/// TESTING ONLY: Proportion of rate away that is contained in differing positions.
 	double tot_iz = 0;
-	for (vector<Site>::iterator it = i_z->seq_evo.begin(); it != i_z->seq_evo.end(); ++it) {
+	double same = 0;
+	double diff = 0;
+	vector<Site>::iterator jt = k_0->seq_evo.begin(); 
+	for (vector<Site>::iterator it = i_z->seq_evo.begin(); it != i_z->seq_evo.end(); ++it, ++jt) {
 		tot_iz += (*it).site_rate_away.back();
+		if ( (*it).returnState() == (*jt).returnState() ) same += (*it).site_rate_away.back();
+		else diff += (*it).site_rate_away.back();
 	}
-	cerr << tot_iz << endl;
+
+	cout << diff / tot_iz << endl;	// This is the needed value. Percent of rate away coming from differing sites. //
+
+	cerr << tot_iz << " s" << same << " d" << diff << endl;
 	exit(0);
 	
 	
