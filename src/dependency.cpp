@@ -52,7 +52,6 @@ void contextDependence::readDependencies(string& file)
 	}
 
 	is.close();
-	
 	//report_tuplet_pi();
 }
 
@@ -100,6 +99,17 @@ void contextDependence::allocate_lookup_context_vector()
 	//for (jt = context_specific_index_offset.begin(); jt != context_specific_index_offset.end(); ++jt, ++o) {
 	//	cerr << "Order " << o << " offset: " << (*jt) << endl;
 	//}
+}
+
+contextDependence::~contextDependence()
+{
+	vector<vector<LookUp*> >::iterator xt = lookup_table.begin();
+	vector<LookUp*>::iterator yt;
+	for (xt = lookup_table.begin(); xt != lookup_table.end(); ++xt) {
+		for (yt = (*xt).begin(); yt != (*xt).end(); ++yt) {
+			delete (*yt);
+		}
+	}
 }
 
 //////////

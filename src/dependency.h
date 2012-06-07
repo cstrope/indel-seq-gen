@@ -32,6 +32,7 @@ public:
 	vector<int>   index_position_multiplier;
 	vector<vector<int> > index_offset;	// For TauIJ: calculate indices for neighboring residues.
 	contextDependence(int dep_order) : order(dep_order) { }
+	~contextDependence();
 	using Counter<contextDependence>::howMany;
 
 	// Accessors

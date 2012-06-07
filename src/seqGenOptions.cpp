@@ -330,7 +330,7 @@ void seqGenOptions::readOptions(
 				for (int k = 0; k < 6; k++)
 					if (str.at(k) != '0') output_file_flags[k] = true;
 					else output_file_flags[k] = false;
-				setEventTracking(optarg);
+				//setEventTracking(optarg);
 				break;
 			case 'D':
 				order_3_markov = true;
