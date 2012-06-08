@@ -652,6 +652,7 @@ cerr << "done." << endl;
 cerr << "TauIJ_out" << endl;
 	return tau_ij;
 }
+
 string contextDependence::lookup_table_sequence(int idx, int sequence_length)
 {
 	string sequence = "";

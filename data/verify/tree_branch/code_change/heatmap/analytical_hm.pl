@@ -10,13 +10,14 @@ my ($L_I);			### Number of identical sites ###
 my ($Pik, $Pjk);	### Transition probabilities ###
 my ($PDjk, $PIjk);	### Transition probabilities for different/identical sites ###
 my $nt = 1000;		### The number of time slices.
+my $begin = 0	;	### Begin time.
 my $Qidot_k;		### Value of interest, for full sequence.
 
 my @rates_away;
 my @proportion_different;
 my @array;
 
-for my $i (0 .. $nt) {
+for my $i ($begin .. $nt) {
 	$rates_away[$i] = [ @array ];
 	$proportion_different[$i] = [ @array ];
 	for my $j (0 .. $L) {
@@ -26,14 +27,14 @@ for my $i (0 .. $nt) {
 }
 
 ### For all time slices.
-for my $dt (0 .. $nt-1) {
-	my $time_to_go = ($nt-$dt)/$nt;
+for my $dt ($begin .. $nt-1) {
+	my $time_to_go = (($nt-$dt)/$nt)*0.75;
 	my $exponential = exp( -(4.0/3.0) * $time_to_go );
 	### Calculate PDjk, PIjk
 	$PDjk = 0.25 - 0.25*$exponential;
 	$PIjk = 0.25 + 0.75*$exponential;
 
-	#print "$PDjk $PIjk\n";
+	print "$PDjk $PIjk\n";
 	### For all possible numbers of differences
 	for my $L_D (0 .. $L) {
 		$L_I = $L-$L_D;
@@ -53,3 +54,34 @@ for my $dt (0 .. $nt-1) {
 
 	}
 }
+
+open OUT, ">Pdiff";
+print OUT "time\t";
+print OUT "seq0";
+for my $i (1 .. 1000) { print OUT "\tseq$i"; }
+print OUT "\n";
+for my $i (0 .. 1000) {
+	print OUT "t$i\t";
+	print OUT $proportion_different[$i][0];
+	for my $j (1 .. 1000) {
+		print OUT "\t" . $proportion_different[$i][$j];
+	}
+	print OUT "\n";
+}
+close OUT;
+
+open OUT, ">seqR";
+print OUT "time\t";
+print OUT "seq0";
+for my $i (1 .. 1000) { print OUT "\tseq$i"; }
+print OUT "\n";
+for my $i (0 .. 1000) {
+	print OUT "t$i\t";
+	print OUT $rates_away[$i][0];
+	for my $j (0 .. 1000) {
+		print OUT "\t" . $rates_away[$i][$j];
+	}
+	print OUT "\n";
+}
+close OUT;
+

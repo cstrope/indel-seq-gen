@@ -17,12 +17,14 @@ my $RANDOM_SEED = shift;
 my $seqlen = shift;
 my $numdiff = shift;
 
+my $epc_sample_type = 1;
+
 #### Branch:
 ##    i                         j
 ##  0 |-------------------------| T
 ####
 my $increment = 0.001;
-my $begin = 0.000;		### Start at very beginning of the branch
+my $begin = 0.998;		### Start at very beginning of the branch
 my $end = 0.999;		### Makes no sense to try to get 1 substitution when starting at T
 my $branch_length = $end+$increment;	### T
 
@@ -65,7 +67,7 @@ for my $t ( ($begin * ($branch_length/$increment)) .. ($end * (($branch_length/$
 	close OUT;
 	my $epc_command = "";
 	$epc_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -d 000000 -e $filename -O 3 -D $filename.sim.dep -E $filename.sim.ma ";
-	$epc_command .= " -I 1";		# EPC sample type. -O order
+	$epc_command .= " -I $epc_sample_type";		# EPC sample type. -O order
 	$epc_command .= " < $filename.tree";
 	print "$epc_command\n ";
 	my $return_val_epc = `./$indel_seq_gen $epc_command`;

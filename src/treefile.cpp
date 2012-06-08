@@ -1066,15 +1066,23 @@ TNode::calculateEndpointRateAwayFromSequence(
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
 
 	//RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
+cerr << "Temp_rates being made: " << endl;
 	RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
+cerr << "Temp rates done." << endl;
+	cerr << "XXXXXXX" << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
 	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
 		//update_rate_matrices(&temp_rates, it, T, at_dt);
-		(*ptr2update)(&temp_rates, this, it, T, at_dt);
+		(*ptr2update)(&temp_rates, this, it, T, at_dt);		// Points to rate matrices in rate_type.cpp. //
+
+		cerr << "pos " << seq_pos << ": " << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
+
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
 	}
+
+	exit(0);
 	
 	// Set values needed for calculating Forward and EPC log probabilities.
 	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
