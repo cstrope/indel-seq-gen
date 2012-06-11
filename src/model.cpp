@@ -815,7 +815,6 @@ void RateMatrix::setPij(
 						int rateHetero
 					   )
 {
-cerr << "SETPIJ" << endl;
     switch (rateHetero) {
 	case GammaRates:
 		BL *= site.returnGamma();

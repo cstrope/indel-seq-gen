@@ -9,7 +9,8 @@ my ($delta_t, $filename, $first_cycle_to_sample, $sample_each_x_cycles) = @ARGV;
 my ($numStates);
 $numStates = 4; 	## For now, assume nucleotides. Can change to codons or higher order contexts later. ##
 my ($t_0, $T) = (0, 1);		## Known, for the time being. ##
-my $time_bins = 10000;
+#my $time_bins = 10000;
+my $time_bins = 1000;
 my $time_increment = ($T - $t_0) / $time_bins;
 my $max_path_diff = 0;
 my $min_diff = 1;
@@ -19,14 +20,24 @@ my @all_path_diff = ();
 my @distance_matrix = ();
 
 { ######### MAIN #########
-	my (@average_path);
 
-	##########
-	## First pass through data, construct average path.
-	##########
 	open my $infile, '<', $filename or die "Cannot open file $filename: $?\n";
 	my ($tree, $sequence_data, $initial_cycle) = &read_init($infile);
-	my ($i_0, $k_0, $sequence_size) = &set_endpoints($sequence_data);
+	my ($i_0, $k_0, $sequence_size) = &set_endpoints($sequence_data);	
+
+	## Output MCMC cycle data for heat map. ##
+	$time_bins = 1000;
+	&output_mcmc_heatmap_table($infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+
+	exit(0);
+
+	##########
+	## 2-pass data: First pass through data, construct average path.
+	##########
+	my (@average_path);
+	seek $infile, 0, 0;
+	open my $infile, '<', $filename or die "Cannot open file $filename: $?\n";
+	&read_init($infile);
 
 	## Average path calculation. ##
 	&build_average_path(\@average_path, $time_bins, $sequence_size, $numStates);
@@ -126,6 +137,88 @@ sub compare_individual_paths
 			&compare_sequences($i_0, $t_0, $T, $rpath, $cpath, \@distance_matrix, $row_idx, $col_idx, $time_increment, $time_bins);
 		}
 	}
+}
+
+sub output_mcmc_heatmap_table
+{
+	my ($fh, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample) = @_;
+
+	my ($path, $current_cycle, $nextpath_cycle) = &advance_to_first_sample($fh, $initial_cycle, $first_cycle_to_sample);
+	## Next sample is set to -1 when there are no more paths to be read from MCMC
+	## After reading to the next path, we will have the next pathID (cycle for which it was accepted),
+	## and the previous path (since next pathID will be larger than the current cycle).
+	my (@work);
+	while ($nextpath_cycle != -1) {
+		### Set the work sequence to the initial state ###
+		@work = split //, $i_0;
+		### Get the next path ###
+		($path, $nextpath_cycle, $current_cycle) 
+		= &get_next_sample(
+						   $fh, 
+						   $current_cycle, 
+						   $sample_each_x_cycles, 
+						   $path, 
+						   $nextpath_cycle
+						  );
+		## Should have path to profile && cycle of interest.
+		print STDERR "$current_cycle $nextpath_cycle\n"; 
+		print STDERR $path . "\n";
+		&print_path($i_0, $t_0, $T, $path, $time_increment, $time_bins);
+	}
+}
+
+sub print_path
+{
+	my (
+		$i_0,				## Begin sequence.
+		$t_0, 				## Start time of i_0 (begin time before time_bin increments).
+		$T,					## End time.
+		$path_to_add, 		## Path from $i_0--->$k_0
+		$dt,				## Amount of time to increment at each step.
+		$total_time_bins	## To increment the array at the proper point.
+	   ) = @_;
+
+	my @path_events = split /\n/, $path_to_add;
+	pop @path_events;		## Branch ending event. ##
+	my @work_sequence = split //, $i_0;
+	my $last_event_ptr = 0;
+	my ($prof_site_idx) = (0);
+
+	my ($t, $change, $Qidot, $site, $Qidot_k);
+	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
+	my $last_Q = $Qidot;
+	print "$last_Q\n";
+#	for (my $time_bin = $t_0; $last_event_ptr < (scalar @path_events); $time_bin += $dt) {
+	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
+		## Catch work sequence up to the times.
+		if ($last_event_ptr > @path_events) {
+			print "\t$last_Q\n";
+		} else {
+			while ($time_bin < $t) {
+				print "\t$Qidot\n";
+				$time_bin+=$dt;
+			}
+
+			if ($t < $time_bin+$dt) {
+				my($t2, $site2, $change2, $Qidot2, $Qidot_k2) = split(",", $path_events[$last_event_ptr+1]);
+				if ($t2 < $time_bin+$dt) {
+					;
+				} else {
+					print "\t$Qidot\n";
+					$last_Q = $Qidot;
+				}
+			} else {
+				print "\t$last_Q";
+			}
+
+			## Finished event, get data of next event.
+			$last_event_ptr++;
+			($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
+			#print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n";
+		}
+	}
+	print "t: $t\n";
+	exit(0);
 }
 
 sub compare_sequences
