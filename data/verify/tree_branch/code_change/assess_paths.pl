@@ -9,8 +9,8 @@ my ($delta_t, $filename, $first_cycle_to_sample, $sample_each_x_cycles) = @ARGV;
 my ($numStates);
 $numStates = 4; 	## For now, assume nucleotides. Can change to codons or higher order contexts later. ##
 my ($t_0, $T) = (0, 1);		## Known, for the time being. ##
-#my $time_bins = 10000;
-my $time_bins = 1000;
+my $time_bins = 10000;
+#my $time_bins = 1000;
 my $time_increment = ($T - $t_0) / $time_bins;
 my $max_path_diff = 0;
 my $min_diff = 1;
@@ -18,6 +18,8 @@ my $max_diff = 0;
 my $num_sampled_paths = 0;
 my @all_path_diff = ();
 my @distance_matrix = ();
+my $EPC = 0;
+my ($global_min, $global_max) = (10000, 0);
 
 { ######### MAIN #########
 
@@ -28,6 +30,7 @@ my @distance_matrix = ();
 	## Output MCMC cycle data for heat map. ##
 	$time_bins = 1000;
 	&output_mcmc_heatmap_table($infile, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample);
+	print STDERR "min: $global_min     max: $global_max\n";
 
 	exit(0);
 
@@ -139,6 +142,8 @@ sub compare_individual_paths
 	}
 }
 
+my @Qidot_avg = ();
+
 sub output_mcmc_heatmap_table
 {
 	my ($fh, $i_0, $t_0, $T, $time_increment, $time_bins, $initial_cycle, $first_cycle_to_sample) = @_;
@@ -148,6 +153,7 @@ sub output_mcmc_heatmap_table
 	## After reading to the next path, we will have the next pathID (cycle for which it was accepted),
 	## and the previous path (since next pathID will be larger than the current cycle).
 	my (@work);
+	my $num_samples = 0;
 	while ($nextpath_cycle != -1) {
 		### Set the work sequence to the initial state ###
 		@work = split //, $i_0;
@@ -162,9 +168,21 @@ sub output_mcmc_heatmap_table
 						  );
 		## Should have path to profile && cycle of interest.
 		print STDERR "$current_cycle $nextpath_cycle\n"; 
-		print STDERR $path . "\n";
+		#print STDERR $path . "\n";
+		print "cycle_$current_cycle";
 		&print_path($i_0, $t_0, $T, $path, $time_increment, $time_bins);
+		#if ($current_cycle > 200) {exit(0);}
+		$num_samples++;
 	}
+
+	open OUT, ">avg_of_paths";
+	print OUT "xyz\t";
+	for my $j (0 .. 9999) {
+		print OUT "\t" . ($Qidot_avg[$j]/$num_samples);
+	}
+	close OUT;
+
+	exit(0);
 }
 
 sub print_path
@@ -184,41 +202,104 @@ sub print_path
 	my $last_event_ptr = 0;
 	my ($prof_site_idx) = (0);
 
+	my $times_thru_wasted_loop = 0;
+	my $num_print = 0;
+
+	my $Qidot_avg_idx = 0;
+
 	my ($t, $change, $Qidot, $site, $Qidot_k);
 	($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 	my $last_Q = $Qidot;
-	print "$last_Q\n";
-#	for (my $time_bin = $t_0; $last_event_ptr < (scalar @path_events); $time_bin += $dt) {
+	if ($EPC) { $last_Q = $Qidot_k; }
 	for (my $time_bin = $t_0; $time_bin < $T; $time_bin += $dt) {
 		## Catch work sequence up to the times.
-		if ($last_event_ptr > @path_events) {
-			print "\t$last_Q\n";
+		if ($last_event_ptr > @path_events - 1) {
+			#print "$time_bin -> $t ";
+			if ($last_Q < $global_min) { $global_min = $last_Q; }
+			if ($last_Q > $global_max) { $global_max = $last_Q; }
+			print "\t$last_Q";
+			$Qidot_avg[$Qidot_avg_idx++] += $last_Q;
+			$num_print++;
+			#print "!!!\n";
 		} else {
 			while ($time_bin < $t) {
-				print "\t$Qidot\n";
+				#print "$time_bin -> $t ";
+				if ($EPC) {
+					if ($Qidot_k < $global_min) { $global_min = $Qidot_k; }
+					if ($Qidot_k > $global_max) { $global_max = $Qidot_k; }
+					print "\t$Qidot_k"; 
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot_k;
+				} else {
+					if ($Qidot < $global_min) { $global_min = $Qidot; }
+					if ($Qidot > $global_max) { $global_max = $Qidot; }
+					print "\t$Qidot";
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot;
+				}
+
+				$num_print++;
+				#print "***\n";
 				$time_bin+=$dt;
 			}
 
-			if ($t < $time_bin+$dt) {
-				my($t2, $site2, $change2, $Qidot2, $Qidot_k2) = split(",", $path_events[$last_event_ptr+1]);
-				if ($t2 < $time_bin+$dt) {
-					;
-				} else {
-					print "\t$Qidot\n";
-					$last_Q = $Qidot;
+			my $num_in_bin = 1;
+			my ($t2, $site2, $change2, $Qidot2, $Qidot_k2) = split(",", $path_events[$last_event_ptr+1]);
+			if ($t2 < $time_bin && $t2 > $t && $t != 0) {
+				my $bin_val = $Qidot;
+				while ($t2 < $time_bin && $t2 > $t) {
+					($t2, $site2, $change2, $Qidot2, $Qidot_k2) 
+					= split(",", $path_events[$last_event_ptr+$num_in_bin]);
+					if ($EPC) {
+						$bin_val += $Qidot_k2;
+					} else {
+						$bin_val += $Qidot2;
+					}
+					$num_in_bin++;
 				}
+
+				$Qidot = $bin_val / $num_in_bin;
+				if ($EPC) {
+					if ($Qidot_k < $global_min) { $global_min = $Qidot_k; }
+					if ($Qidot_k > $global_max) { $global_max = $Qidot_k; }
+					print "\t$Qidot_k"; 
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot_k;
+				} else {
+					if ($Qidot < $global_min) { $global_min = $Qidot; }
+					if ($Qidot > $global_max) { $global_max = $Qidot; }
+					print "\t$Qidot";
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot;
+				}
+				$num_print++;
+				#print "???\n";
+				$times_thru_wasted_loop++;
 			} else {
-				print "\t$last_Q";
+				#print "$time_bin -> $t ";
+				if ($EPC) {
+					if ($Qidot_k < $global_min) { $global_min = $Qidot_k; }
+					if ($Qidot_k > $global_max) { $global_max = $Qidot_k; }
+					print "\t$Qidot_k"; 
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot_k;
+				} else {
+					if ($Qidot < $global_min) { $global_min = $Qidot; }
+					if ($Qidot > $global_max) { $global_max = $Qidot; }
+					print "\t$Qidot";
+					$Qidot_avg[$Qidot_avg_idx++] += $Qidot;
+				}
+				$num_print++;
+				#print "~~~\n";
+				if ($Qidot != 0) { $last_Q = $Qidot; }
 			}
 
 			## Finished event, get data of next event.
-			$last_event_ptr++;
+			$last_event_ptr += $num_in_bin;
 			($t, $site, $change, $Qidot, $Qidot_k) = split(",", $path_events[$last_event_ptr]);
 			#print "$last_event_ptr: $t $site $change $Qidot $Qidot_k\n";
 		}
 	}
-	print "t: $t\n";
-	exit(0);
+
+	print STDERR "Qidot_avg_idx = $Qidot_avg_idx\n";
+
+	print "\n";
+	print STDERR "$num_print\n";
 }
 
 sub compare_sequences

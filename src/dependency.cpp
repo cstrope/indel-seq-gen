@@ -538,6 +538,23 @@ contextDependence::set_lookup_table()
 			//cerr << "    " << j-1 << ", " << i << "       " << lookup_table.at(j-1).at(i)->value << ", " << lookup_table.at(j-1).at(i)->inverse << endl;
 		}
 	}
+
+	//////////
+	/// Following code is FOR TESTING ONLY: Get the range of values for XXXYXXX in order-3 markov model,
+	/// i.e., P(Y|XXX) x P(X|YXX), etc.
+	//////////
+	int gg = 0;
+	double minV = 1; double maxV = 0;
+	vector<LookUp*>::iterator lt_ptr = lookup_table.at(order).begin();
+	for (; lt_ptr != lookup_table.at(order).end(); ++lt_ptr, ++gg) {
+		cout << gg << " " << (*lt_ptr)->value << endl;
+		if ((*lt_ptr)->value > maxV) maxV = (*lt_ptr)->value;
+		if ((*lt_ptr)->value < minV) minV = (*lt_ptr)->value;
+	}
+
+	cout << minV << " " << maxV << endl;
+
+	exit(0);
 }
 
 void

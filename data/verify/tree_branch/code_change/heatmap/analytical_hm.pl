@@ -34,7 +34,7 @@ for my $dt ($begin .. $nt-1) {
 	$PDjk = 0.25 - 0.25*$exponential;
 	$PIjk = 0.25 + 0.75*$exponential;
 
-	print "$PDjk $PIjk\n";
+#	print "$PDjk $PIjk\n";
 	### For all possible numbers of differences
 	for my $L_D (0 .. $L) {
 		$L_I = $L-$L_D;
@@ -47,10 +47,21 @@ for my $dt ($begin .. $nt-1) {
 		$proportion_different[$dt][$L_D]
 		= (0.25 * $L_D * (2 + $PIjk/$PDjk)) / $Qidot_k;
 		
-#		if ($L_D == 0) {
-			print "Time: $time_to_go   #diff: $L_D     val = $Qidot_k    %diff = $proportion_different[$dt][$L_D]\n"; 
+#		if (
+#			$L_D == 750 && $dt == 1 or
+#			$L_D == 750 && $dt == 999 or
+#			$L_D == 250 && $dt == 1 or
+#			$L_D == 250 && $dt == 999 or
+#			$L_D == 500 && $dt == 500 or
+#			$L_D == 750 && $dt == 1 or
+#			$L_D == 750 && $dt == 999 or
+#			$L_D ==  50 && $dt ==  50
+#		   ) {
+#			print "" 
+#				  . ($dt/1000) 
+#				  . " $Qidot_k\n";	
+#				  . " ld: $L_D $proportion_different[$dt][$L_D]  length_diff: " . ($proportion_different[$dt][$L_D]/$L_D) ."\n"; 
 #		}
-
 
 	}
 }
@@ -84,4 +95,26 @@ for my $i (0 .. 1000) {
 	print OUT "\n";
 }
 close OUT;
+
+open OUT, ">propdiff1.dat";
+for my $i (0 .. 999) {
+	print OUT "" . ($i/1000) . " $proportion_different[$i][1]\n";
+}
+
+open OUT, ">propdiff250.dat";
+for my $i (0 .. 999) {
+	print OUT "" . ($i/1000) . " $proportion_different[$i][250]\n";
+}
+open OUT, ">propdiff500.dat";
+for my $i (0 .. 999) {
+	print OUT "" . ($i/1000) . " $proportion_different[$i][500]\n";
+}
+open OUT, ">propdiff750.dat";
+for my $i (0 .. 999) {
+	print OUT "" . ($i/1000) . " $proportion_different[$i][750]\n";
+}
+open OUT, ">propdiff999.dat";
+for my $i (0 .. 999) {
+	print OUT "" . ($i/1000) . " $proportion_different[$i][999]\n";
+}
 
