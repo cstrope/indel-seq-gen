@@ -111,8 +111,8 @@ PathProposal::displayPaths(
 
 void 
 PathProposal::parseEndpointInfile(
-									   string& filename
-									  )
+								  string& filename
+								 )
 {
 	ifstream infile;
 	string in_buffer = "";

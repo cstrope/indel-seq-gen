@@ -20,7 +20,7 @@ Dependency::Dependency(
 void contextDependence::readDependencies(string& file)
 {
 	ifstream is;
-	char line[256];
+	char line[2096];
 	int i = 0;
 	string sequence;
 	double val;
@@ -33,7 +33,7 @@ void contextDependence::readDependencies(string& file)
 	is.open(file.c_str());
 	int num_lines = 0;
 	while(is.good()) {
-		is.getline(line, 256);
+		is.getline(line, 2096);
 		split_line = split (line, " ");
 		if (split_line.size() < 2) break;	// last line might have no values, will cause problems.
 
