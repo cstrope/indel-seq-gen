@@ -120,6 +120,8 @@ public:
 	string	epc_Pij_pi;
 	string 	dependency_file;
 	string	forward_sim_event_file_to_emulate;	// These two variables are used to emulate forward simulation
+	string	dependence_model_counts;
+	string 	neutral_model_counts;
 	bool	epc_emulate_forward_simulation;  	// events, should be helpful to judge Qi.|k(t) vs Qi.
 
 	string end_point_branch_length;

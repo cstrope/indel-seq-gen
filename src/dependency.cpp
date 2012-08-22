@@ -33,12 +33,22 @@ void contextDependence::readDependencies(string& file)
 	is.open(file.c_str());
 	int num_lines = 0;
 	while(is.good()) {
+		// Read in line of values. Element 1 is seed ktuplet (K) probability. Following are Pr(N|K).
 		is.getline(line, 2096);
-		split_line = split (line, " ");
-		if (split_line.size() < 2) break;	// last line might have no values, will cause problems.
 
+		// Split into each element, as separated by spaces.
+		split_line = split (line, " ");
+
+		// last line might have no values, will cause problems.
+		if (split_line.size() < 2) break;
+
+		// Iterator for the list of elements, start at beginning.
 		it = split_line.begin();
+
+		// Set element 1 (ktuplet probability).
 		(*tup_it) = atof((*it).c_str());
+
+		// Set to the first transition probability.
 		++tup_it, ++it;
 		for (; it != split_line.end(); ++it, ++i) {
 			sequence = lookup_table_sequence(i, order+1);
@@ -358,7 +368,7 @@ void contextDependence::generateDependencies(double dependence_strength_superscr
 	//////////
 	/// Fill in the values for the first <order> positions
 	//////////
-	// Set order-plets
+	// Set order-tuplets
 	total = 0;
 	double total2 = 0;
 	tuplet_pi.assign(index_position_multiplier.at(order), 0);
@@ -555,119 +565,6 @@ contextDependence::set_lookup_table()
 	cout << minV << " " << maxV << endl;
 
 	exit(0);
-}
-
-void
-contextDependence::set_Qmat(TNode *node)
-{
-	vector<vector<LookUp*> >::iterator it;
-	vector<LookUp*>::iterator jt;
-	int a, b, i, j;
-	double tau_ij;
-	double row_total;
-	
-	// Environment
-	i = 0;
-	for (it = lookup_table.begin(); it != lookup_table.end(); ++it, ++i) {
-		// Sequence
-		j = 0;
-		for (jt = (*it).begin(); jt != (*it).end(); ++jt, ++j) {
-cerr << "env " << i << " seq " << j << endl;
-			(*jt)->Qmat.assign(numStates*numStates, 0);
-			// From
-			for (a = 0; a < numStates; a++) {
-				row_total = 0;
-				// To
-				for (b = 0; b < numStates; b++) {
-					if (a != b) {
-						tau_ij = TauIJ(node, i, j, a, b);
-						if (tau_ij != 1) {
-							(*jt)->Qmat.at(a*numStates+b)
-							= node->branch->rates->pi.at(b)
-							  *
-							  ( log(tau_ij)/(1 - 1.0/tau_ij) );
-						} else (*jt)->Qmat.at(a*numStates+b) = 0.25; 
-						row_total += (*jt)->Qmat.at(a*numStates+b);
-					}
-				}
-				(*jt)->Qmat.at(a*numStates+a) = -row_total;
-			}
-		}
-	}
-
-	exit(0);
-}
-
-double 
-contextDependence::TauIJ (
-						  TNode *node,
-			  			  int env_index,
-						  int i_seq_index,
-						  short residue_i,
-						  short residue_j
-						 )
-{
-	double diffPji, diffP0ji;
-	register double tau_ij; // The tau_ij parameter, equation 1.7 Choi et al.
-cerr << "TauIJ_in: i=" << residue_i << " j=" << residue_j << endl;
-	int j_seq_index = i_seq_index + getOffset(env_index, residue_i, residue_j);
-
-//	cerr << "env: " << env_index << "  ";
-//	cerr << "j_seq_index = " << i_seq_index << " + " << tree->dep.front()->context.getOffset(env_index, residue_i, residue_j) << endl;
-
-	//////////
-	///	This representation is different since we are (currently) not calculating the VLMM on
-	/// protein sequences, but are rather leaving everything at the nucleotide level.
-	///
-	/// Equation (1.1) Independent sites probability of sequence i.
-	/// * Unnecessary to calculate: only need to find the difference.
-	/// * Calculate P(i) given the 3rd order Markov model. This has no equation in Choi et al, but
-	///   it plays an integral part in Equation (1.7).
-	/// * First triplet stationary probability for the state of the sequence.
-	/// *Calculating the probabilities for sequence j. This is different than sequence i, since
-	///  j will be different in one position. This difference is what is difficult to do, however,
-	///  since we will need to calculate the probabilities of all sequences that have that position.
-	///  The first thing to do, in any case, is to keep the P_i_ calculation, and re-calculating
-	///  only the necessary positions.
-	///    * Inheriting 2 values: the probability of the triplet for i, and
-	///    * The multiplicand for each site in j that is unaffected by the changed site.
-	///
-	/// Position 1:
-	/// P(i)P(j_1,j_2,j_3)P(j_4|j_1,j_2,j_3)
-	/// ------------------------------------
-	/// P(i_1,i_2,i_3)P(i_4|i_1,i_2,i_3)
-	///
-	/// Rest of sequences cancel out, since none depend on the i_1->j_1 change. Upon close 
-	/// inspection, one can see that this formula is simply tau_{ij} from Choi et al., solved
-	/// for P(J). Thus, P(J) is P(I) times a ratio of P(J)'/P(I)', where the ' indicates the
-	/// probabilities changed by the i->j change.
-	//////////
-cerr << "diffPji: passing " << env_index << ", " << i_seq_index << ", " << j_seq_index << endl;
-	diffPji 
-	= lt_markov_ratio(
-					  env_index,			// env.
-					  i_seq_index,		// i
-					  j_seq_index		// j
-					 );
-	//////////
-	/// Final value needed to complete TauIJ for this particular position is
-	/// the calculation of the stationary frequency of P0_j_ under the independent
-	/// model.
-	//////////
-cerr << "diffP0ji:";
-	diffP0ji = node->branch->rates->pi.at(residue_j) / node->branch->rates->pi.at(residue_i);
-cerr << "done." << endl;
-	
-	//////////
-	/// Equation 1.7 from Choi et al, tau_ij.
-	//////////
-	double diffP0ji_inv = 1.0 / diffP0ji;
-	tau_ij = diffPji;
-    tau_ij *= diffP0ji_inv;
-	//////////
-
-cerr << "TauIJ_out" << endl;
-	return tau_ij;
 }
 
 string contextDependence::lookup_table_sequence(int idx, int sequence_length)

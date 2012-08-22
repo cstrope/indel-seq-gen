@@ -67,9 +67,14 @@ public:
 	void				report_tuplet_pi();
 
 private:
-	int order;		// The order of dependence (Markovian). //
+
+	// The order of Markov dependence.
+	int order;		
+
+	// 
 	vector<vector<LookUp*> > lookup_table;
 	map<string, LookUp*> 	lookup_table2;
+
 	// Triplet frequencies
 	vector<double>			tuplet_pi;
 	vector<int>				context_specific_index_offset;	// see allocate_lookup_context_vector();
