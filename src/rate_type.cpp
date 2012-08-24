@@ -197,9 +197,9 @@ uQdPc(
      )
 {
 	/// Calculating and passing the site-specific transition probabilities.
-	(*rates).Qij = (*site).e_QijDt;							// Entire Qij matrix. For exponentiating.
-	(*rates).SetupMatrix(false);							// Set Cijk matrix, for exponentiating.
-	(*rates).setPij((*site), (T-at_dt), i_z->nodeEnv->rateHetero); // Exponentiation.
+	(*rates).Qij = (*site).e_QijDt;									// Entire Qij matrix. For exponentiating.
+	(*rates).SetupMatrix(false);									// Set Cijk matrix, for exponentiating.
+	(*rates).setPij((*site), (T-at_dt), i_z->nodeEnv->rateHetero); 	// Exponentiation.
 }
 
 void

@@ -92,8 +92,9 @@ public:
 	contextDependence		context;
 	using Counter<Dependency>::howMany;
 
-	Dependency(double dep_order, double dependence_superscript, string& output_files);
-	Dependency(double dep_order, string& dependency_file);
+	Dependency(double dep_order, double dependence_superscript, string& output_files);	// 3oMM FWD
+	Dependency(double dep_order, string& dependency_file);	// 3oMM EPC
+	Dependency::Dependency(double dep_order, string &dependency_counts_file, string $neutral_counts_file);	// HDS FWD/EPC?
 	void buildDependenceStructures();
 };
 

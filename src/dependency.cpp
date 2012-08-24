@@ -5,6 +5,26 @@
 ////////////////////
 ////// EPC simulation: Reads the Markov dependency from a file created by the forward simulation.
 ////////////////////
+
+//////////
+/// CONSTRUCTORS
+//////////
+// Forward 3rd-order MM simulation, Randomly assigned frequencies and transition probabilities taken to a power
+Dependency::Dependency(
+					   double dep_order,
+					   double dependence_superscript,
+					   string& outfile_name_root
+					  )
+	: context(dep_order)
+{
+	context.allocate_lookup_context_vector();
+	context.generateDependencies(dependence_superscript);
+	context.set_lookup_table();
+	context.setOffset();
+	context.outputDependencies(outfile_name_root);
+}
+
+// EPC Third-order Markov Model.
 Dependency::Dependency(
 					   double dep_order,
 					   string& file
@@ -17,6 +37,20 @@ Dependency::Dependency(
 	context.setOffset();
 }
 
+// Human Data... FWD & EPC?
+Dependency::Dependency(
+					   double dep_order,
+					   string &dependency_counts_file,
+					   string $neutral_counts_file
+					  )
+{
+	context.allocate_lookup_context_vector();
+}
+
+
+//////////
+/// Functions
+//////////
 void contextDependence::readDependencies(string& file)
 {
 	ifstream is;
@@ -70,45 +104,61 @@ void contextDependence::allocate_lookup_context_vector()
 	vector<int>::iterator it;
 	int lookup_context_size = 0;
 	LookUp *lookup;
-
-	//////////
-	/// General purpose vector that pre-multiplies the numStates. Used for setting offsets, for one. ///
-	index_position_multiplier.assign(order*2+2, 1);
-	for (it = index_position_multiplier.begin()+1; it != index_position_multiplier.end(); ++it)
-		(*it) = (*(it-1))*numStates;
-	/// Allocate lookup array
-	for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it) {
-		lookup_context_size += 2*(*it);
-	}
-	lookup_context_size -= index_position_multiplier.at(order+4);
-	lookup_context.assign(lookup_context_size, lookup);
-	//cerr << "lookup_context_size = " << lookup_context_size << endl;
-	/// Setup vector that indexes the star of each order setting.
-	///		For example, order 3 markov, this vector will hold:
-	///    *4   *5    *6      7      4*      5*      6*     XX
-	///     0 | 256 | 1280 | 5376 | 21760 | 22016 | 23040 | 27136
-	/// Bookend values not really necessary, but are useful as placeholders (define beginning and ending of array).
-	context_specific_index_offset.assign(order*2+1,0);
-	vector<int>::iterator jt = context_specific_index_offset.begin()+1;
-	for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++jt)
-		(*jt) = (*(jt-1))+(*it);
-	for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++jt)
-		(*jt) = (*(jt-1))+(*it);
-
-	LookUp *dummy;
-	// 2D vector lookup table.
+	LookUp *dummy;	// For allocating vector<LookUp*> below.
 	lookup_table.assign( order*2+1, vector<LookUp*> (1, dummy) );
-	vector<vector<LookUp*> >::iterator xt = lookup_table.begin();
-	for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++xt)
-		(*xt).assign((*it), dummy);
-	for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end()-1; ++it, ++xt)
-		(*xt).assign((*it), dummy);
-	int i = 0;
 
-	//int o=0;
-	//for (jt = context_specific_index_offset.begin(); jt != context_specific_index_offset.end(); ++jt, ++o) {
-	//	cerr << "Order " << o << " offset: " << (*jt) << endl;
-	//}
+	if (order_3_markov) {
+		//////////
+		/// General purpose vector that pre-multiplies the numStates. Used for setting offsets, for one. ///
+		index_position_multiplier.assign(order*2+2, 1);
+		for (it = index_position_multiplier.begin()+1; it != index_position_multiplier.end(); ++it)
+			(*it) = (*(it-1))*numStates;
+		/// Allocate lookup array
+		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it) {
+			lookup_context_size += 2*(*it);
+		}
+		lookup_context_size -= index_position_multiplier.at(order+4);
+		lookup_context.assign(lookup_context_size, lookup);
+		//cerr << "lookup_context_size = " << lookup_context_size << endl;
+		/// Setup vector that indexes the star of each order setting.
+		///		For example, order 3 markov, this vector will hold:
+		///    *4   *5    *6      7      4*      5*      6*     XX
+		///     0 | 256 | 1280 | 5376 | 21760 | 22016 | 23040 | 27136
+		/// Bookend values not really necessary, but are useful as placeholders (define beginning and ending of array).
+		context_specific_index_offset.assign(order*2+1,0);
+		vector<int>::iterator jt = context_specific_index_offset.begin()+1;
+		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++jt)
+			(*jt) = (*(jt-1))+(*it);
+		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++jt)
+			(*jt) = (*(jt-1))+(*it);
+
+		// 2D vector lookup table.
+		vector<vector<LookUp*> >::iterator xt = lookup_table.begin();
+		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it, ++xt)
+			(*xt).assign((*it), dummy);
+		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end()-1; ++it, ++xt)
+			(*xt).assign((*it), dummy);
+		int i = 0;
+
+		//int o=0;
+		//for (jt = context_specific_index_offset.begin(); jt != context_specific_index_offset.end(); ++jt, ++o) {
+		//	cerr << "Order " << o << " offset: " << (*jt) << endl;
+		//}
+	} else if (Human_Data_simulation) {
+		// This is hard coded to make human example work. To generalize, need to include that expected order of the
+		// data, and proceed similarly as above. This is for codons (triplets), where only 1 site will vary.
+		
+		// Beginning of sequence change probability:
+		// i_h^1 i_h^2 i_h^3   i_{4}^1 i_{5}^2 i_{6}^3
+		// We will assume that this is always ATG
+		lookup_table.at(0).clear();
+		lookup_table.at(1).assign(pow(numStates, 9), dummy);
+		lookup_table.at(2).assign(pow(numStates, 6), dummy);
+	} else {
+		cerr << "Queer... should not reasonably get here in contextDependence::allocate_lookup_context_vector()." << endl;
+		exit(EXIT_FAILURE);
+	}
+
 }
 
 contextDependence::~contextDependence()
@@ -120,23 +170,6 @@ contextDependence::~contextDependence()
 			delete (*yt);
 		}
 	}
-}
-
-//////////
-/// CONSTRUCTOR: Forward simulation, Randomly assigned frequencies and transition probabilities taken to a power
-//////////
-Dependency::Dependency(
-					   double dep_order,
-					   double dependence_superscript,
-					   string& outfile_name_root
-					  )
-	: context(dep_order)
-{
-	context.allocate_lookup_context_vector();
-	context.generateDependencies(dependence_superscript);
-	context.set_lookup_table();
-	context.setOffset();
-	context.outputDependencies(outfile_name_root);
 }
 
 void 

@@ -49,6 +49,7 @@ class motifInfo;
 
 extern double CpG_multiplier;
 extern bool	  order_3_markov;
+extern bool   Human_Data_simulation;
 
 enum {
 	PHYLIPFormat,

@@ -116,7 +116,7 @@ void seqGenOptions::postProcess()
 	}
 	
 	// This is primarily written so that I can run tailor made EPC simulations for manuscript.
-	if ( dependent_model_counts.empty() && !neutral_model_counts.empty() ) {
+	if ( dependence_model_counts.empty() && !neutral_model_counts.empty() ) {
 		cerr << "Not set up for user defined model of neutral rates and no dependence model." << endl;
 		exit(EXIT_FAILURE);
 	}
@@ -196,7 +196,7 @@ void seqGenOptions::init()
 	num_mcmc_steps							= 0;
 	context_order 							= 0;
 	rasmus_independent_proposals			= false;
-	dependent_model_counts.clear();
+	dependence_model_counts.clear();
 	neutral_model_counts.clear();
 }
 
@@ -273,7 +273,7 @@ void seqGenOptions::readOptions(
         // getopt_long stores the option index here.
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "a:b:c:Cd:D:e:E:f:F:g:hi:I:j:k:K:l:Lm:M:n:o:O:p:P:qr:s:t:T:u:Uvwxy:z:1:",long_options, &option_index);
+        c = getopt_long (argc, argv, "a:b:c:Cd:D:e:E:f:F:g:hi:I:j:k:K:l:Lm:M:n:o:O:p:P:qr:s:t:T:u:Uvwxy:z:1:2:3:",long_options, &option_index);
      
         // Detect the end of the options.
         if (c == -1) break;
@@ -449,6 +449,7 @@ void seqGenOptions::readOptions(
 				break;
 			case 'O':
 				context_order = atof(optarg);
+				order_3_markov = true;
 				break;
 			case 'p':
 				filePath = optarg;
@@ -555,6 +556,7 @@ void seqGenOptions::readOptions(
 				break;
 			case '2':
 				dependence_model_counts = optarg;
+				Human_Data_simulation = true;
 				break;
 			case '3':
 				neutral_model_counts = optarg;

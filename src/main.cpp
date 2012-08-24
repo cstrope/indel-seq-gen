@@ -45,6 +45,9 @@
 
 using namespace std;
 
+bool	order_3_markov;
+bool	Human_Data_simulation = true;
+
 bool	empty_column_warning_spooled = false;
 ofstream verbose_output;
 extern 	ofstream verbose_output;
@@ -55,7 +58,6 @@ int		eventNo;
 const string nucleotides="ACGT";
 const string aminoAcids="ARNDCQEGHILKMFPSTWYV";
 bool 	test_alternate_representations = true;
-bool	order_3_markov = true;
 unsigned int		numStates_squared;
 unsigned int		numStates_cubed;
 int 	changed_site=0;
@@ -149,6 +151,9 @@ int main(int argc, char *argv[])
 
 	rasmus_independent_proposals = options->rasmus_independent_proposals;
 
+	cerr << "Dependent Sites Model: " << options->dependence_model_counts << endl;
+	cerr << "Neutral Model:         " << options->neutral_model_counts << endl;
+
 	//////////
 	/// Primary routine. Preprocesses data, then either calls Forward simulation or path proposals.
 	//////////
@@ -160,9 +165,7 @@ int main(int argc, char *argv[])
 			);
 
 
-cerr << "Before output streams." << endl;
 	closeOutputStreams(inputTrees, simulation_output_streams, options->output_file_flags);
-cerr << "Before warnings spool" << endl;
 	options->SpoolWarnings("",true);
 
 	//////////
@@ -287,6 +290,8 @@ void Simulate(
 			  seqGenOptions *options
 			 )
 {
+	cerr << "Point-> Simulate() IN" << endl;
+
 	paleobiology *paleontologicalProcess;	// Fossil deposition
 	list<eventTrack*> events;				// Event tracking
 	int numTaxa = 0;		// To check if all trees have the same number of taxa.
@@ -296,6 +301,7 @@ void Simulate(
  
 	if (options->deposit_fossils) 
 		paleontologicalProcess = new paleobiology(options->paleo_root_age, options->fossil_deposition_rate);
+
 
 	//////////
 	/// Gathering inTrees, checking sanity 
@@ -316,6 +322,8 @@ void Simulate(
 		}
 	}
 
+	cerr << "Point-> Simulate() TREES READ" << endl;
+
 	// Set the function pointers.
 	//for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
 	//	for (list<TNode*>::iterator jt = (*it)->my_tree->nodeList.begin(); jt != (*it)->my_tree->nodeList.end(); ++jt) {
@@ -334,6 +342,8 @@ void Simulate(
 	else if (!Qd && Pc) ptr2update = &uQPc; 
 	else if (Qd && nij) ptr2update = &uQN; 
 	else ptr2update = &uQP;
+
+	cerr << "Point-> Simulate() FUNCTION PTR SET" << endl;
 
 	if (!options->quiet && !options->path_proposal) {
 		if (options->fileFormat == NEXUSFormat) 
@@ -366,6 +376,8 @@ void Simulate(
 		else 
 			*simulation_output_streams.at(seqGenOptions::trace) << header.str() << endl;
 	}
+
+	cerr << "Point-> Simulate() PREPROCESS SUCCESSFUL" << endl;
 
 	//////////
 	/// MAIN ROUTINE: All events that need to be done for each dataset are done inside this
@@ -477,11 +489,20 @@ void Simulate(
 			//////////
 			/// Check to see if there are dependencies specified.
 			//////////
-			if ( !options->dependency_file.empty() || order_3_markov ) {
+			if ( !options->dependency_file.empty() || order_3_markov || Human_Data_simulation ) {
 				if (options->path_proposal) {
 					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, options->dependence_superscript));	// Current: hard-coded 3rd-order Markov.
 				} else {
-					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
+					cerr << "Not path proposal (Simulate())" << endl;
+					if (order_3_markov) {
+						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
+					} else if (Human_Data_simulation) {
+						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
+					} else {
+						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
+						exit(EXIT_FAILURE);
+					}
+					cerr << "Success." << endl;
 				}
 			}
 		}

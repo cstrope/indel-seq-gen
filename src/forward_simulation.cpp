@@ -10,6 +10,7 @@ void ForwardSimulation::EvolveNode(
 								   seqGenOptions *options
 			   					  )
 { 
+	cerr << "Point-> ForwardSimulation::EvolveNode IN" << endl;
 	bool chang_and_benner = false;
 	ofstream step_out;
 	string trs_outfile;
@@ -55,6 +56,8 @@ void ForwardSimulation::EvolveSequences(
 					 					seqGenOptions *options
 									   )
 {
+	cerr << "Point-> ForwardSimulation::EvolveSequences IN" << endl;
+
 	num_subst = 0;
 
 	//////////
@@ -75,6 +78,8 @@ void ForwardSimulation::EvolveSequences(
 	overall_rate_multiplier /= iTree->my_tree->root->seq_evo.size();
 	cerr << "Overall multiplier: " << overall_rate_multiplier << endl;	//XOUT
 	//cout << overall_rate_multiplier;		//XOUT
+
+	cerr << "Cutoff: ForwardSimulation::EvolveSequences" << endl;
 
 	if ( order_3_markov ) {
 		iTree->my_tree->dep.front()->context.set_sequence_indices(iTree->my_tree->root);
@@ -143,7 +148,9 @@ double ForwardSimulation::calcGillespieLambda(
 		*S = des->seq_evo.size() * des->rate_away_site_width;
 	} else {
 		if (order_3_markov) *S = des->calculateForwardRateAwayFromSequence__order3Markov(tree, event_site);
-		else {
+		else if (Human_Data_simulation) {
+			cerr << "ForwardSimulation::calcGillespieLambda->what to do for calculating forward rate away?" << endl;
+		} else {	
 			for (vector<double>::iterator it = des->nodeEnv->delete_lengthDistribution.begin(); it != des->nodeEnv->delete_lengthDistribution.end(); ++it, i++) {
 				del_freq += (*it);
 				del_freq_by_size += (*it)*i;
