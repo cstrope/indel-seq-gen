@@ -1,0 +1,44 @@
+*** Using command: perl mcmc-driver.pl 1 10 1000 1 1 0 9967  ****
+
+EMU pos 70 CG---------- Time (0.624536), left: 0.0101369/0.252808---------- Qi.|k(t): 498.371         Qi: 481.365
+EMU pos 165 GA---------- Time (0.627404), left: 0.00726823/0.252808---------- Qi.|k(t): 554.549         Qi: 479.716
+EMU pos 973 TG---------- Time (0.62794), left: 0.00673316/0.252808---------- Qi.|k(t): 448.656         Qi: 475.096
+EMU pos 313 AT---------- Time (0.629586), left: 0.00508672/0.252808---------- Qi.|k(t): 395.884         Qi: 474.659
+EMU pos 993 TG---------- Time (0.632956), left: 0.00171651/0.252808---------- Qi.|k(t): 584.674         Qi: 474.726
+EMU pos 176 GT---------- Time (0.633272), left: 0.00140055/0.252808---------- Qi.|k(t): 0.175103         Qi: 464.343
+LOG_SUM_FORWARD:  -273.981
+LOG_EPC: 118.089
+LOG_SUM_FORWARD:  -297.347
+LOG_EPC: 97.817
+Statistics::MCMC::rlog: (-273.981-118.089) - (-297.347-97.817) = 3.0939
+*P(p):    -297.347
+*J(p|p'): 97.817
+*P(p'):   -273.981
+*J(p'|p): 118.089
+*log_r = min{0, -->}Acceptance test: (logRN < log(r)) = -0.933073 > 0 = subpath accepted.
+DONE.
+
+
+Times on branch of accepted proposals: 
+ 0.5793 0.928232 A
+ 0.708979 0.754647 R
+ 0.490692 0.504436 A
+ 0.44914 0.80068 A
+ 0.381297 0.513057 A
+ 0.598078 0.613729 R
+ 0.303825 0.531271 A
+ 0.375976 0.970919 A
+ 0.313409 0.3888 A
+ 0.381865 0.634673 A
+
+True path forward probability: 
+Reps: 1
+Power: 1
+MCMC: Last 10 lines in file results_dir/mcmc10-bl1-ds1-10-9967.results.
+ branch length:   1
+ sequence length: 1000
+ depsup:          1
+ mcmc style:      QdPc-subpath, P(time = T/2) = 0.5
+ mcmc_cycles:     10
+ seed:            9967
+
