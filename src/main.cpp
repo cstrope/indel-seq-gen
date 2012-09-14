@@ -501,7 +501,8 @@ void Simulate(
 						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
 					} else if (Human_Data_simulation) {
 						cerr << "Human Data simulation (Simulate())" << endl;
-						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
+						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, 3, options->dependence_model_counts));
+						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
 						exit(EXIT_FAILURE);

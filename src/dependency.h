@@ -97,6 +97,7 @@ public:
 	Dependency(double dep_order, string& dependency_file);	// 3oMM EPC
 	Dependency(double dep_order, string &dependency_counts_file, string $neutral_counts_file);	// HDS FWD/EPC?
 	Dependency(double dep_order, inClade *global_environment);	// For cases where Neutral model = independent sites model.
+	Dependency(double dep_order, int block_size, string& file);
 	void buildDependenceStructures();
 };
 

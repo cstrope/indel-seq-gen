@@ -13,7 +13,7 @@
 Dependency::Dependency(
 					   double dep_order,
 					   double dependence_superscript,
-					   string& outfile_name_root
+					   string& outfile_name_root		// After generating 3MM, Write out file for EPC.
 					  )
 	: context(dep_order)
 {
@@ -48,6 +48,7 @@ Dependency::Dependency(
 	cerr << "Point-> Dependency::Dependency(dep_order, &file) OUT" << endl;
 }
 
+// Neutral model setting for 3MM.
 Dependency::Dependency(
 					   double dep_order,
 					   inClade *environment
@@ -56,7 +57,16 @@ Dependency::Dependency(
 {
 	context.allocate_lookup_context_vector();
 	context.set_neutral_lookup_vector(environment);
+}
 
+Dependency::Dependency(
+					   double dep_order,	// Still useful...
+					   int block_size,		// Dummy variable for distinguishing from prev decl., but the idea would work.
+					   string& file			// File holding dependency counts
+					  )
+	: context(dep_order)
+{
+	context.allocate_lookup_context_vector();
 
 }
 
@@ -343,18 +353,22 @@ void contextDependence::allocate_lookup_context_vector()
 			(*xt).assign((*it), dummy);
 		int i = 0;
 
-		//int o=0;
-		//for (jt = context_specific_index_offset.begin(); jt != context_specific_index_offset.end(); ++jt, ++o) {
-		//	cerr << "Order " << o << " offset: " << (*jt) << endl;
-		//}
+		int o=0;
+		for (jt = context_specific_index_offset.begin(); jt != context_specific_index_offset.end(); ++jt, ++o) {
+			cerr << "Order " << o << " offset: " << (*jt) << endl;
+		} exit(0);
 	} else if (Human_Data_simulation) {
 		// This is hard coded to make human example work. To generalize, need to include that expected order of the
 		// data, and proceed similarly as above. This is for codons (triplets), where only 1 site will vary.
 		
+		index_position_multiplier.assign(3, 1);		// 1st order markov, 3 dependence types. //
+//		for (it = index_position_multiplier.begin()+1; it != index_position_multiplier.end(); ++it)
+//			(*it) = (*(it-1)*
+		
 		// Beginning of sequence change probability:
 		// i_h^1 i_h^2 i_h^3   i_{4}^1 i_{5}^2 i_{6}^3
 		// We will assume that this is always ATG
-		lookup_table.at(0).clear();
+		lookup_table.at(0).assign(pow(numStates, 6), dummy);
 		lookup_table.at(1).assign(pow(numStates, 9), dummy);
 		lookup_table.at(2).assign(pow(numStates, 6), dummy);
 	} else {
