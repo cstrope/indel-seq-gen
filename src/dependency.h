@@ -40,7 +40,8 @@ public:
 	double return_lookup_table_value(string sequence) { return lookup_table2[sequence]->value; }
 	double return_lookup_table_inverse(string sequence) { return lookup_table2[sequence]->inverse; }
 	double return_order() { return order; }
-	
+
+	void 				set_neutral_lookup_vector(inClade *environment);
 	void 				set_sequence_indices(TNode *node);
 	void 				reset_sequence_indices(TNode *node, int event_site, string subst_event);
 	int					getOffset(int env, short i, short j);
@@ -94,7 +95,8 @@ public:
 
 	Dependency(double dep_order, double dependence_superscript, string& output_files);	// 3oMM FWD
 	Dependency(double dep_order, string& dependency_file);	// 3oMM EPC
-	Dependency::Dependency(double dep_order, string &dependency_counts_file, string $neutral_counts_file);	// HDS FWD/EPC?
+	Dependency(double dep_order, string &dependency_counts_file, string $neutral_counts_file);	// HDS FWD/EPC?
+	Dependency(double dep_order, inClade *global_environment);	// For cases where Neutral model = independent sites model.
 	void buildDependenceStructures();
 };
 

@@ -850,10 +850,16 @@ TNode::TauIJ3 (
 											    );
 	//////////
 	/// Final value needed to complete TauIJ for this particular position is
-	/// the calculation of the stationary frequency of P0_j_ under the independent
+	/// the calculation of the stationary frequency of P0_j_ under the neutral
 	/// model.
 	//////////
-	diffP0ji = branch->rates->pi.at(residue_j) / branch->rates->pi.at(residue_i);
+//	diffP0ji = branch->rates->pi.at(residue_j) / branch->rates->pi.at(residue_i);
+	diffP0ji
+	= tree->neutral_dep.front()->context.lt_markov_ratio(
+														 env_index,
+														 i_seq_index,
+														 j_seq_index
+														);
 	
 	//////////
 	/// Equation 1.7 from Choi et al, tau_ij.
@@ -1066,10 +1072,10 @@ TNode::calculateEndpointRateAwayFromSequence(
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
 
 	//RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
-cerr << "Temp_rates being made: " << endl;
+//cerr << "Temp_rates being made: " << endl;
 	RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
-cerr << "Temp rates done." << endl;
-	cerr << "XXXXXXX" << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
+//cerr << "Temp rates done." << endl;
+//	cerr << "XXXXXXX" << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
@@ -1077,12 +1083,12 @@ cerr << "Temp rates done." << endl;
 		//update_rate_matrices(&temp_rates, it, T, at_dt);
 		(*ptr2update)(&temp_rates, this, it, T, at_dt);		// Points to rate matrices in rate_type.cpp. //
 
-		cerr << "pos " << seq_pos << ": " << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
+//		cerr << "pos " << seq_pos << ": " << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
 
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
 	}
 
-	exit(0);
+//	exit(0);
 	
 	// Set values needed for calculating Forward and EPC log probabilities.
 	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;

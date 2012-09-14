@@ -492,11 +492,15 @@ void Simulate(
 			if ( !options->dependency_file.empty() || order_3_markov || Human_Data_simulation ) {
 				if (options->path_proposal) {
 					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, options->dependence_superscript));	// Current: hard-coded 3rd-order Markov.
+					(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, global_environment));
 				} else {
 					cerr << "Not path proposal (Simulate())" << endl;
 					if (order_3_markov) {
+						cerr << "order_3_markov (Simulate())" << endl;
+						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, global_environment));
 						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
 					} else if (Human_Data_simulation) {
+						cerr << "Human Data simulation (Simulate())" << endl;
 						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
@@ -506,6 +510,8 @@ void Simulate(
 				}
 			}
 		}
+
+		cerr << "Point-> Simulate() entering Path_Proposal/Forward_Simulation" << endl;
 
 		if (options->path_proposal) {
 			Path_Proposal(

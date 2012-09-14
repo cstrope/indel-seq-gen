@@ -486,6 +486,8 @@ void RateMatrix::SetModel(
 	double a, b, c, d, e, f, a_, b_, c_, d_, e_, f_, kappa1, kappa2, alpha, beta, gamma, delta;
 	double sum_freq = 0;	
 	
+	cerr << "Point-> RateMatrix::SetModel(inClade *branch) IN" << endl;
+	
 	if (isNucModel) stateCharacters = nucleotides;
 	else stateCharacters = aminoAcids;
 

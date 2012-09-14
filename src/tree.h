@@ -307,6 +307,7 @@ public:
 	list<inClade*> treeEnv;
 	bool epc_root_is_set;
 	list<Dependency*> dep;
+	list<Dependency*> neutral_dep;
 	int treeNum;		// The partition that this tree is assigned to.
 	
 	// Global arrays

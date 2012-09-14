@@ -543,7 +543,7 @@ PathProposal::EvolveStep(
 	cout << diff / tot_iz << endl;	// This is the needed value. Percent of rate away coming from differing sites. //
 
 	cerr << tot_iz << " s" << same << " d" << diff << endl;
-*/	exit(0);
+	exit(0);*/
 	
 	
 	cerr << i_z->printBipartition() << "(0)  lambda_T(epc): " << lambda_T << endl; //XOUT
