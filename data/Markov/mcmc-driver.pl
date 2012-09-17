@@ -56,7 +56,6 @@ if ($INDEPENDENT_SITES) {
 	$fwd_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -D $dependence_superscript -e $filename -o f ";
 	if ($dependence_superscript ge 0) {
 		$fwd_command .= "-O $order ";
-		print STDERR "Fuck?\n"; exit(0);
 	} else {
 		$fwd_command .= "-2 CCDS_nucleotide-1OMm.current.dep.norm -3 GRCh37_non-coding-1OMm.dep.norm ";
 	}

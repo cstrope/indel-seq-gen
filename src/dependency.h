@@ -79,7 +79,7 @@ private:
 	// Triplet frequencies
 	vector<double>			tuplet_pi;
 	vector<int>				context_specific_index_offset;	// see allocate_lookup_context_vector();
-	vector<LookUp*>			lookup_context;
+	//vector<LookUp*>			lookup_context;
 };
 
 class Dependency : private Counter<Dependency>
@@ -114,7 +114,7 @@ double inline contextDependence::lt_markov_ratio (
 	return ratio;
 }
 
-double inline contextDependence::markov_ratio (
+/*double inline contextDependence::markov_ratio (
 								 			   vector<short>& i,
 								 			   vector<short>& j,
 								  	  		   size_t sequence_position
@@ -139,6 +139,6 @@ double inline contextDependence::markov_ratio (
 
 	return ratio;
 }
-
+*/
 
 #endif
