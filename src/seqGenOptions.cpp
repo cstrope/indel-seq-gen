@@ -557,6 +557,8 @@ void seqGenOptions::readOptions(
 			case '2':
 				dependence_model_counts = optarg;
 				Human_Data_simulation = true;
+				order_3_markov = false;
+				context_order = 1;
 				break;
 			case '3':
 				neutral_model_counts = optarg;

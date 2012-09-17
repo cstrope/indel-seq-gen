@@ -320,6 +320,8 @@ void contextDependence::allocate_lookup_context_vector()
 	LookUp *dummy;	// For allocating vector<LookUp*> below.
 	lookup_table.assign( order*2+1, vector<LookUp*> (1, dummy) );
 
+	cerr << "ORDER? " << order << endl;
+
 	if (order_3_markov) {
 		//////////
 		/// General purpose vector that pre-multiplies the numStates. Used for setting offsets, for one. ///
@@ -361,6 +363,8 @@ void contextDependence::allocate_lookup_context_vector()
 		// This is hard coded to make human example work. To generalize, need to include that expected order of the
 		// data, and proceed similarly as above. This is for codons (triplets), where only 1 site will vary.
 		
+		cerr << "Point-> allocate_lookup_context_vector()" << endl;
+		
 		index_position_multiplier.assign(3, 1);		// 1st order markov, 3 dependence types. //
 //		for (it = index_position_multiplier.begin()+1; it != index_position_multiplier.end(); ++it)
 //			(*it) = (*(it-1)*
@@ -371,6 +375,13 @@ void contextDependence::allocate_lookup_context_vector()
 		lookup_table.at(0).assign(pow(numStates, 6), dummy);
 		lookup_table.at(1).assign(pow(numStates, 9), dummy);
 		lookup_table.at(2).assign(pow(numStates, 6), dummy);
+		
+		cerr << "Sizes of each lookup table element:" << endl;
+		cerr << "  0: " << lookup_table.at(0).size() << endl;
+		cerr << "  1: " << lookup_table.at(1).size() << endl;
+		cerr << "  2: " << lookup_table.at(2).size() << endl;
+		exit(0);
+		
 	} else {
 		cerr << "Queer... should not reasonably get here in contextDependence::allocate_lookup_context_vector()." << endl;
 		exit(EXIT_FAILURE);
