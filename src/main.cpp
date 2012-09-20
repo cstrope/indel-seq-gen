@@ -98,6 +98,7 @@ void CheckTrees(list<inTree*>& inputTrees, seqGenOptions *options);
 size_t trimMSA(vector<vector<char> >& print, vector<bool>& empty_columns, seqGenOptions *options);
 void fiddle_with_trees(list<inTree*>& inTrees, seqGenOptions *options);
 void QuickTest();
+void CheckMarkovCodonLikelihoods(Dependency *selective, Dependency *neutral);
 
 int point_to_me (int return_val) { cerr << "pointed to me." << endl; return return_val; }
 int point2me (int return_val) { cerr << "you chose me." << endl; return return_val; }
@@ -500,9 +501,13 @@ void Simulate(
 						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, global_environment));
 						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, atof(options->dependence_superscript.c_str()), options->output_files));
 					} else if (Human_Data_simulation) {
-						cerr << "Human Data simulation (Simulate())" << endl;
+						cerr << "Human Data simulation (Simulate()) 1" << endl;
 						(*it)->my_tree->dep.push_back(new Dependency(options->context_order, 3, options->dependence_model_counts));
+						cerr << "Human Data simulation (Simulate()) 2" << endl;
 						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
+						cerr << "Human Data simulation (Simulate()) 3" << endl;
+						exit(0);
+						CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
 						exit(EXIT_FAILURE);
@@ -650,6 +655,18 @@ void Simulate(
 
 cerr << "Exiting Simulate" << endl;
 	if (options->deposit_fossils) delete paleontologicalProcess;
+}
+
+/// This function is used to check the values of the lookup tables given various codon strings.
+// INPUT: contextDependence data (lookup_table is private variable).
+void CheckMarkovCodonLikelihoods(
+								 Dependency *selective,
+								 Dependency *neutral
+								)
+{
+
+
+	exit(0);
 }
 
 void Path_Proposal(

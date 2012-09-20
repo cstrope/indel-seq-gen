@@ -66,9 +66,12 @@ Dependency::Dependency(
 					  )
 	: context(dep_order)
 {
+	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 1" << endl;
 	context.allocate_lookup_context_vector();
+	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 2" << endl;
 	context.readDependencies(file);
-	exit(0);
+	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 3" << endl;
+	//exit(0);
 }
 
 void contextDependence::set_neutral_lookup_vector(
@@ -250,18 +253,6 @@ contextDependence::set_lookup_table()
 	//exit(0);
 }
 
-
-// Human Data... FWD & EPC?
-//Dependency::Dependency(
-//					   double dep_order,
-//					   string &dependency_counts_file,
-//					   string $neutral_counts_file
-//					  )
-//{
-//	context.allocate_lookup_context_vector();
-//}
-
-
 //////////
 /// Functions
 //////////
@@ -276,6 +267,8 @@ void contextDependence::readDependencies(string& file)
 	list<string> split_line;
 	list<string>::iterator it;
 
+	cerr << "Point-> contextDependence::readDependencies(file) reading " << file << endl;
+
 	tuplet_pi.assign(index_position_multiplier.at(order), 0);
 	vector<double>::iterator tup_it = tuplet_pi.begin();
 	is.open(file.c_str());
@@ -284,10 +277,10 @@ void contextDependence::readDependencies(string& file)
 		// Read in line of values. Element 1 is seed ktuplet (K) probability. Following are Pr(N|K).
 		is.getline(line, 2096);
 
-cerr << "line: " << line << endl;
-
 		// Split into each element, as separated by spaces.
 		split_line = split (line, " ");
+
+		cerr << split_line.size() << endl;
 
 		// last line might have no values, will cause problems.
 		if (split_line.size() < 2) break;
@@ -301,21 +294,25 @@ cerr << "line: " << line << endl;
 		// Set to the first transition probability.
 		++tup_it, ++it;
 		for (; it != split_line.end(); ++it, ++i) {
-cerr << "i: " << i ;
+//			cerr << "i: " << i ;
 			if (order_3_markov) sequence = lookup_table_sequence(i, order+1);
 			else sequence = lookup_table_sequence(i, (order+1) * 3);	// Codons...
-cerr << "  sequence: " << sequence;
+//			cerr << "  sequence: " << sequence;
 			sequence += "*";
 			val = atof((*it).c_str());
 			lookup = new LookUp(val);
-			lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
+			if (order_3_markov) lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
 			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1), true)) = lookup;
-			cerr << "     Element " << i << "/" << lookup_table.at(order+1).size() << endl;
+//			cerr << "     Element " << i << "/" << lookup_table.at(order+1).size() << endl;
 			lookup_table.at(order+1).at(i) = lookup;
 		}
 	}
-
 	is.close();
+
+//	i = 0;
+//	for (vector<LookUp*>::iterator dt = lookup_table.at(order+1).begin(); dt != lookup_table.at(order+1).end(); ++dt, ++i) {
+//		cerr << "Lookup table element " << i << ": " << (*dt)->value << endl;
+//	}
 	//report_tuplet_pi();
 }
 
