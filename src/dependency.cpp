@@ -280,8 +280,6 @@ void contextDependence::readDependencies(string& file)
 		// Split into each element, as separated by spaces.
 		split_line = split (line, " ");
 
-		cerr << split_line.size() << endl;
-
 		// last line might have no values, will cause problems.
 		if (split_line.size() < 2) break;
 

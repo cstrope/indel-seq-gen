@@ -112,6 +112,10 @@ int main(int argc, char *argv[])
 	double totalSecs;
 	vector<ofstream*> simulation_output_streams;
 
+	string s;
+	cin >> s;
+	cerr << "Read " << s << endl; exit(0);
+
 /*	int (*ptr2func)(int) = NULL;
 	
 	ptr2func = &point_to_me;
@@ -506,8 +510,8 @@ void Simulate(
 						cerr << "Human Data simulation (Simulate()) 2" << endl;
 						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
 						cerr << "Human Data simulation (Simulate()) 3" << endl;
-						exit(0);
 						CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
+						exit(0);
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
 						exit(EXIT_FAILURE);
@@ -664,7 +668,15 @@ void CheckMarkovCodonLikelihoods(
 								 Dependency *neutral
 								)
 {
+	string nucl_seq;
+	nucl_seq.assign(10, 'x');
+	cerr << "Point-> CheckMarkovCodonLikelihood() IN" << endl;
 
+//	do {
+		cout << "Enter a string:  ";
+		getline(cin, nucl_seq);
+		cerr << "Entered \"" << nucl_seq << "\"" << endl; 
+//	} while ( !nucl_seq.empty() );
 
 	exit(0);
 }
