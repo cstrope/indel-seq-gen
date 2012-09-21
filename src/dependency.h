@@ -39,6 +39,8 @@ public:
 	double return_tuplet_pi(int index, bool inverse = false) { return ( (inverse) ? (1.0/tuplet_pi.at(index)) : tuplet_pi.at(index) ); }
 	double return_lookup_table_value(string sequence) { return lookup_table2[sequence]->value; }
 	double return_lookup_table_inverse(string sequence) { return lookup_table2[sequence]->inverse; }
+	double return_lt_value(int env, int idx) { return lookup_table.at(env).at(idx)->value; }
+	double return_lt_inverse(int env, int idx) { return lookup_table.at(env).at(idx)->inverse; }
 	double return_order() { return order; }
 
 	void 				set_neutral_lookup_vector(inClade *environment);
@@ -63,6 +65,7 @@ public:
 	double				lt_markov_ratio(double env_index, int i_seq_index, int j_seq_index);
 	void				set_Qmat(TNode *node);
 	double				TauIJ(TNode *node, int env_index, int i_seq_index, short residue_i, short residue_j);
+	void				get_first_order_indices (int tuplet, int *index1, int *index2);
 
 	// Print functions
 	void				report_tuplet_pi();

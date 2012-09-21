@@ -99,6 +99,9 @@ size_t trimMSA(vector<vector<char> >& print, vector<bool>& empty_columns, seqGen
 void fiddle_with_trees(list<inTree*>& inTrees, seqGenOptions *options);
 void QuickTest();
 void CheckMarkovCodonLikelihoods(Dependency *selective, Dependency *neutral);
+int Nucleotide_Sequence_2_Index ( string sequence );
+int Get_Nucleotide_Value ( char nucleotide );
+
 
 int point_to_me (int return_val) { cerr << "pointed to me." << endl; return return_val; }
 int point2me (int return_val) { cerr << "you chose me." << endl; return return_val; }
@@ -111,10 +114,6 @@ int main(int argc, char *argv[])
 	clock_t totalStart;
 	double totalSecs;
 	vector<ofstream*> simulation_output_streams;
-
-	string s;
-	cin >> s;
-	cerr << "Read " << s << endl; exit(0);
 
 /*	int (*ptr2func)(int) = NULL;
 	
@@ -511,7 +510,6 @@ void Simulate(
 						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
 						cerr << "Human Data simulation (Simulate()) 3" << endl;
 						CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
-						exit(0);
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
 						exit(EXIT_FAILURE);
@@ -657,7 +655,7 @@ void Simulate(
 		delete (*it);
 	}
 
-cerr << "Exiting Simulate" << endl;
+	cerr << "Point-> Simulate() OUT" << endl;
 	if (options->deposit_fossils) delete paleontologicalProcess;
 }
 
@@ -668,17 +666,55 @@ void CheckMarkovCodonLikelihoods(
 								 Dependency *neutral
 								)
 {
+	ifstream is;
 	string nucl_seq;
+	int index;
 	nucl_seq.assign(10, 'x');
 	cerr << "Point-> CheckMarkovCodonLikelihood() IN" << endl;
 
-//	do {
-		cout << "Enter a string:  ";
-		getline(cin, nucl_seq);
-		cerr << "Entered \"" << nucl_seq << "\"" << endl; 
-//	} while ( !nucl_seq.empty() );
+	is.open("check_nucl_seqs.test");
+
+	while(is.good()) {
+		// Read in line of values. Element 1 is seed ktuplet (K) probability. Following are Pr(N|K).
+		getline(is, nucl_seq);
+		index = Nucleotide_Sequence_2_Index(nucl_seq);
+		if (nucl_seq.size() == 6) {
+			cerr << nucl_seq 
+				 << "    " << index
+				 << "    " << selective->context.return_lt_value(2, index)
+				 << " (" << selective->context.return_lt_value(0, index) << ")"
+				 << "    " << neutral->context.return_lt_value(2, index)
+				 << " (" << neutral->context.return_lt_value(0, index) << ")"
+				 << endl; 
+		} else {
+			cerr << nucl_seq 
+				 << "    " << index
+				 << "    " << selective->context.return_lt_value(1, index)
+				 << "    " << neutral->context.return_lt_value(1, index)
+				 << endl; 
+		}
+	}
 
 	exit(0);
+}
+
+int
+Nucleotide_Sequence_2_Index ( string sequence )
+{
+	int char_val;
+	int power_of_4 = 1;
+	int index = 0;
+	for (string::reverse_iterator it = sequence.rbegin(); it != sequence.rend(); ++it) {
+		index += Get_Nucleotide_Value(*it) * power_of_4;
+		power_of_4 *= 4;
+	}
+	return index;
+}
+
+int 
+Get_Nucleotide_Value ( char nucleotide )
+{
+	return (int) stateCharacters.find(nucleotide);
 }
 
 void Path_Proposal(

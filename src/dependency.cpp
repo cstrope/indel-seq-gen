@@ -71,6 +71,7 @@ Dependency::Dependency(
 	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 2" << endl;
 	context.readDependencies(file);
 	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 3" << endl;
+	context.set_lookup_table();
 	//exit(0);
 }
 
@@ -110,13 +111,50 @@ contextDependence::set_lookup_table()
 	//////////
 	/// Use seed values to construct the lookup table values for patterns not involving the first <order> residues.
 	//////////
-	string substr_key;
-	for (int j = 2; j <= order; j++) {
-		for (i = 0; i < index_position_multiplier.at(order+j); i++) {
-			sequence = lookup_table_sequence(i, order+j);
+	if (order_3_markov) {
+		string substr_key;
+		for (int j = 2; j <= order; j++) {
+			for (i = 0; i < index_position_multiplier.at(order+j); i++) {
+				sequence = lookup_table_sequence(i, order+j);
+				//cerr << " sequence: " << sequence << endl;
+				RN = 1;
+				for (int k = 1; k <= j; k++) {
+					substr_key = sequence.substr(sequence.size() - order - k , order + 1);
+					substr_key += "*";
+					//cerr << " -> substr_key: " << substr_key << endl;
+					RN *= lookup_table2[substr_key]->value;
+				}
+				lookup = new LookUp();
+				lookup->value = RN;
+				RN_inv = 1.0 / RN;
+				lookup->inverse = RN_inv;
+				sequence += "*";	// Marker is still at the end. // 
+				lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
+
+				//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true)) = lookup;
+
+
+				lookup_table.at(order+j).at(i) = lookup;
+
+				//cerr << "lookup_table[" << sequence << "] = v(" << lookup_table2[sequence]->value << ") i(" << lookup_table2[sequence]->inverse << ")";
+				//cerr << "lookup_context[" << lookup_context_index(int2iSG_seq(i, order+j), true); 
+				//cerr << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true))->value << ") i("; 
+				//cerr << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true))->inverse << ")" << endl;
+	
+				//cerr << "   " << order+j << ", " << i << "/" << lookup_table.at(order+j).size() << "       ";
+				//cerr << lookup_table.at(order+j).at(i)->value << ", " << lookup_table.at(order+j).at(i)->inverse << endl;
+			}
+		}
+
+		//////////
+		/// Fill in the middle of sequence values
+		/// Substitute (order+1) for all instances of j, do not add "*" at end of sequence.
+		//////////
+		for (i = 0; i < index_position_multiplier.at(order+order+1); i++) {
+			sequence = lookup_table_sequence(i, order+order+1);
 			//cerr << " sequence: " << sequence << endl;
 			RN = 1;
-			for (int k = 1; k <= j; k++) {
+			for (int k = 1; k <= order+1; k++) {
 				substr_key = sequence.substr(sequence.size() - order - k , order + 1);
 				substr_key += "*";
 				//cerr << " -> substr_key: " << substr_key << endl;
@@ -126,131 +164,140 @@ contextDependence::set_lookup_table()
 			lookup->value = RN;
 			RN_inv = 1.0 / RN;
 			lookup->inverse = RN_inv;
-			sequence += "*";	// Marker is still at the end. // 
 			lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
 
-			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true)) = lookup;
+			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1))) = lookup;
 
-
-			lookup_table.at(order+j).at(i) = lookup;
-
-			//cerr << "lookup_table[" << sequence << "] = v(" << lookup_table2[sequence]->value << ") i(" << lookup_table2[sequence]->inverse << ")";
-			//cerr << "lookup_context[" << lookup_context_index(int2iSG_seq(i, order+j), true); 
-			//cerr << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true))->value << ") i("; 
-			//cerr << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j), true))->inverse << ")" << endl;
-
-			//cerr << "   " << order+j << ", " << i << "/" << lookup_table.at(order+j).size() << "       ";
-			//cerr << lookup_table.at(order+j).at(i)->value << ", " << lookup_table.at(order+j).at(i)->inverse << endl;
+			lookup_table.at(order).at(i) = lookup;
+	//		cerr << "lookup_table[" << sequence << "] = v(" << lookup_table2[sequence]->value << ") i(" << lookup_table2[sequence]->inverse << ")" << endl;
+	//		cerr << "lookup_index[" << lookup_context_index(int2iSG_seq(i, order*2+1)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1)))->inverse << ")" << endl;
+	//		cerr << "   " << lookup_table.at(order).at(i)->value << "  " << lookup_table.at(order).at(i)->inverse << endl;
 		}
-	}
 
-	//////////
-	/// Fill in the middle of sequence values
-	/// Substitute (order+1) for all instances of j, do not add "*" at end of sequence.
-	//////////
-	for (i = 0; i < index_position_multiplier.at(order+order+1); i++) {
-		sequence = lookup_table_sequence(i, order+order+1);
-		//cerr << " sequence: " << sequence << endl;
-		RN = 1;
-		for (int k = 1; k <= order+1; k++) {
-			substr_key = sequence.substr(sequence.size() - order - k , order + 1);
-			substr_key += "*";
-			//cerr << " -> substr_key: " << substr_key << endl;
-			RN *= lookup_table2[substr_key]->value;
-		}
-		lookup = new LookUp();
-		lookup->value = RN;
-		RN_inv = 1.0 / RN;
-		lookup->inverse = RN_inv;
-		lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
-
-		//lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1))) = lookup;
-
-		lookup_table.at(order).at(i) = lookup;
-//		cerr << "lookup_table[" << sequence << "] = v(" << lookup_table2[sequence]->value << ") i(" << lookup_table2[sequence]->inverse << ")" << endl;
-//		cerr << "lookup_index[" << lookup_context_index(int2iSG_seq(i, order*2+1)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order*2+1)))->inverse << ")" << endl;
-//		cerr << "   " << lookup_table.at(order).at(i)->value << "  " << lookup_table.at(order).at(i)->inverse << endl;
-	}
-
-	//////////
-	/// Calculate the changes for the very first sequence position. This will be used for future sequences.
-	/// * This position will use the transition frequencies for the last site. 
-	//////////
-	string tuplet;
-	string sequence_5prime;
-	for (i = 0; i < index_position_multiplier.at(order+1); i++) {
-		sequence = lookup_table_sequence(i, order+1);
-		tuplet = sequence.substr(0, order);
-		RN = tuplet_pi.at(lookup_ktuplet_index(tuplet));
-		sequence_5prime = "*"+sequence;
-		//cerr << " sequence: " << sequence_5prime << endl;
-		RN *= lookup_table2[sequence+"*"]->value;
-		lookup = new LookUp();
-		lookup->value = RN;
-		RN_inv = 1.0 / RN;
-		lookup->inverse = RN_inv;
-		lookup_table2.insert( pair<string, LookUp*>(sequence_5prime, lookup) );
-
-		//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1))) = lookup;
-
-		lookup_table.at(0).at(i) = lookup;
-		//cerr << "lookup_table[" << sequence_5prime << "] = v(" << lookup_table2[sequence_5prime]->value << ") i(" << lookup_table2[sequence_5prime]->inverse << ")  ";
-		//cerr << "lookup_table[" << lookup_context_index(int2iSG_seq(i, order+1)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1)))->inverse << ")" << endl;
-		//cerr << "     " << lookup_table.at(0).at(i)->value << ", " << lookup_table.at(0).at(i)->inverse << endl;
-	}
-
-	//////////
-	/// Finish off the lookup table by adding changes to the 2nd, 3rd, ..., order positions.
-	//////////
-	for (int j = 2; j <= order; j++) {
-		for (i = 0; i < index_position_multiplier.at(order+j); i++) {
-			sequence = lookup_table_sequence(i, order+j);
+		//////////
+		/// Calculate the changes for the very first sequence position. This will be used for future sequences.
+		/// * This position will use the transition frequencies for the last site. 
+		//////////
+		string tuplet;
+		string sequence_5prime;
+		for (i = 0; i < index_position_multiplier.at(order+1); i++) {
+			sequence = lookup_table_sequence(i, order+1);
 			tuplet = sequence.substr(0, order);
 			RN = tuplet_pi.at(lookup_ktuplet_index(tuplet));
-			sequence_5prime = "*" + sequence;
+			sequence_5prime = "*"+sequence;
 			//cerr << " sequence: " << sequence_5prime << endl;
-			
-			/// Pre-calculated value for ktuplet for current sequence size - 1
-			substr_key = "*";
-			substr_key += sequence.substr(0, sequence.size()-1);
-			//cerr << "lookup_table[" << substr_key << "] = "; cerr << lookup_table[substr_key]->value << endl;
-			RN = lookup_table2[substr_key]->value;
-			/// Pre-calculated transition probabilities for size order+1 sequence (for last position).
-			substr_key = sequence.substr(sequence.size()-order-1, order+1);
-			substr_key += "*";
-			//cerr << " X lookup_table[" << substr_key << "] = " << lookup_table[substr_key]->value << endl;
-			RN *= lookup_table2[substr_key]->value;
-
+			RN *= lookup_table2[sequence+"*"]->value;
 			lookup = new LookUp();
 			lookup->value = RN;
 			RN_inv = 1.0 / RN;
 			lookup->inverse = RN_inv;
 			lookup_table2.insert( pair<string, LookUp*>(sequence_5prime, lookup) );
-			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j))) = lookup;
+
+			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1))) = lookup;
+
+			lookup_table.at(0).at(i) = lookup;
+			//cerr << "lookup_table[" << sequence_5prime << "] = v(" << lookup_table2[sequence_5prime]->value << ") i(" << lookup_table2[sequence_5prime]->inverse << ")  ";
+			//cerr << "lookup_table[" << lookup_context_index(int2iSG_seq(i, order+1)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1)))->inverse << ")" << endl;
+			//cerr << "     " << lookup_table.at(0).at(i)->value << ", " << lookup_table.at(0).at(i)->inverse << endl;
+		}
+
+		//////////
+		/// Finish off the lookup table by adding changes to the 2nd, 3rd, ..., order positions.
+		//////////
+		for (int j = 2; j <= order; j++) {
+			for (i = 0; i < index_position_multiplier.at(order+j); i++) {
+				sequence = lookup_table_sequence(i, order+j);
+				tuplet = sequence.substr(0, order);
+				RN = tuplet_pi.at(lookup_ktuplet_index(tuplet));
+				sequence_5prime = "*" + sequence;
+				//cerr << " sequence: " << sequence_5prime << endl;
+				
+				/// Pre-calculated value for ktuplet for current sequence size - 1
+				substr_key = "*";
+				substr_key += sequence.substr(0, sequence.size()-1);
+				//cerr << "lookup_table[" << substr_key << "] = "; cerr << lookup_table[substr_key]->value << endl;
+				RN = lookup_table2[substr_key]->value;
+				/// Pre-calculated transition probabilities for size order+1 sequence (for last position).
+				substr_key = sequence.substr(sequence.size()-order-1, order+1);
+				substr_key += "*";
+				//cerr << " X lookup_table[" << substr_key << "] = " << lookup_table[substr_key]->value << endl;
+				RN *= lookup_table2[substr_key]->value;
+
+				lookup = new LookUp();
+				lookup->value = RN;
+				RN_inv = 1.0 / RN;
+				lookup->inverse = RN_inv;
+				lookup_table2.insert( pair<string, LookUp*>(sequence_5prime, lookup) );
+				//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j))) = lookup;
 			
-			lookup_table.at(j-1).at(i) = lookup;
-			//cerr << "lookup_table[" << sequence_5prime << "] = v(" << lookup_table2[sequence_5prime]->value << ") i(" << lookup_table2[sequence_5prime]->inverse << ")" << endl;
-			//cerr << "lookup_table[" << lookup_context_index(int2iSG_seq(i, order+j)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j)))->inverse << ")" << endl;
-			//cerr << "    " << j-1 << ", " << i << "       " << lookup_table.at(j-1).at(i)->value << ", " << lookup_table.at(j-1).at(i)->inverse << endl;
+				lookup_table.at(j-1).at(i) = lookup;
+				//cerr << "lookup_table[" << sequence_5prime << "] = v(" << lookup_table2[sequence_5prime]->value << ") i(" << lookup_table2[sequence_5prime]->inverse << ")" << endl;
+				//cerr << "lookup_table[" << lookup_context_index(int2iSG_seq(i, order+j)) << "] = v(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j)))->value << ") i(" << lookup_context.at(lookup_context_index(int2iSG_seq(i, order+j)))->inverse << ")" << endl;
+				//cerr << "    " << j-1 << ", " << i << "       " << lookup_table.at(j-1).at(i)->value << ", " << lookup_table.at(j-1).at(i)->inverse << endl;
+			}
+		}
+
+		//////////
+		/// Following code is FOR TESTING ONLY: Get the range of values for XXXYXXX in order-3 markov model,
+		/// i.e., P(Y|XXX) x P(X|YXX), etc.
+		//////////
+		//int gg = 0;
+		//double minV = 1; double maxV = 0;
+		//vector<LookUp*>::iterator lt_ptr = lookup_table.at(order).begin();
+		//for (; lt_ptr != lookup_table.at(order).end(); ++lt_ptr, ++gg) {
+		//	cout << gg << " " << (*lt_ptr)->value << endl;
+		//	if ((*lt_ptr)->value > maxV) maxV = (*lt_ptr)->value;
+		//	if ((*lt_ptr)->value < minV) minV = (*lt_ptr)->value;
+		//}
+
+		//cout << minV << " " << maxV << endl;
+	} else {
+		// Human first order markov model. //
+		// Right now, lookup_table.at(2) is fully filled with 4096 sequences, as is the tuplet_pi.
+		// Use these to do lookup_table.at(0) (tuplet_pi * 2codon prob.) and lookup_table.at(1) (middle.)
+		// lookup_table.at(0);
+		vector<double>::iterator tup_it = tuplet_pi.begin();
+		for (int i = 0; i < 64; i++, ++tup_it) {
+			for (int j = 0; j < 64; j++) {
+//				cerr << i << " " << j << ": " << (*tup_it) << " " << 
+				lookup = new LookUp((*tup_it) * lookup_table.at(2).at(i*64+j)->value);
+				lookup_table.at(0).at(i*64+j) = lookup;
+			}
+		}
+
+//exit(0);
+
+		int i = 0;
+		int lt_index_1, lt_index_2;
+		for (vector<LookUp*>::iterator it = lookup_table.at(1).begin(); it != lookup_table.at(1).end(); ++it, ++i) {
+			get_first_order_indices(i, &lt_index_1, &lt_index_2);
+			lookup = new LookUp(lookup_table.at(2).at(lt_index_1)->value * lookup_table.at(2).at(lt_index_2)->value);
+			(*it) = lookup;
 		}
 	}
+}
 
-	//////////
-	/// Following code is FOR TESTING ONLY: Get the range of values for XXXYXXX in order-3 markov model,
-	/// i.e., P(Y|XXX) x P(X|YXX), etc.
-	//////////
-	//int gg = 0;
-	//double minV = 1; double maxV = 0;
-	//vector<LookUp*>::iterator lt_ptr = lookup_table.at(order).begin();
-	//for (; lt_ptr != lookup_table.at(order).end(); ++lt_ptr, ++gg) {
-	//	cout << gg << " " << (*lt_ptr)->value << endl;
-	//	if ((*lt_ptr)->value > maxV) maxV = (*lt_ptr)->value;
-	//	if ((*lt_ptr)->value < minV) minV = (*lt_ptr)->value;
-	//}
+void 
+contextDependence::get_first_order_indices (int tuplet, int *index1, int *index2)
+{
+	vector<int> decompose_9tuplet (9, 0);
 
-	//cout << minV << " " << maxV << endl;
+	// For ACAGGTTTG, this consists of ACAGGT and GGTTTG. This vector will be used to get the
+	// nucleotide at each position of the string, then we can get the indices of the component
+	// parts.
+	vector<int>::iterator it = decompose_9tuplet.begin();
+	vector<int>::reverse_iterator rit = index_position_multiplier.rbegin();
+	for (; rit != index_position_multiplier.rend(); ++rit, ++it) {
+		(*it) = tuplet / (*rit);		// Num integers that can go into i
+		tuplet -= (*it)*(*rit);		// Subtract this amount, proceed.
+	}
 
-	//exit(0);
+	(*index1) = 0;
+	rit = index_position_multiplier.rbegin()+3;
+	for (it = decompose_9tuplet.begin(); it != decompose_9tuplet.end()-3; ++it, ++rit) (*index1) += (*it)*(*rit);
+	(*index2) = 0;
+	rit = index_position_multiplier.rbegin()+3;
+	for (it = decompose_9tuplet.begin()+3; it != decompose_9tuplet.end(); ++it, ++rit) (*index2) += (*it)*(*rit);
 }
 
 //////////
@@ -269,7 +316,8 @@ void contextDependence::readDependencies(string& file)
 
 	cerr << "Point-> contextDependence::readDependencies(file) reading " << file << endl;
 
-	tuplet_pi.assign(index_position_multiplier.at(order), 0);
+	if (order_3_markov) tuplet_pi.assign(index_position_multiplier.at(order), 0);
+	else tuplet_pi.assign(numStates*numStates*numStates, 0);		// Codons, triplets.
 	vector<double>::iterator tup_it = tuplet_pi.begin();
 	is.open(file.c_str());
 	int num_lines = 0;
@@ -293,18 +341,26 @@ void contextDependence::readDependencies(string& file)
 		++tup_it, ++it;
 		for (; it != split_line.end(); ++it, ++i) {
 //			cerr << "i: " << i ;
-			if (order_3_markov) sequence = lookup_table_sequence(i, order+1);
-			else sequence = lookup_table_sequence(i, (order+1) * 3);	// Codons...
-//			cerr << "  sequence: " << sequence;
-			sequence += "*";
 			val = atof((*it).c_str());
 			lookup = new LookUp(val);
-			if (order_3_markov) lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
+			if (order_3_markov) {
+				sequence = lookup_table_sequence(i, order+1);
+//				cerr << "  sequence: " << sequence;
+				sequence += "*";
+				lookup_table2.insert( pair<string, LookUp*>(sequence, lookup) );
+			}
 			//lookup_context.at(lookup_context_index(int2iSG_seq(i, order+1), true)) = lookup;
-//			cerr << "     Element " << i << "/" << lookup_table.at(order+1).size() << endl;
+			//cerr << "     Element " << i << "/" << lookup_table.at(order+1).size();
+			//cerr << "  VALUE: " << lookup->value << endl;
 			lookup_table.at(order+1).at(i) = lookup;
+			//if (lookup_table.at(order+1).at(0)->value < 0.25446 && lookup_table.at(order+1).at(0)->value > 0.254467) {
+			//	cerr << lookup_table.at(order+1).at(0) << endl;
+			//	exit(0);
+			//}
 		}
 	}
+
+	cerr << "Exited loop" << endl;
 	is.close();
 
 //	i = 0;
@@ -312,6 +368,8 @@ void contextDependence::readDependencies(string& file)
 //		cerr << "Lookup table element " << i << ": " << (*dt)->value << endl;
 //	}
 	//report_tuplet_pi();
+
+	cerr << "Exiting function  " << lookup_table.at(order+1).size() << endl;
 }
 
 void contextDependence::allocate_lookup_context_vector()
@@ -369,16 +427,9 @@ void contextDependence::allocate_lookup_context_vector()
 
 		//////////
 		/// General purpose vector that pre-multiplies the numStates. Used for setting offsets, for one. ///
-		index_position_multiplier.assign(order*6+2, 1);
+		index_position_multiplier.assign(order*6+3, 1);
 		for (it = index_position_multiplier.begin()+1; it != index_position_multiplier.end(); ++it)
 			(*it) = (*(it-1))*numStates;
-		/// Allocate lookup array
-//		for (it = index_position_multiplier.begin()+order+1; it != index_position_multiplier.end(); ++it) {
-//			lookup_context_size += 2*(*it);
-//		}
-//		lookup_context_size -= index_position_multiplier.at(order+4);
-//		lookup_context.assign(lookup_context_size, lookup);
-
 		
 		// Beginning of sequence change probability:
 		// i_h^1 i_h^2 i_h^3   i_{4}^1 i_{5}^2 i_{6}^3
