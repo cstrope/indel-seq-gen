@@ -531,6 +531,7 @@ void Simulate(
 						  &events
 						 );
 		} else {
+			cerr << "Point-> Simulate::Forward_Simulation() Beginning simulation." << endl;
 			Forward_Simulation(
 							   inputTrees, 
 							   global_environment, 

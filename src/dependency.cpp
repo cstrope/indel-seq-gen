@@ -260,12 +260,13 @@ contextDependence::set_lookup_table()
 		for (int i = 0; i < 64; i++, ++tup_it) {
 			for (int j = 0; j < 64; j++) {
 //				cerr << i << " " << j << ": " << (*tup_it) << " " << 
-				lookup = new LookUp((*tup_it) * lookup_table.at(2).at(i*64+j)->value);
+				lookup = new LookUp((*tup_it) * lookup_table.at(2).at(i*64+j)->value); 
+				// Assume P(ATG) = 1
+				lookup->value = 0;
+				lookup->inverse = numeric_limits<double>::max();
 				lookup_table.at(0).at(i*64+j) = lookup;
 			}
 		}
-
-//exit(0);
 
 		int i = 0;
 		int lt_index_1, lt_index_2;
