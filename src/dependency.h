@@ -46,7 +46,7 @@ public:
 	void 				set_neutral_lookup_vector(inClade *environment);
 	void 				set_sequence_indices(TNode *node);
 	void 				reset_sequence_indices(TNode *node, int event_site, string subst_event);
-	int					getOffset(int env, short i, short j);
+	int					getOffset(int env, int codon_pos, short i, short j);
 	void				setOffset();
 	void 				set_lookup_table();
 	void				calculate_tau_ij();

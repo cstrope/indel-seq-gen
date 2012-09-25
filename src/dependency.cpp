@@ -72,6 +72,7 @@ Dependency::Dependency(
 	context.readDependencies(file);
 	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 3" << endl;
 	context.set_lookup_table();
+	context.setOffset();
 	//exit(0);
 }
 
@@ -558,50 +559,149 @@ void contextDependence::set_sequence_indices(TNode *node)
 void
 contextDependence::setOffset()
 {
-	// Need to keep track of the offsets of neighboring patterns. 
-	// ASSUMING WE ARE MID-SEQUENCE, given an order 3 markov dependence,
-	// if the current nucleotide is an A, XXXAXXX with index indexA, then the neighboring sequences 
-	// XXXCXXX, XXXGXXX, and XXXTXXX will be indexA+4^3, indexA+2*4^3, and indexA+3*4^3
-	// For XXXCXXX, indices will be indexC-4^3, indexC+4^3, and indexC+2*4^3  for A,G,T
-	// For XXXGXXX, indices will be indexG-2*4^3, indexG-4^3, and indexG+4^3  for A,C,T
-	// For XXXTXXX, indices will be indexT-3*4^3, indexT-2*4^3, and indexT-2*4^3 for A,C,G
-	// If we are not mid-sequence, then 4^3 needs to be changed to the appropriate value,
-	// seq position 0: 4^3
-	// seq position 1: 4^3
-	// seq position 2: 4^3
-	// seq position 3: 4^3 (order)
-	// seq position N-2: 4^2
-	// seq position N-1: 4^1
-	// seq position N: 4^0
-	int multiple_of_numStates = index_position_multiplier.at(order);
-	// Makes array for the multiplier above. This array essentially removes the zero multiplier,
-	// in this case, it will be -3 -2 -1  1  2  3
-	vector<int> num_steps_from_current (order*2, 0);
-	int start = -order;
-	for (vector<int>::iterator it = num_steps_from_current.begin(); it != num_steps_from_current.end(); ++it, start++) {
-		if (start == 0) start++;
-		(*it) = start;
-	}
-	index_offset.assign(order*2+1, vector<int> (numStates*numStates, 0));
-	vector<vector<int> >::iterator at = index_offset.begin();
-	for (; at != index_offset.begin()+order+1; ++at) {
-		for (int j = 0; j < numStates; ++j) {		// current == sequence i
-			for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
-				// e.g., current T, proposed A, should be -3...
-				// current T -> iterator j = 3
-				// proposed A -> iterator k = 0
-				// Thus, to index num_steps_from_current, use k-j.
-				// for j == k, who cares. TauIJ will not check reference since it calculates only sequences differing in one position.
-				(*at).at(j*numStates+k) = multiple_of_numStates * (k-j);
+	vector<vector<int> >::iterator at;
+
+	if (order_3_markov) {
+		// Need to keep track of the offsets of neighboring patterns. 
+		// ASSUMING WE ARE MID-SEQUENCE, given an order 3 markov dependence,
+		// if the current nucleotide is an A, XXXAXXX with index indexA, then the neighboring sequences 
+		// XXXCXXX, XXXGXXX, and XXXTXXX will be indexA+4^3, indexA+2*4^3, and indexA+3*4^3
+		// For XXXCXXX, indices will be indexC-4^3, indexC+4^3, and indexC+2*4^3  for A,G,T
+		// For XXXGXXX, indices will be indexG-2*4^3, indexG-4^3, and indexG+4^3  for A,C,T
+		// For XXXTXXX, indices will be indexT-3*4^3, indexT-2*4^3, and indexT-2*4^3 for A,C,G
+		// If we are not mid-sequence, then 4^3 needs to be changed to the appropriate value,
+		// seq position 0: 4^3
+		// seq position 1: 4^3
+		// seq position 2: 4^3
+		// seq position 3: 4^3 (order)
+		// seq position N-2: 4^2
+		// seq position N-1: 4^1
+		// seq position N: 4^0
+		// Level 0: (Very beginning of sequence? AXXX)
+		//  Offset to: A    C    G    T
+		// 	Curr: A	   0    64   128  192 
+		// 		  C	   -64  0    64   128 
+		// 		  G	   -128 -64  0    64 
+		// 		  T	   -192 -128 -64  0 
+		// Level 1: 
+		// 0 64 128 192 
+		// -64 0 64 128 
+		// -128 -64 0 64 
+		// -192 -128 -64 0 
+		// Level 2: 
+		// 0 64 128 192 
+		// -64 0 64 128 
+		// -128 -64 0 64 
+		// -192 -128 -64 0 
+		// Level 3: 
+		// 0 64 128 192 
+		// -64 0 64 128 
+		// -128 -64 0 64 
+		// -192 -128 -64 0 
+		// Level 4: 
+		// 0 1 2 3 
+		// -1 0 1 2 
+		// -2 -1 0 1 
+		// -3 -2 -1 0 
+		// Level 5: 
+		// 0 4 8 12 
+		// -4 0 4 8 
+		// -8 -4 0 4 
+		// -12 -8 -4 0 
+		// Level 6: 
+		// 0 16 32 48 
+		// -16 0 16 32 
+		// -32 -16 0 16 
+		// -48 -32 -16 0 
+		int multiple_of_numStates = index_position_multiplier.at(order);
+		// Makes array for the multiplier above. This array essentially removes the zero multiplier,
+		// in this case, it will be -3 -2 -1  1  2  3
+		vector<int> num_steps_from_current (order*2, 0);
+		int start = -order;
+		for (vector<int>::iterator it = num_steps_from_current.begin(); it != num_steps_from_current.end(); ++it, start++) {
+			if (start == 0) start++;
+			(*it) = start;
+		}
+		index_offset.assign(order*2+1, vector<int> (numStates*numStates, 0));
+		at = index_offset.begin();
+		for (; at != index_offset.begin()+order+1; ++at) {
+			for (int j = 0; j < numStates; ++j) {		// current == sequence i
+				for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
+					// e.g., current T, proposed A, should be -3...
+					// current T -> iterator j = 3
+					// proposed A -> iterator k = 0
+					// Thus, to index num_steps_from_current, use k-j.
+					// for j == k, who cares. TauIJ will not check reference since it calculates only sequences differing in one position.
+					(*at).at(j*numStates+k) = multiple_of_numStates * (k-j);
+				}
 			}
 		}
-	}
-	int ipm = 0;
-	for (at = index_offset.begin()+order+1; at != index_offset.end(); ++at) {
-		multiple_of_numStates = index_position_multiplier.at(ipm++);
-		for (int j = 0; j < numStates; ++j) {		// current == sequence i
-			for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
-				(*at).at(j*numStates+k) = multiple_of_numStates * (k-j);
+		int ipm = 0;
+		for (at = index_offset.begin()+order+1; at != index_offset.end(); ++at) {
+			multiple_of_numStates = index_position_multiplier.at(ipm++);
+			for (int j = 0; j < numStates; ++j) {		// current == sequence i
+				for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
+					(*at).at(j*numStates+k) = multiple_of_numStates * (k-j);
+				}
+			}
+		}
+	} else if (Human_Data_simulation) {
+		// Here is a little tougher case, since we are thinking with respect to codons.
+		// Middle of sequence, codon position 1, sequence AAAAAAAAA for simplicity:
+		// Starting at index_offset.at(1).at(0):
+		//            AAAAAAAAA  AAACAAAAA AAAGAAAAA AAATAAAAA
+		// AAAAAAAAA   0          1024      2048      3072
+		// AAACAAAAA  -1024       0         1024      2048
+		// AAAGAAAAA  -2048      -1024      0	      1024
+		// AAATAAAAA  -3072      -2048     -1024	  0
+		// codon position 2 varies:
+		// Starting at index_offset.at(1).at(16):
+		//            AAAAAAAAA  AAAACAAAA AAAAGAAAA AAAATAAAA
+		// AAAAAAAAA   0          256       512       768
+		// AAAACAAAA  -256        0         256       512
+		// AAAAGAAAA  -512       -256       0	      256
+		// AAAATAAAA  -768       -512      -256	      0
+		// codon position 3 varies:
+		// Starting at index_offset.at(1).at(32):
+		//            AAAAAAAAA  AAAAACAAA AAAAAGAAA AAAAATAAA
+		// AAAAAAAAA   0          64        128       192
+		// AAAAACAAA  -64         0         64        128
+		// AAAAAGAAA  -128       -64        0	      64
+		// AAAAATAAA  -192       -128      -64	      0
+		//
+		// In summary, for environment 1 (which is middle of the sequence), the index offset takes
+		// into account which codon position, and what the nature of the change is.
+		// If codon position 1, offset is 4**5
+		// If codon position 2, offset is 4**4
+		// If codon position 3, offset is 4**3
+		//
+		// Thus, the index offset will have 3 environments, beginning of sequence, middle of sequence, and end of sequence
+		// Within each environment, access will be obtained as:
+		// (nature_of_change) * (3 - pow(numStates, sequence_site_number % 3)) * pow(numStates, 3)
+		// e.g., codon position 2 changes from C->A:
+		// -1 * (4^(3-2)) * 4^3 ---> -4^4 ---> -256
+		// Checking above, the entry AAAACAAAA -> AAAAAAAAA, -256!
+
+		// Make index_offset array:
+		// There are 3 environments, Codons are order 1, so order*2+1 = 3. Perfect!
+		// Each environment will have 3 codon positions with a 4*4 flattened matrix. So the environment
+		// needs 3*4*4 entries.
+		index_offset.assign(order*2+1, vector<int> (numStates*numStates*3));
+		int block_size = 3;	// Codons, should be made a variable passed into this function at some time.
+		for (int bs = 0; bs < block_size; bs++) {	// Number of items in a codon... Could be replaced by a variable "block_size"
+			for (int seqi = 0; seqi < numStates; seqi++) {	// Nucleotide on sequence i, or "from" state
+				for (int seqj = 0; seqj < numStates; seqj++) {	// Nucleotide on sequence j, or "to" state
+					// I will be explicit in the environments here, but this could be replaced by a loop
+					// over all environments with some coding magic.
+					index_offset.at(1).at(
+										    bs * numStates * numStates	// Each codon position has 16 flattened matrix positions, so this moves to the correct codon position.
+										  + seqi*numStates
+										  + seqj
+										 ) 
+										 =  (seqj-seqi)	// Nature of change
+										  * pow(numStates,block_size-bs)	// codon position
+										  * pow(numStates, block_size)		// codon_size;
+				}
 			}
 		}
 	}
@@ -617,15 +717,20 @@ contextDependence::setOffset()
 //			cerr << endl;
 //		}
 //	}
+//exit(0);
 }
 
 int contextDependence::getOffset(
 								 int environment,
+								 int codon_position,
 								 short i, 
 								 short j
 								)
 {
-	return index_offset.at(environment).at(i*numStates+j);
+	int offset;
+	cerr << "Point-> contextDependence::getOffset(environment=" << environment << " i=" << i << " j=" << j << ")" << endl;
+
+	return index_offset.at(environment).at(codon_position*numStates*numStates+i*numStates+j);
 }
 
 void contextDependence::generateDependencies(double dependence_strength_superscript)

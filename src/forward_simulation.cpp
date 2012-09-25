@@ -150,6 +150,7 @@ double ForwardSimulation::calcGillespieLambda(
 		if (order_3_markov) *S = des->calculateForwardRateAwayFromSequence__order3Markov(tree, event_site);
 		else if (Human_Data_simulation) {
 			cerr << "ForwardSimulation::calcGillespieLambda->what to do for calculating forward rate away?" << endl;
+			*S = des->calculateForwardRateAwayFromSequence__order3Markov(tree, event_site);
 			exit(0);
 		} else {	
 			for (vector<double>::iterator it = des->nodeEnv->delete_lengthDistribution.begin(); it != des->nodeEnv->delete_lengthDistribution.end(); ++it, i++) {

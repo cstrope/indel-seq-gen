@@ -690,6 +690,7 @@ void CheckMarkovCodonLikelihoods(
 		} else {
 			cerr << nucl_seq 
 				 << "    " << index
+				 << "    " << 
 				 << "    " << selective->context.return_lt_value(1, index)
 				 << "    " << neutral->context.return_lt_value(1, index)
 				 << endl; 

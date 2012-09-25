@@ -45,7 +45,16 @@ my $filename = "results_dir/mcmc$MCMC-bl$branch_length-ds$dependence_superscript
 my $indel_seq_gen = "isg-test-one";
 
 open OUTt, ">$filename.tree";
-print OUTt "[$seq_size](T_1:$branch_length,T_2:0);\n";
+if ($dependence_superscript ge 0) {
+	print OUTt "[$seq_size]";
+} else {
+	print OUTt "[:$filename.seq]";
+	open SEQOUT, ">$filename.seq";
+	print SEQOUT "15\n";
+	print SEQOUT "000000000000000\n";
+	print SEQOUT "ATGTCCAAGGGGGAT\n";
+}
+print OUTt "(T_1:$branch_length,T_2:0);\n";
 close OUTt;
 
 if ($INDEPENDENT_SITES) {
