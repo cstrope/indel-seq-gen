@@ -383,7 +383,8 @@ Statistics::MCMC::resample_subpath(
 	// the probabilities of the events (Qij, Qi., Qij|k(t), Qi.|k(t)).
 	proposed_subpath_events.clear();
 	work->resetSequence(i_B);
-	tree->dep.front()->context.set_sequence_indices(work);
+	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(work, 1);
+	if (Human_Data_simulation) tree->dep.front()->context.set_sequence_indices(work, 3);
 	
 	proposed->EvolveStep(tree, work, i_E, t_B, t_E, &proposed_subpath_events);
 	for (pt = proposed_subpath_events.begin(); pt != proposed_subpath_events.end(); ++pt)

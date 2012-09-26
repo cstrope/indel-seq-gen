@@ -82,7 +82,9 @@ void ForwardSimulation::EvolveSequences(
 	cerr << "Cutoff: ForwardSimulation::EvolveSequences" << endl;
 
 	if ( order_3_markov || Human_Data_simulation) {
-		iTree->my_tree->dep.front()->context.set_sequence_indices(iTree->my_tree->root);
+		int block_size = 1;
+		if (Human_Data_simulation) block_size = 3;
+		iTree->my_tree->dep.front()->context.set_sequence_indices(iTree->my_tree->root, block_size);
 		//iTree->my_tree->dep.front()->context.set_Qmat(iTree->my_tree->root);
 		if ( order_3_markov) {
 			// Order 3 markov does not start with a sequence at equilibrium, since the sequence is

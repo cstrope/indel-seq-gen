@@ -489,7 +489,8 @@ PathProposal::EvolveStep(
 	//////////
 	/// Set up indices of dependency for the sequence on this branch.
 	//////////
-	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(i_z);
+	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(i_z, 1);
+	if (Human_Data_simulation) tree->dep.front()->context.set_sequence_indices(i_z, 3);
 	//////////
 	/// Quick calculation of evolvingSequence->Qidot (forward rate away);
 	//////////
@@ -764,7 +765,8 @@ PathProposal::EmulateStep(
 	if (!(*events).empty())
 	assert((*events).front()->ID != -1);
 
-	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(i_z);
+	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(i_z, 1);
+	if (Human_Data_simulation) tree->dep.front()->context.set_sequence_indices(i_z, 3);
 
 	//for (list<eventTrack*>::iterator it = (*events).begin(); it != (*events).end(); ++it) {
 	//	cerr << (*it)->Print_Event();

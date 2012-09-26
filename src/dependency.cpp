@@ -465,6 +465,7 @@ contextDependence::~contextDependence()
 void 
 contextDependence::reset_sequence_indices(
 										  TNode *node, 
+										  // Block size (for codons)
 										  int event_site,
 										  string event
 										 )
@@ -517,32 +518,35 @@ contextDependence::reset_sequence_indices(
 //	cerr << endl;
 }
 
-void contextDependence::set_sequence_indices(TNode *node)
+void contextDependence::set_sequence_indices(
+											 TNode *node,
+											 int block_size
+											)
 {
 	vector<Site>::iterator it = node->seq_evo.begin();
 	vector<short> seq;
 
-	//cerr << node->printSequence();
+	cerr << node->printSequence();
 
 	// Beginning <order> positions.
-	for (int i = 0; i < order; ++i) seq.push_back((*(it+i)).returnState());
+	for (int i = 0; i < order*block_size; ++i) seq.push_back((*(it+i)).returnState());
 	seq.push_back((*(it+order)).returnState());
 	(*it).set_lookup_table_environment_index(0);
 	(*it).set_lookup_table_sequence_index(sequence_specific_index_offset(seq));
-	//cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+	cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
 	++it;
 	int i = 1;
-	for (i = 1; i < order; ++i, ++it) {
+	for (i = block_size; i < order*block_size; ++i, ++it) {
 		(*it).set_lookup_table_environment_index(i);
 		(*it).set_lookup_table_sequence_index( (*(it-1)).return_lookup_table_sequence_index()*numStates + (*(it+order)).returnState() );
-		//cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
 	}
 
 	// Middle.
-	for (; it != node->seq_evo.end()-order; ++it, ++i) {
+	for (; it != node->seq_evo.end()-order*block_size; ++it, ++i) {
 		(*it).set_lookup_table_environment_index(order);
 		(*it).set_lookup_table_sequence_index( ((*(it-1)).return_lookup_table_sequence_index()*numStates + (*(it+order)).returnState()) % index_position_multiplier.at(order*2+1));
-		//cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
 	}
 
 	// End <order> positions.
@@ -550,10 +554,12 @@ void contextDependence::set_sequence_indices(TNode *node)
 	int k = 1;
 	for (; it != node->seq_evo.end(); ++it, ++i, ++k, --j) {
 		(*it).set_lookup_table_environment_index(2*order+1-k);
-		//cerr << (*(it-1)).return_lookup_table_sequence_index() << " - " << (*(it-order)).returnState()*index_position_multiplier.at(j) << endl;
+		cerr << (*(it-1)).return_lookup_table_sequence_index() << " - " << (*(it-order)).returnState()*index_position_multiplier.at(j) << endl;
 		(*it).set_lookup_table_sequence_index((*(it-1)).return_lookup_table_sequence_index() - (*(it-order-1)).returnState()*index_position_multiplier.at(j));
-		//cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
 	}
+
+	exit(0);
 }
 
 void
