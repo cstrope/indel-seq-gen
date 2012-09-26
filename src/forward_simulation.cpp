@@ -81,12 +81,19 @@ void ForwardSimulation::EvolveSequences(
 
 	cerr << "Cutoff: ForwardSimulation::EvolveSequences" << endl;
 
-	if ( order_3_markov ) {
+	if ( order_3_markov || Human_Data_simulation) {
 		iTree->my_tree->dep.front()->context.set_sequence_indices(iTree->my_tree->root);
 		//iTree->my_tree->dep.front()->context.set_Qmat(iTree->my_tree->root);
-		cerr << "EVOLVING TO EQUILIBRIUM>>>>>" << endl;
-		evolve2Equilibrium(iTree, events, options);
-		cerr << "EVOLVED TO EQUILIBRIUM>>>>>" << endl;
+		if ( order_3_markov) {
+			// Order 3 markov does not start with a sequence at equilibrium, since the sequence is
+			// essentially picked from the independent sites stationary model. To get to stationarity,
+			// we evolve the chosen sequence over a long branch (in this case, BL=10) using the 
+			// dependent sites model, and the sequence at the end of the branch will be assumed to be
+			// at stationarity for the dependent sites model.
+			cerr << "EVOLVING TO EQUILIBRIUM>>>>>" << endl;
+			evolve2Equilibrium(iTree, events, options);
+			cerr << "EVOLVED TO EQUILIBRIUM>>>>>" << endl;
+		}
 		//exit(0);
 	}
 	

@@ -46,7 +46,7 @@
 using namespace std;
 
 bool	order_3_markov;
-bool	Human_Data_simulation = true;
+bool	Human_Data_simulation;
 
 bool	empty_column_warning_spooled = false;
 ofstream verbose_output;
@@ -509,7 +509,7 @@ void Simulate(
 						cerr << "Human Data simulation (Simulate()) 2" << endl;
 						(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
 						cerr << "Human Data simulation (Simulate()) 3" << endl;
-						CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
+						//CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
 					} else {
 						cerr << "Didn't enter a model? (-O <markov_sup> OR -2 <dep_counts> -3 <neutral_counts>) " << endl;
 						exit(EXIT_FAILURE);

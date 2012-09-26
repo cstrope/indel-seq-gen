@@ -76,7 +76,7 @@ if ($INDEPENDENT_SITES) {
 	print OUT "$return_val_fwd\n";
 	close OUT;
 
-	exit(0);		## While testing new dependency model. ##
+	if ($dependence_superscript < 0) { exit(0);	}	## While testing new dependency model. ##
 
 	print STDERR "----- END-POINT CONDITIONED RUN -------------\n";
 	my $epc_command = "";

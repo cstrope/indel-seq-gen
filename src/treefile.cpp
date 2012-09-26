@@ -717,7 +717,7 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	//////////
 	R_D = Rij(tree, event_site, end_site);
 
-	exit(0);
+	if (Human_Data_simulation) exit(0);
 
 	//////////
 	/// Make CDF of site_rate_away, but only for the sites that have changed!
@@ -824,12 +824,8 @@ TNode::TauIJ3 (
 	if (Human_Data_simulation) sequence_position %= 3;
 	else sequence_position %= 1;
 
+	cerr << "sequence position:  " << sequence_position << endl;
 	int j_seq_index = i_seq_index + tree->dep.front()->context.getOffset(env_index, sequence_position, residue_i, residue_j);
-
-	// NEED TO HAVE INFORMATION ABOUT WHERE IN THE CODON THE SITE WE ARE CHANGING IS (CODON_POSITION)
-	// ABSOLUTELY NECESSARY FOR GETOFFSET
-	// IF ORDER_3_MARKOV< PASS 0-> getOffset(env_index, 0, residue_i, residue_j)
-	// OTHERWISE, PASS site % 3.
 
 	cerr << "env: " << env_index << "  ";
 	cerr << "j_seq_index = " << i_seq_index << " + " 

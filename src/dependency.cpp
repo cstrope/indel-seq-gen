@@ -755,7 +755,7 @@ int contextDependence::getOffset(
 								)
 {
 	int offset;
-	cerr << "Point-> contextDependence::getOffset(environment=" << environment << " i=" << i << " j=" << j << ")" << endl;
+	cerr << "Point-> contextDependence::getOffset(environment=" << environment << " codon_position=" << codon_position << " i=" << i << " j=" << j << ")" << endl;
 
 	return index_offset.at(environment).at(codon_position*numStates*numStates+i*numStates+j);
 }
