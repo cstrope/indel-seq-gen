@@ -230,7 +230,7 @@ public:
 	void calculateEndpointRateAwayFromSite(vector<Site>::iterator evolver_it, vector<Site>::iterator target_it, double *cumulative_site_sum_away, double *forward_site_sum_away, RateMatrix *rate_matrix);
 	double TauIJ (TTree *tree);
 	double TauIJ2 (TTree *tree, unsigned int position, unsigned int end_position);
-	double TauIJ3 (TTree *tree, int env_index, int i_seq_index, short residue_i, short residue_j);
+	double TauIJ3 (TTree *tree, int sequence_position, int env_index, int i_seq_index, short residue_i, short residue_j);
 	void set_site_window(int order, int *start_site, unsigned int *end_site);
 	void site_specific_Qmat(TTree *tree, int start_site, unsigned int end_site);
 	RateMatrix initialize_rate_matrices(TTree *tree, TNode *des, double T, double at_dt, int event_site);

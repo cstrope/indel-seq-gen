@@ -774,6 +774,7 @@ TNode::Rij (
 					//////////
 					tau_ij = TauIJ3(
 								    tree, 
+								    position,
 								    (*i).return_lookup_table_environment_index(), 
 								    (*i).return_lookup_table_sequence_index(), 
 								    (*i).returnState(), 
@@ -809,6 +810,7 @@ TNode::Rij (
 double 
 TNode::TauIJ3 (
 			  TTree *tree,
+			  int sequence_position,
 			  int env_index,
 			  int i_seq_index,
 			  short residue_i,
@@ -818,7 +820,11 @@ TNode::TauIJ3 (
 	cerr << "Point-> TauIJ3() IN" << endl;
 	double diffPji, diffP0ji;
 	register double tau_ij; // The tau_ij parameter, equation 1.7 Choi et al.
-	int j_seq_index = i_seq_index + tree->dep.front()->context.getOffset(env_index, residue_i, residue_j);
+
+	if (Human_Data_simulation) sequence_position %= 3;
+	else sequence_position %= 1;
+
+	int j_seq_index = i_seq_index + tree->dep.front()->context.getOffset(env_index, sequence_position, residue_i, residue_j);
 
 	// NEED TO HAVE INFORMATION ABOUT WHERE IN THE CODON THE SITE WE ARE CHANGING IS (CODON_POSITION)
 	// ABSOLUTELY NECESSARY FOR GETOFFSET
@@ -826,7 +832,9 @@ TNode::TauIJ3 (
 	// OTHERWISE, PASS site % 3.
 
 	cerr << "env: " << env_index << "  ";
-	cerr << "j_seq_index = " << i_seq_index << " + " << tree->dep.front()->context.getOffset(env_index, residue_i, residue_j) << endl;
+	cerr << "j_seq_index = " << i_seq_index << " + " 
+		 << tree->dep.front()->context.getOffset(env_index, sequence_position,  residue_i, residue_j) 
+		 << endl;
 
 	//////////
 	///	This representation is different since we are (currently) not calculating the VLMM on
@@ -1258,7 +1266,8 @@ TNode::site_specific_Qmat(
 				if (j != i) {
 					tau_ij
 					= TauIJ3(
-							 tree, 
+							 tree,
+							 seq_pos,
 							 (*it).return_lookup_table_environment_index(), 
 							 (*it).return_lookup_table_sequence_index(),
 							 i,

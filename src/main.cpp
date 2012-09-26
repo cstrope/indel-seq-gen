@@ -690,12 +690,63 @@ void CheckMarkovCodonLikelihoods(
 		} else {
 			cerr << nucl_seq 
 				 << "    " << index
-				 << "    " << 
 				 << "    " << selective->context.return_lt_value(1, index)
 				 << "    " << neutral->context.return_lt_value(1, index)
 				 << endl; 
 		}
 	}
+
+	// int contextDependence::getOffset(
+	//							 int environment,
+	//							 int codon_position,
+	//							 short i, 
+	//							 short j
+	//							)
+	// CODON POSITION::: XXX123XXX
+	// CODONS:::		 AAAAAAAAA
+	// SEQ POSITION:::   012345678
+	// MOD 3:::			 012012012
+	//																	   A  C
+	int AAAAAAAAA_index = Nucleotide_Sequence_2_Index("AAAAAAAAA");
+	int AAAXAAAAA_index;
+	int AAAAXAAAA_index;
+	int AAAAAXAAA_index;
+	int CATGATGTA_index = Nucleotide_Sequence_2_Index("CATGATGTA");
+	int CATTATGTA_index = Nucleotide_Sequence_2_Index("CATTATGTA");
+	cerr << "CATGATGTA->CATTATGTA: " << selective->context.return_lt_value(1, CATGATGTA_index)
+		 << "   " << selective->context.return_lt_value(1, CATTATGTA_index)
+		 << "   OFFSET_DIFF: " << selective->context.getOffset(1,0,stateCharacters.find("G"),stateCharacters.find("T"))
+		 << "  VAL: " 
+		 << selective->context.return_lt_value(1, CATGATGTA_index+selective->context.getOffset(1,0,stateCharacters.find("G"),stateCharacters.find("T"))) 
+		 << endl << endl;
+
+	cerr << "CATTATGTA->CATGATGTA: " << selective->context.return_lt_value(1, CATTATGTA_index)
+		 << "   " << selective->context.return_lt_value(1, CATGATGTA_index)
+		 << "   OFFSET_DIFF: " << selective->context.getOffset(1,0,stateCharacters.find("T"),stateCharacters.find("G"))
+		 << "  VAL: " 
+		 << selective->context.return_lt_value(1, CATTATGTA_index+selective->context.getOffset(1,0,stateCharacters.find("T"),stateCharacters.find("G"))) 
+		 << endl << endl;
+
+	cerr << "AAAAAAAAA->AAACAAAAA: " << selective->context.getOffset(1, 0, 0, 1) << endl;
+	AAAXAAAAA_index = Nucleotide_Sequence_2_Index("AAACAAAAA");
+	cerr << "     VALUES:  " << selective->context.return_lt_value(1, AAAAAAAAA_index)
+		 << "   " << selective->context.return_lt_value(1, AAAXAAAAA_index)
+		 << "   OFFSET_DIFF: " << selective->context.getOffset(1,0,0,1)
+		 << "  VAL: " << selective->context.return_lt_value(1, AAAAAAAAA_index+selective->context.getOffset(1,0,0,1)) << endl;
+	cerr << "AAAAAAAAA->AAAGAAAAA: " << selective->context.getOffset(1, 0, 0, 2) << endl;
+	cerr << "AAAAAAAAA->AAATAAAAA: " << selective->context.getOffset(1, 0, 0, 3) << endl;
+	cerr << "AAACAAAAA->AAAAAAAAA: " << selective->context.getOffset(1, 0, 1, 0) << endl;
+	cerr << endl;
+	cerr << "AAAAAAAAA->AAAACAAAA: " << selective->context.getOffset(1, 1, 0, 1) << endl;
+	cerr << "AAAAAAAAA->AAAAGAAAA: " << selective->context.getOffset(1, 1, 0, 2) << endl;
+	cerr << "AAAAAAAAA->AAAATAAAA: " << selective->context.getOffset(1, 1, 0, 3) << endl;
+	cerr << "AAACAAAAA->AAAAAAAAA: " << selective->context.getOffset(1, 1, 1, 0) << endl;
+	cerr << endl;
+	cerr << "AAAAAAAAA->AAAAACAAA: " << selective->context.getOffset(1, 2, 0, 1) << endl;
+	cerr << "AAAAAAAAA->AAAAAGAAA: " << selective->context.getOffset(1, 2, 0, 2) << endl;
+	cerr << "AAAAAAAAA->AAAAATAAA: " << selective->context.getOffset(1, 2, 0, 3) << endl;
+	cerr << "AAACAAAAA->AAAAAAAAA: " << selective->context.getOffset(1, 2, 1, 0) << endl;
+	cerr << endl;
 
 	exit(0);
 }

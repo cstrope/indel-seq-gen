@@ -699,25 +699,52 @@ contextDependence::setOffset()
 										  + seqj
 										 ) 
 										 =  (seqj-seqi)	// Nature of change
-										  * pow(numStates,block_size-bs)	// codon position
-										  * pow(numStates, block_size)		// codon_size;
+										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										  * pow(numStates, block_size)		// size of codons before current.;
+										 ;
+					// Interestingly, the begin environment is the SAME as middle. Makes sense... if you think about it.
+					// To be explicit, mid, we change AAAXXXAAA the X's, so, the positions with 4^4, 4^5, and 4^6.
+					// Likewise, for beginning, we change XXXAAA, again with positions with 4^4, 4^5, and 4^6.
+					index_offset.at(0).at(
+										    bs * numStates * numStates	// Each codon position has 16 flattened matrix positions, so this moves to the correct codon position.
+										  + seqi*numStates
+										  + seqj
+										 ) 
+										 =  (seqj-seqi)	// Nature of change
+										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										  * pow(numStates, block_size)		// size of codons before current.;
+										 ;
+					// The end of the sequence, however, we need to do differently.
+					// We change AAAXXX, so codon position 0 is 4^2, codon pos 1 is 4^1, and codon pos 2 is 4^0.
+					index_offset.at(2).at(
+										    bs * numStates * numStates	// Each codon position has 16 flattened matrix positions, so this moves to the correct codon position.
+										  + seqi*numStates
+										  + seqj
+										 ) 
+										 =  (seqj-seqi)	// Nature of change
+										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										 ;
 				}
 			}
 		}
 	}
 
-//	cerr << "Offset setup: " << endl;
-//	int p = 0;
-//	for (at = index_offset.begin(); at != index_offset.end(); ++at, ++p) {
-//		cerr << "Level " << p << ": " << endl;
+	cerr << "Offset setup: " << endl;
+	int p = 0;
+	for (at = index_offset.begin(); at != index_offset.end(); ++at, ++p) {
+		cerr << "Level " << p << ": " << endl;
+		for (vector<int>::iterator bt = (*at).begin(); bt != (*at).end(); ++bt) {
+			cerr << (*bt) << " ";
+		}
+		cerr << endl;
 //		for (int j = 0; j < numStates; ++j) {		// current == sequence i
 //			for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
 //				cerr << (*at).at(j*numStates+k) << " ";
 //			}
 //			cerr << endl;
 //		}
-//	}
-//exit(0);
+	}
+	//exit(0);
 }
 
 int contextDependence::getOffset(
