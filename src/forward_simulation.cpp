@@ -96,8 +96,8 @@ void ForwardSimulation::EvolveSequences(
 			evolve2Equilibrium(iTree, events, options);
 			cerr << "EVOLVED TO EQUILIBRIUM>>>>>" << endl;
 		}
-		//exit(0);
 	}
+	
 	
 	EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch1, iTree->partitionLength, events, options);
     EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch2, iTree->partitionLength, events, options);

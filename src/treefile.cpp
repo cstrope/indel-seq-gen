@@ -717,6 +717,8 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	//////////
 	R_D = Rij(tree, event_site, end_site);
 
+	cerr << "Rate away from sequence: " << R_D << endl;
+
 	if (Human_Data_simulation) exit(0);
 
 	//////////
@@ -821,15 +823,17 @@ TNode::TauIJ3 (
 	double diffPji, diffP0ji;
 	register double tau_ij; // The tau_ij parameter, equation 1.7 Choi et al.
 
+	cerr << "sequence position:  " << sequence_position << endl;
+
 	if (Human_Data_simulation) sequence_position %= 3;
 	else sequence_position %= 1;
 
-	cerr << "sequence position:  " << sequence_position << endl;
+	cerr << "  codon position: " << sequence_position << " -> ";
 	int j_seq_index = i_seq_index + tree->dep.front()->context.getOffset(env_index, sequence_position, residue_i, residue_j);
 
-	cerr << "env: " << env_index << "  ";
-	cerr << "j_seq_index = " << i_seq_index << " + " 
-		 << tree->dep.front()->context.getOffset(env_index, sequence_position,  residue_i, residue_j) 
+	cerr << "  env: " << env_index << endl;
+	cerr << "  j_seq_index = " << i_seq_index << " + ";
+	cerr << tree->dep.front()->context.getOffset(env_index, sequence_position,  residue_i, residue_j) 
 		 << endl;
 
 	//////////
@@ -1107,8 +1111,6 @@ TNode::calculateEndpointRateAwayFromSequence(
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
 	}
 
-//	exit(0);
-	
 	// Set values needed for calculating Forward and EPC log probabilities.
 	evolvingSequence->Qidot_k__T__ = cumulative_site_sum_away;
 	evolvingSequence->Qidot = forward_site_sum_away;
@@ -1805,9 +1807,9 @@ TNode::clearMotifSites()
 
 string 
 TNode::output_sequence(
-							  string::iterator start, 
-							  string::iterator end
-							 )
+					   string::iterator start, 
+					   string::iterator end
+				      )
 {
 	string seqout = "";
 	for (string::iterator it = start; it != end; ++it) {

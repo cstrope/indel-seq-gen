@@ -260,10 +260,10 @@ contextDependence::set_lookup_table()
 		vector<double>::iterator tup_it = tuplet_pi.begin();
 		for (int i = 0; i < 64; i++, ++tup_it) {
 			for (int j = 0; j < 64; j++) {
-//				cerr << i << " " << j << ": " << (*tup_it) << " " << 
 				lookup = new LookUp((*tup_it) * lookup_table.at(2).at(i*64+j)->value); 
-				// Assume P(ATG) = 1
-				lookup->value = 0;
+				// Assume P(ATG) = 1, therefore, there is 0 chance that it will change.
+				// With these values, tau_ij = P(j)/P(i) * P_0(i)/P_0(j) = 1, so Rij = u\pi log(tau_ij)/1-1/tau_ij = 0; 
+				lookup->value = numeric_limits<double>::min();
 				lookup->inverse = numeric_limits<double>::max();
 				lookup_table.at(0).at(i*64+j) = lookup;
 			}
@@ -344,6 +344,11 @@ void contextDependence::readDependencies(string& file)
 		for (; it != split_line.end(); ++it, ++i) {
 //			cerr << "i: " << i ;
 			val = atof((*it).c_str());
+			// If the read-in value is zero, it causes havoc with nan's in the tau_ij routine. Set to minimum double
+			// value, instead. Need to make sure that this number can be squared!! This is because if we are going to 
+			// multiply two "0"s, and these were both at numeric_limits<double>::min(), we would get underflow, and
+			// the problem with zeroes would persist. So, set val to the square root of the minimum double value.
+			if (val == 0) val = sqrt(numeric_limits<double>::min());
 			lookup = new LookUp(val);
 			if (order_3_markov) {
 				sequence = lookup_table_sequence(i, order+1);
@@ -525,41 +530,111 @@ void contextDependence::set_sequence_indices(
 {
 	vector<Site>::iterator it = node->seq_evo.begin();
 	vector<short> seq;
+	int i, site;
 
-	cerr << node->printSequence();
+	if (order_3_markov) {
+		// Beginning <order> positions.
+		for (i = 0; i < order*block_size; ++i) seq.push_back((*(it+i)).returnState());
+		seq.push_back((*(it+order)).returnState());
+		(*it).set_lookup_table_environment_index(0);
+		(*it).set_lookup_table_sequence_index(sequence_specific_index_offset(seq));
+		++it;
+		i = 1;
+		for (i = block_size; i < order*block_size; ++i, ++it) {
+			(*it).set_lookup_table_environment_index(i);
+			// This is a shortcut that works well for order 1, but not so well for higher orders...
+			// Can make a function to handle this.
+			(*it).set_lookup_table_sequence_index( 
+												  (*(it-1)).return_lookup_table_sequence_index()*numStates 
+												  + (*(it+order)).returnState() 
+												 );
+		}
 
-	// Beginning <order> positions.
-	for (int i = 0; i < order*block_size; ++i) seq.push_back((*(it+i)).returnState());
-	seq.push_back((*(it+order)).returnState());
-	(*it).set_lookup_table_environment_index(0);
-	(*it).set_lookup_table_sequence_index(sequence_specific_index_offset(seq));
-	cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
-	++it;
-	int i = 1;
-	for (i = block_size; i < order*block_size; ++i, ++it) {
-		(*it).set_lookup_table_environment_index(i);
-		(*it).set_lookup_table_sequence_index( (*(it-1)).return_lookup_table_sequence_index()*numStates + (*(it+order)).returnState() );
-		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+		// Middle.
+		for (; it != node->seq_evo.end()-order*block_size; ++it, ++i) {
+			(*it).set_lookup_table_environment_index(order);
+			(*it).set_lookup_table_sequence_index( ((*(it-1)).return_lookup_table_sequence_index()*numStates + (*(it+order)).returnState()) % index_position_multiplier.at(order*2+1));
+		}
+
+		// End <order> positions.
+		int j = order*2;
+		int k = 1;
+		for (; it != node->seq_evo.end(); ++it, ++i, ++k, --j) {
+			(*it).set_lookup_table_environment_index(2*order+1-k);
+			(*it).set_lookup_table_sequence_index((*(it-1)).return_lookup_table_sequence_index() - (*(it-order-1)).returnState()*index_position_multiplier.at(j));
+		}
+	} else {
+		// Beginning order*block_size positions (beginning of the sequence only?)
+		// The first position will be for when changes occur in the beginning of the sequence. These
+		// types of changes will affect the first position as well as the downstream dependencies.
+		// We represent the first position as order+block_size, and the downstream dependencies as
+		// + block_size. The first block_size positions will be assigned an index into the lookup_table.
+		for (i = 0; i < order*block_size+block_size; ++i) 
+			seq.push_back((*(it+i)).returnState());
+
+		for (vector<short>::iterator q = seq.begin(); q != seq.end(); ++q)
+			cerr << stateCharacters.at(*q);
+		cerr << endl;
+
+		site = 0;
+		for (it = node->seq_evo.begin(); it != node->seq_evo.begin()+block_size; ++it, ++site) {
+			(*it).set_lookup_table_environment_index(0);
+			(*it).set_lookup_table_sequence_index(sequence_specific_index_offset(seq));
+			cerr << "Site " << site << ":" << "  env->" << (*it).return_lookup_table_environment_index() << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
+		}
+		
+
+		// Middle of sequence
+		for (it = node->seq_evo.begin()+order*block_size; it != node->seq_evo.end()-block_size; it += block_size) {
+			// First begin by moving the next <block_size> to the front of the sequence:
+			// First pass through, the seq.size() will be 6 (for 1OMM, BS=3), so skip this as the first codon will still
+			// be needed to find the correct index. Beyond that, need to move data to the front.
+			i = 0;
+			if (seq.size() >= 3*order*block_size) {
+				// Move to the front of the array.
+				// Why the 2 in the 2nd term? Because we are moving the first 2 codons to the front of the array,
+				// then adding the third codon.
+				for (vector<short>::iterator q = seq.begin(); q != seq.begin()+2*order*block_size; ++q, ++i)
+					(*q) = (*(q+order*block_size));
+				for (int x = 0; x < block_size; x++) seq.pop_back();
+			}
+			// Replace the back elements with the next 3 positions of the sequence
+			for (i = block_size; i < 2*block_size; i++) 
+				seq.push_back((*(it+i)).returnState());
+
+			//for (vector<short>::iterator q = seq.begin(); q != seq.end(); ++q)
+			//	cerr << stateCharacters.at(*q);
+			//cerr << endl;
+
+			// Multiply the two previous entries by 64, then add new block.
+			for (i = 0; i < block_size; i++, site++) {
+				(*(it+i)).set_lookup_table_environment_index(order);
+				(*(it+i)).set_lookup_table_sequence_index( sequence_specific_index_offset(seq) );
+				cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
+			}
+		}
+
+		// End of sequence. Need to move the 2 codons to the front, and remove the last 3 positions.
+		for (vector<short>::iterator q = seq.begin(); q != seq.begin()+2*order*block_size; ++q, ++i)
+			(*q) = (*(q+order*block_size));
+		for (int x = 0; x < block_size; x++) seq.pop_back();
+		for (; it != node->seq_evo.end(); it += block_size, ++site) {
+			for (i = 0; i < block_size; ++i) {
+				(*(it+i)).set_lookup_table_environment_index(2);
+				(*(it+i)).set_lookup_table_sequence_index( sequence_specific_index_offset(seq) );
+				cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
+			}
+		}
 	}
-
-	// Middle.
-	for (; it != node->seq_evo.end()-order*block_size; ++it, ++i) {
-		(*it).set_lookup_table_environment_index(order);
-		(*it).set_lookup_table_sequence_index( ((*(it-1)).return_lookup_table_sequence_index()*numStates + (*(it+order)).returnState()) % index_position_multiplier.at(order*2+1));
-		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
+	
+	// Report
+	i = 0;
+	cerr << node->printSequence() << endl;
+	for (it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it, ++i) {
+		cerr << "Site " << i << ":" << endl;
+		cerr << "  env->" << (*it).return_lookup_table_environment_index() << endl;
+		cerr << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
 	}
-
-	// End <order> positions.
-	int j = order*2;
-	int k = 1;
-	for (; it != node->seq_evo.end(); ++it, ++i, ++k, --j) {
-		(*it).set_lookup_table_environment_index(2*order+1-k);
-		cerr << (*(it-1)).return_lookup_table_sequence_index() << " - " << (*(it-order)).returnState()*index_position_multiplier.at(j) << endl;
-		(*it).set_lookup_table_sequence_index((*(it-1)).return_lookup_table_sequence_index() - (*(it-order-1)).returnState()*index_position_multiplier.at(j));
-		cerr << "  " << (*it).return_lookup_table_environment_index() << ", " << (*it).return_lookup_table_sequence_index() << endl;
-	}
-
-	exit(0);
 }
 
 void
