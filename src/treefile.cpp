@@ -703,7 +703,7 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	if (order_3_markov || Human_Data_simulation) {
 		set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
 		if (!Pc && forward_simulation) Qd = true;		// Dependent sites is definitely true for forward simulation. (!Pc flags EPC.)
-		cerr << "Point-> TNode::calculateForwardRateAwayFromSequence__order3Markov(tree, site) site: " << event_site << " end_site: " << end_site << endl;
+		//cerr << "Point-> TNode::calculateForwardRateAwayFromSequence__order3Markov(tree, site) site: " << event_site << " end_site: " << end_site << endl;
 	} else end_site = event_site+1;
 
 	//////////
@@ -717,16 +717,20 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	//////////
 	R_D = Rij(tree, event_site, end_site);
 
-	cerr << "Rate away from sequence: " << R_D << endl;
-
-	if (Human_Data_simulation) exit(0);
+	if (Human_Data_simulation) R_D -= evolvingSequence->zeroStopCodons(event_site, end_site);
 
 	//////////
 	/// Make CDF of site_rate_away, but only for the sites that have changed!
 	//////////
 	evolvingSequence->forward_rate_away_from_sequence(branch, event_site, end_site);
 
-	cerr << "Point-> TNode::calculateForwardRateAwayFromSequence__order3Markov(tree, event_site) RATE AWAY = " << R_D << endl;
+	if (Human_Data_simulation) {
+		//cerr << "Rate away from sequence: " << R_D << endl;
+		//evolvingSequence->printSequenceRateAway();
+		//exit(0);
+	}
+
+	//cerr << "Point-> TNode::calculateForwardRateAwayFromSequence__order3Markov(tree, event_site) RATE AWAY = " << R_D << endl;
 	return R_D;
 }
 
@@ -746,7 +750,7 @@ TNode::Rij (
 	bool initial_rates_calculation = false;
 	double rate_ij;
 
-	cerr << "Point-> TNode::Rij(tree, start_position=" << start_position << " end_position=" << end_position << endl;
+	//cerr << "Point-> TNode::Rij(tree, start_position=" << start_position << " end_position=" << end_position << endl;
 
 	//////////
 	/// Each site carries its own rate away, but on the first pass, those rates away need to be
@@ -760,7 +764,7 @@ TNode::Rij (
 		sum_rate_away = 0;
 	} else sum_rate_away = evolvingSequence->returnRij(); 
 
-	cerr << "Point-> TNode::Rij() Begin rate away loop." << endl;
+	//cerr << "Point-> TNode::Rij() Begin rate away loop." << endl;
 	position = start_position;
 	for (vector<Site>::iterator i = seq_evo.begin()+start_position; i != seq_evo.begin()+end_position; ++i, ++position) {
 		(*i).site_rate_away.clear();
@@ -791,7 +795,16 @@ TNode::Rij (
 						= branch->rates->pi.at(j)
 						  *
 						  ( log(tau_ij)/(1 - 1.0/tau_ij) );
-					} else rate_ij = tree->root->branch->rates->pi.at(j); 
+					} else if (order_3_markov || Human_Data_simulation) {
+						// If we are working with a non-standard model, then a value of tau_ij = 0 is the approporiate
+						// choice
+						rate_ij = numeric_limits<double>::min(); 
+					} else { 
+						// Although the check has already been done (if Qd, above), we may still want to have this
+						// code here for times that a non- order3markov or human data set are used. In any case,
+						// this remnant will act as a reminder later...
+						tree->root->branch->rates->pi.at(j); 
+					}
 				} else rate_ij = tree->root->branch->rates->pi.at(j);
 			//////////
 			/// i == j, therefore, is not a rate away.
@@ -819,22 +832,22 @@ TNode::TauIJ3 (
 			  short residue_j
 			 )
 {
-	cerr << "Point-> TauIJ3() IN" << endl;
+	//cerr << "Point-> TauIJ3() IN" << endl;
 	double diffPji, diffP0ji;
 	register double tau_ij; // The tau_ij parameter, equation 1.7 Choi et al.
 
-	cerr << "sequence position:  " << sequence_position << endl;
+	//cerr << "sequence position:  " << sequence_position << endl;
 
 	if (Human_Data_simulation) sequence_position %= 3;
 	else sequence_position %= 1;
 
-	cerr << "  codon position: " << sequence_position << " -> ";
+	//cerr << "  codon position: " << sequence_position << " -> ";
 	int j_seq_index = i_seq_index + tree->dep.front()->context.getOffset(env_index, sequence_position, residue_i, residue_j);
 
-	cerr << "  env: " << env_index << endl;
-	cerr << "  j_seq_index = " << i_seq_index << " + ";
-	cerr << tree->dep.front()->context.getOffset(env_index, sequence_position,  residue_i, residue_j) 
-		 << endl;
+	//cerr << "  env: " << env_index << endl;
+	//cerr << "  j_seq_index = " << i_seq_index << " + ";
+	//cerr << tree->dep.front()->context.getOffset(env_index, sequence_position,  residue_i, residue_j) 
+	//	 << endl;
 
 	//////////
 	///	This representation is different since we are (currently) not calculating the VLMM on
@@ -890,7 +903,7 @@ TNode::TauIJ3 (
     tau_ij *= diffP0ji_inv;
 	//////////
 
-	cerr << "Point-> TNode::TauIJ3() RETURN " << tau_ij << endl;
+	//cerr << "Point-> TNode::TauIJ3() RETURN " << tau_ij << endl;
 
 	return tau_ij;
 }

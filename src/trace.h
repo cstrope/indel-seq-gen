@@ -22,6 +22,7 @@ using namespace std;
 
 #include "tree.h"
 #include "motif.h"
+#include "forward_simulation.h"
 #include <iostream>
 #include <sstream>
 

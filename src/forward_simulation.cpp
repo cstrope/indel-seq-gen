@@ -98,7 +98,6 @@ void ForwardSimulation::EvolveSequences(
 		}
 	}
 	
-	
 	EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch1, iTree->partitionLength, events, options);
     EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch2, iTree->partitionLength, events, options);
     if (!iTree->my_tree->rooted) {
@@ -158,9 +157,7 @@ double ForwardSimulation::calcGillespieLambda(
 	} else {
 		if (order_3_markov) *S = des->calculateForwardRateAwayFromSequence__order3Markov(tree, event_site);
 		else if (Human_Data_simulation) {
-			cerr << "ForwardSimulation::calcGillespieLambda->what to do for calculating forward rate away?" << endl;
 			*S = des->calculateForwardRateAwayFromSequence__order3Markov(tree, event_site);
-			exit(0);
 		} else {	
 			for (vector<double>::iterator it = des->nodeEnv->delete_lengthDistribution.begin(); it != des->nodeEnv->delete_lengthDistribution.end(); ++it, i++) {
 				del_freq += (*it);
@@ -183,6 +180,7 @@ double ForwardSimulation::calcGillespieLambda(
 //	cerr << "*S = " << des->seq_evo.size() * des->rate_away_site_width << " = " << *S << endl;
 
 	lambda = *I + *D + *S;
+
 	return lambda;
 }
                
@@ -293,8 +291,10 @@ void ForwardSimulation::gillespie(
 				new_event->assign_Q(des, des->seq_evo.at(event_site), action, 1);
 			}
 			if (action == DELETE || action == INSERT) event_site = -1;		// Temp. Flags to recalculate TauIJ for entire sequence.
-			iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
+//			iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
+			iTree->my_tree->dep.front()->context.set_sequence_indices(des, 3);
 			lambda_T = calcGillespieLambda(iTree->my_tree, des, &I, &D, &S, simulation_type, event_site);
+//cerr << "lambda_T, post_change = " << lambda_T << endl; exit(0);
 			if (!evolving_to_equilibrium) {
 				new_event->Q.idot = lambda_T;
 				(*events).push_back(new_event);
@@ -303,6 +303,7 @@ void ForwardSimulation::gillespie(
 			}
 		}
 		if (!evolving_to_equilibrium) {	//XOUT
+			cerr << event_site << " " << (*events).back()->size << " ";
 			cerr << "---------- Time left: " << branch_len-dt << "/" << branch_len << "----------"; //XOUT
 			cerr << "Qi.: " << des->evolvingSequence->Qidot; //XOUT
 //			cout << dt << " " << des->evolvingSequence->Qidot << endl;

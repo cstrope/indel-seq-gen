@@ -114,6 +114,94 @@ Sequence::print_sequence( )
 	cerr << endl;
 }
 
+void Sequence::printSequenceRateAway()
+{
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin(); it != evolutionaryAttributes.end(); ++it) {
+		if ((*it).isSet()) {
+			cerr << stateCharacters[(*it).returnState()] << ":   ";
+			(*it).printSiteRateAway();
+		} else {
+			cerr << "X";
+		}
+		cerr << endl;
+	}
+
+}
+
+//////////
+/// Each time we calculate the rate away from a sequence, the rates for all possible changes is agnostic as to
+/// whether the change will result in a stop codon being formed. This function checks such changes, and whenever
+/// one possible stop codon can be formed, zeroes out the offending substitution.
+/// - This function assumes that we are working with coding-data (block size 3), and that there is no sequence that
+///   is not an order of 3 large. 
+//////////
+double
+Sequence::zeroStopCodons (
+						  int event_site,
+						  int end_site
+						 )
+{
+	int codon[3];
+	// If we end up zeroing some possible transition, this needs to be reflected in the overall sequence probability.
+	// For this, we return the amount that the sequence needs to be adjusted by.
+	double probability_adjustment = 0;
+	// First, set the event site to the nearest codon boundary.
+	event_site -= 3 + (event_site%3);
+	if (event_site < 0) event_site = 0;
+
+	// and the end site similarly.
+	vector<Site>::iterator end;
+	end_site += 3 + (3-(end_site%3));		// ? End site at the end of a codon should be a 2... but if less than end site?
+	if (end_site > evolutionaryAttributes.size()) {
+		end = evolutionaryAttributes.end(); cerr << "***" << endl;
+	} else {
+		end = evolutionaryAttributes.begin()+end_site; cerr << "!!!" << endl;
+	}
+
+	cerr << "now event_site=" << event_site << " and end_site=" << end_site << endl;
+
+	int i = event_site;
+	for (vector<Site>::iterator it = evolutionaryAttributes.begin()+event_site; it != end; it+=3, i+=3) {
+cerr << "site " << i << endl;
+		codon[0] = (*it).returnState();
+		codon[1] = (*(it+1)).returnState();
+		codon[2] = (*(it+2)).returnState();
+		
+		// All stop codons start with T, this checks for that.
+		if (codon[0] == 3) {		// T
+			// This checks to see if any of the other positions match a stop codon. If so, then this
+			// position is 1 change away from becoming a stop codon. So, we zero out the offending
+			// change... make it impossible to happen.
+			if (codon[1] == 0) {
+				probability_adjustment += (*(it+1)).site_rate_away.at(0);
+				(*(it+1)).site_rate_away.at(0) = 0;
+			} else if (codon[1] == 2) {
+				probability_adjustment += (*(it+1)).site_rate_away.at(2);
+				(*(it+1)).site_rate_away.at(2) = 0;
+			} else if (codon[2] == 0) {
+				probability_adjustment += (*(it+2)).site_rate_away.at(0);
+				(*(it+2)).site_rate_away.at(0) = 0;
+			} else if (codon[2] == 2) {
+				probability_adjustment += (*(it+2)).site_rate_away.at(2);
+				(*(it+2)).site_rate_away.at(2) = 0;
+			} // else this codon is fine.
+			// Now check to see if second and third codon positions are stoppers.
+		} else if (codon[1] == 0) {
+			if (codon[2] == 2 || codon[2] == 0) {
+				probability_adjustment += (*it).site_rate_away.at(3);
+				(*it).site_rate_away.at(3) = 0;
+			}
+		} else if (codon[1] == 2) {
+			if (codon[2] == 0) {
+				probability_adjustment += (*it).site_rate_away.at(3);
+				(*it).site_rate_away.at(3) = 0;
+			}
+		}
+	}
+	cerr << "EXITING ZEROSTOPCODONS" << endl;
+	return probability_adjustment;
+}
+
 void 
 Sequence::setActiveProps(
 						 bool insertion
@@ -714,7 +802,7 @@ Site::forward_rate_away_from_site(
 		} else forward_rate_away.at(j) = 0;
 	}
 
-	if (order_3_markov) {
+	if (order_3_markov || Human_Data_simulation) {
 		for (vector<double>::iterator jt = site_rate_away.begin()+1; jt != site_rate_away.end(); ++jt) 
 			(*jt) += (*(jt-1));
 	} else {

@@ -119,14 +119,14 @@ treefile.o: treefile.cpp \
  random.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include/stdint.h \
  /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/stdint.h \
- trace.h twister.h inClade.h seqGenOptions.h ../config.h propose_path.h \
- stats.h /opt/local/include/gcc46/c++/algorithm \
+ trace.h forward_simulation.h seqGenOptions.h ../config.h propose_path.h \
+ inClade.h twister.h stats.h /opt/local/include/gcc46/c++/algorithm \
  /opt/local/include/gcc46/c++/utility \
  /opt/local/include/gcc46/c++/bits/stl_relops.h \
  /opt/local/include/gcc46/c++/bits/stl_algo.h \
  /opt/local/include/gcc46/c++/bits/algorithmfwd.h \
- /opt/local/include/gcc46/c++/bits/stl_heap.h forward_simulation.h \
- prosite_motif.h dependency.h rate_type.h
+ /opt/local/include/gcc46/c++/bits/stl_heap.h prosite_motif.h \
+ dependency.h rate_type.h
 
 /opt/local/lib/gcc46/gcc/x86_64-apple-darwin10/4.6.2/include-fixed/limits.h:
 
@@ -458,15 +458,17 @@ random.h:
 
 trace.h:
 
-twister.h:
-
-inClade.h:
+forward_simulation.h:
 
 seqGenOptions.h:
 
 ../config.h:
 
 propose_path.h:
+
+inClade.h:
+
+twister.h:
 
 stats.h:
 
@@ -481,8 +483,6 @@ stats.h:
 /opt/local/include/gcc46/c++/bits/algorithmfwd.h:
 
 /opt/local/include/gcc46/c++/bits/stl_heap.h:
-
-forward_simulation.h:
 
 prosite_motif.h:
 

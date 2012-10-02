@@ -580,7 +580,7 @@ void contextDependence::set_sequence_indices(
 		for (it = node->seq_evo.begin(); it != node->seq_evo.begin()+block_size; ++it, ++site) {
 			(*it).set_lookup_table_environment_index(0);
 			(*it).set_lookup_table_sequence_index(sequence_specific_index_offset(seq));
-			cerr << "Site " << site << ":" << "  env->" << (*it).return_lookup_table_environment_index() << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
+			//cerr << "Site " << site << ":" << "  env->" << (*it).return_lookup_table_environment_index() << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
 		}
 		
 
@@ -610,7 +610,7 @@ void contextDependence::set_sequence_indices(
 			for (i = 0; i < block_size; i++, site++) {
 				(*(it+i)).set_lookup_table_environment_index(order);
 				(*(it+i)).set_lookup_table_sequence_index( sequence_specific_index_offset(seq) );
-				cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
+				//cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
 			}
 		}
 
@@ -622,19 +622,19 @@ void contextDependence::set_sequence_indices(
 			for (i = 0; i < block_size; ++i) {
 				(*(it+i)).set_lookup_table_environment_index(2);
 				(*(it+i)).set_lookup_table_sequence_index( sequence_specific_index_offset(seq) );
-				cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
+				//cerr << "Site " << site << ":" << "  env->" << (*(it+i)).return_lookup_table_environment_index() << "  idx->" << (*(it+i)).return_lookup_table_sequence_index() << endl;
 			}
 		}
 	}
 	
 	// Report
-	i = 0;
-	cerr << node->printSequence() << endl;
-	for (it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it, ++i) {
-		cerr << "Site " << i << ":" << endl;
-		cerr << "  env->" << (*it).return_lookup_table_environment_index() << endl;
-		cerr << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
-	}
+	//i = 0;
+	//cerr << node->printSequence() << endl;
+	///for (it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it, ++i) {
+	//	cerr << "Site " << i << ":" << endl;
+	//	cerr << "  env->" << (*it).return_lookup_table_environment_index() << endl;
+	//	cerr << "  idx->" << (*it).return_lookup_table_sequence_index() << endl;
+	//}
 }
 
 void
@@ -836,7 +836,7 @@ int contextDependence::getOffset(
 								)
 {
 	int offset;
-	cerr << "Point-> contextDependence::getOffset(environment=" << environment << " codon_position=" << codon_position << " i=" << i << " j=" << j << ")" << endl;
+	//cerr << "Point-> contextDependence::getOffset(environment=" << environment << " codon_position=" << codon_position << " i=" << i << " j=" << j << ")" << endl;
 
 	return index_offset.at(environment).at(codon_position*numStates*numStates+i*numStates+j);
 }

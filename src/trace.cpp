@@ -16,7 +16,15 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "trace.h"
-#include "forward_simulation.h"
+
+template <class T> string to_string2 (
+								     const T& t
+								    )
+{
+	stringstream ss;
+	ss << t;
+	return ss.str();
+}
 
 eventTrack::eventTrack(
 					   int events_to_track
@@ -259,7 +267,7 @@ eventTrack *branch_terminal_event(
 								 )
 {
 	eventTrack *return_event;
-	string str = to_string(-which_node);
+	string str = to_string2(-which_node);
 	return_event = new eventTrack(
 							      -1,			/// Not really an event, so make it flag-like. ///
 							      type,			/// S,I,D,F,B,E

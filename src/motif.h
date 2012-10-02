@@ -503,6 +503,8 @@ public:
 			 );
 
  	void setRij(double R) { Qidot = Rij = R; }
+	void printSequenceRateAway();
+	double zeroStopCodons (int event_site, int end_site);
 	double returnRij() { return Rij; }
 	void print_sequence();
 	void setActiveProps(bool insertion = false);
