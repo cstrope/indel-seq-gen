@@ -145,24 +145,33 @@ Sequence::zeroStopCodons (
 	// If we end up zeroing some possible transition, this needs to be reflected in the overall sequence probability.
 	// For this, we return the amount that the sequence needs to be adjusted by.
 	double probability_adjustment = 0;
-	// First, set the event site to the nearest codon boundary.
+/*	// First, set the event site to the nearest codon boundary.
+	cerr << "???event_site(" << event_site << ") -= 3 + " << (event_site%3) << endl;
 	event_site -= 3 + (event_site%3);
 	if (event_site < 0) event_site = 0;
 
 	// and the end site similarly.
-	vector<Site>::iterator end;
+	cerr << "???end_site(" << end_site << ") += 3 + " << (3-(end_site%3)) << " ----> ";
 	end_site += 3 + (3-(end_site%3));		// ? End site at the end of a codon should be a 2... but if less than end site?
+
+//	cerr << "???now event_site=" << event_site << " and end_site=" << end_site << endl;
+*/
+
+	vector<Site>::iterator end;
 	if (end_site > evolutionaryAttributes.size()) {
-		end = evolutionaryAttributes.end(); cerr << "***" << endl;
+		end = evolutionaryAttributes.end(); 
+		cerr << "end" << endl;
 	} else {
-		end = evolutionaryAttributes.begin()+end_site; cerr << "!!!" << endl;
+		end = evolutionaryAttributes.begin()+end_site; 
+		cerr << end_site << endl;
 	}
 
-	cerr << "now event_site=" << event_site << " and end_site=" << end_site << endl;
+	event_site = 0;
+	end = evolutionaryAttributes.end();
 
 	int i = event_site;
 	for (vector<Site>::iterator it = evolutionaryAttributes.begin()+event_site; it != end; it+=3, i+=3) {
-cerr << "site " << i << endl;
+		cerr << "site " << i << endl;
 		codon[0] = (*it).returnState();
 		codon[1] = (*(it+1)).returnState();
 		codon[2] = (*(it+2)).returnState();
@@ -172,18 +181,20 @@ cerr << "site " << i << endl;
 			// This checks to see if any of the other positions match a stop codon. If so, then this
 			// position is 1 change away from becoming a stop codon. So, we zero out the offending
 			// change... make it impossible to happen.
-			if (codon[1] == 0) {
-				probability_adjustment += (*(it+1)).site_rate_away.at(0);
-				(*(it+1)).site_rate_away.at(0) = 0;
-			} else if (codon[1] == 2) {
-				probability_adjustment += (*(it+1)).site_rate_away.at(2);
-				(*(it+1)).site_rate_away.at(2) = 0;
-			} else if (codon[2] == 0) {
+			if (codon[1] == 0) {  // TAX
 				probability_adjustment += (*(it+2)).site_rate_away.at(0);
 				(*(it+2)).site_rate_away.at(0) = 0;
-			} else if (codon[2] == 2) {
+			} else if (codon[1] == 2) { // TGX
 				probability_adjustment += (*(it+2)).site_rate_away.at(2);
 				(*(it+2)).site_rate_away.at(2) = 0;
+			} else if (codon[2] == 0) { // TXA -> can change to TAA or TGA
+				probability_adjustment 
+				+= (*(it+1)).site_rate_away.at(0)
+				 + (*(it+1)).site_rate_away.at(2);
+				(*(it+1)).site_rate_away.at(0) = (*(it+1)).site_rate_away.at(2) = 0;
+			} else if (codon[2] == 2) { // TXG
+				probability_adjustment += (*(it+1)).site_rate_away.at(2);
+				(*(it+1)).site_rate_away.at(2) = 0;
 			} // else this codon is fine.
 			// Now check to see if second and third codon positions are stoppers.
 		} else if (codon[1] == 0) {

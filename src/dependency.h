@@ -113,7 +113,7 @@ double inline contextDependence::lt_markov_ratio (
 	//cerr << "  contextDependence::lt_markov_ratio -> dimensions of lookup table -> ";
 	//cerr << env_index << "/" << lookup_table.size() << "   ";
 	//cerr << lookup_table.at(env_index).size() << "              j:" << j_seq_index << " i:" << i_seq_index << endl;
-	cerr << "Ratio: " << lookup_table.at(env_index).at(j_seq_index)->value << " / " << lookup_table.at(env_index).at(i_seq_index)->value << endl;
+	//cerr << "Ratio: " << lookup_table.at(env_index).at(j_seq_index)->value << " / " << lookup_table.at(env_index).at(i_seq_index)->value << endl;
 	double ratio = lookup_table.at(env_index).at(j_seq_index)->value * lookup_table.at(env_index).at(i_seq_index)->inverse;
 	return ratio;
 }

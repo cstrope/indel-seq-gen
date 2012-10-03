@@ -678,17 +678,65 @@ TNode::set_site_window(
 					   unsigned int *end_site
 					  )
 {
-	if (*start_site == -1) { 
-		*start_site = 0; 
-		*end_site = seq_evo.size(); 
-	} else if ( *start_site > seq_evo.size() - (order+1) ) {
-		*end_site = seq_evo.size();
-		*start_site -= order;
+	if (order_3_markov) {
+		if (*start_site == -1) { 
+			*start_site = 0; 
+			*end_site = seq_evo.size(); 
+		} else if ( *start_site > seq_evo.size() - (order+1) ) {
+			*end_site = seq_evo.size();
+			*start_site -= order;
+		} else {
+			*end_site = *start_site + order+1;
+			*start_site -= order;
+			if (*start_site < 0) *start_site = 0;
+		}
 	} else {
-		*end_site = *start_site + order+1;
-		*start_site -= order;
-		if (*start_site < 0) *start_site = 0;
+		int event_site = *start_site, last_site = *end_site;
+		if (*start_site == -1) { 
+			*start_site = 0;
+			*end_site = seq_evo.size();
+
+			event_site = 0; 
+			last_site = seq_evo.size(); 
+
+		} else {
+
+			cerr << "     event_site(" << event_site << ") -= 3 + " << (event_site%3);
+			event_site -= 3 + (event_site%3);
+			if (event_site < 0) event_site = 0;
+			cerr << " = " << event_site << endl;
+
+			*start_site -= 3 + ((*start_site)%3);
+
+			// Ordinarily, the range covered by a 1st order markov codon model is 3 codons, and the
+			// block size is 3, thus, the two 3's below.
+			last_site = event_site + (3*order * 3);
+
+			*end_site = *start_site + 3*order*3;
+
+			// and the end site similarly.
+			cerr << "     end_site(" << last_site << ") ----> ";
+			if (last_site > seq_evo.size()) {
+				cerr << "end" << endl;
+			} else {
+				cerr << last_site << endl;
+			}
+		}
 	}
+
+/// TEMPORARY
+/*		if (*start_site == -1) { 
+			*start_site = 0; 
+			*end_site = seq_evo.size(); 
+		} else if ( *start_site > seq_evo.size() - (order+1) ) {
+			*end_site = seq_evo.size();
+			*start_site -= order;
+		} else {
+			*end_site = *start_site + order+1;
+			*start_site -= order;
+			if (*start_site < 0) *start_site = 0;
+		}
+*/
 }
 
 double 
@@ -725,8 +773,15 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	evolvingSequence->forward_rate_away_from_sequence(branch, event_site, end_site);
 
 	if (Human_Data_simulation) {
-		//cerr << "Rate away from sequence: " << R_D << endl;
-		//evolvingSequence->printSequenceRateAway();
+		cerr << "Rate away from sequence: " << R_D << endl;
+		evolvingSequence->printSequenceRateAway();
+		
+		int i = 0;
+		for (vector<Site>::iterator seqi = seq_evo.begin(); seqi != seq_evo.end(); ++seqi, i++) {
+			cerr << i << " " << stateCharacters.at((*seqi).returnState()) << " " 
+			<< (*seqi).return_lookup_table_environment_index() << " "
+			<< (*seqi).return_lookup_table_sequence_index() << endl;
+		}
 		//exit(0);
 	}
 

@@ -294,7 +294,7 @@ void ForwardSimulation::gillespie(
 //			iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
 			iTree->my_tree->dep.front()->context.set_sequence_indices(des, 3);
 			lambda_T = calcGillespieLambda(iTree->my_tree, des, &I, &D, &S, simulation_type, event_site);
-//cerr << "lambda_T, post_change = " << lambda_T << endl; exit(0);
+cerr << "lambda_T, post_change = " << lambda_T << endl; 
 			if (!evolving_to_equilibrium) {
 				new_event->Q.idot = lambda_T;
 				(*events).push_back(new_event);
