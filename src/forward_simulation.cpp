@@ -291,8 +291,9 @@ void ForwardSimulation::gillespie(
 				new_event->assign_Q(des, des->seq_evo.at(event_site), action, 1);
 			}
 			if (action == DELETE || action == INSERT) event_site = -1;		// Temp. Flags to recalculate TauIJ for entire sequence.
-			if (Human_Data_simulation) iTree->my_tree->dep.front()->context.set_sequence_indices(des, 3);
-			else iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
+//			if (Human_Data_simulation) iTree->my_tree->dep.front()->context.set_sequence_indices(des, 3);
+//			else 
+				iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
 			lambda_T = calcGillespieLambda(iTree->my_tree, des, &I, &D, &S, simulation_type, event_site);
 cerr << "lambda_T, post_change = " << lambda_T << endl; 
 			if (!evolving_to_equilibrium) {

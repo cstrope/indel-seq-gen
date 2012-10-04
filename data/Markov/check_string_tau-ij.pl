@@ -198,13 +198,6 @@ sub tau_ij_eq
 }
 
 
-
-for my $i (1 .. @codons-1) {
-	print "doublet: $codons[$i-1]|$codons[$i] ----> $codon_index[$i-1]*64+$codon_index[$i]\n";
-	print "P($codons[$i-1]|$codons[$i]) = $CCDS[$codon_index[$i-1]][$codon_index[$i]]";
-	print "  $GRCh37[$codon_index[$i-1]][$codon_index[$i]]\n";
-}
-
 sub markov_ratio
 {
 	my ($env, $left, $right, $i, $j, $matrix_ref) = @_;

@@ -713,6 +713,7 @@ TNode::set_site_window(
 			last_site = event_site + (3*order * 3);
 
 			*end_site = *start_site + 3*order*3;
+			if (*end_site > seq_evo.size()) *end_site = seq_evo.size();
 
 			// and the end site similarly.
 			cerr << "     end_site(" << last_site << ") ----> ";

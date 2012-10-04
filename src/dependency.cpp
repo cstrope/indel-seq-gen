@@ -481,46 +481,162 @@ contextDependence::reset_sequence_indices(
 	int event_offset = stateCharacters.find_first_of(event.at(1)) - stateCharacters.find_first_of(event.at(0));
 	vector<int>::iterator bt;
 
-//	cerr << "Changed site " << event_site << "->" << event << endl;
-//	cerr << node->printSequence() << endl;
-//	cerr << "Modifying sites " << start << "->" << end << endl;
+	cerr << "Changed site " << event_site << "->" << event << endl;
+	cerr << node->printSequence() << endl;
+	cerr << "Modifying sites " << start << "->" << end << endl;
 
-//	cerr << "Previous indices: " << endl;
-//	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
-//		cerr << (*it).return_lookup_table_sequence_index() << " ";
-//	cerr << endl;
-	
-	// MIDDLE: If in the middle of the sequence, the index position will change by the nature of the event 
-	// (e.g., T->A is a 3 to a 0 in the stateCharacters array), multiplied by the index_position_multiplier,
-	// i.e., if we are changing the index at the beginning of the string in order-3, the index will be
-	// old_index+4^6*(-3)
-	// END:    If at the end of the sequence, still start at ipm beginning, but the nature of the change
-	// to the sequence indices is different in that after entering the last order+1 sites, the value removed
-	// from the previous indices will remain constant. The Nth site will always have the multiplier 4^0, 
-	// the (N-1)st site will always have the multiplier 4^1, and so on.
-	// BEGINNING: If in the beginning of the sequence, the ipm index will have to start a little ways into the
-	// ipm array, since a change to first site will have a specific multiplier > 1 (actually, it will be 
-	// 4^order), and so on...
-	bt = index_position_multiplier.begin();
-	if (node->seq_evo.at(event_site).return_lookup_table_environment_index() < order) {
-		bt += order-node->seq_evo.at(event_site).return_lookup_table_environment_index();
+	cerr << "Previous indices: " << endl;
+	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
+		cerr << (*it).return_lookup_table_sequence_index() << " ";
+	cerr << endl;
+
+	if (Human_Data_simulation) {
+		int block_size = 3;
+		int codon1[3], codon2[3], codon3[3];	// Get the codons. Can translate them and multiply to get correct indices.
+		int from_codon[3];
+		vector<int> new_indices;
+		vector<int>::iterator nt = new_indices.begin();
+		// Again, assuming that a change cannot occur in the first 3 sites of the sequence.
+		if (end - start == order*2*block_size) {
+			// At the end of the sequence.
+cerr << "ENTERED END OF SEQUENCE LOOP" << endl;
+			for (int i = 0; i < block_size; ++i) codon1[i] = node->seq_evo.at(start+i).returnState();
+			for (int i = 0; i < block_size; ++i) codon2[i] = node->seq_evo.at(start+block_size+i).returnState();
+			from_codon[0] = codon2[0];
+			from_codon[1] = codon2[1];
+			from_codon[2] = codon2[2];
+			int event_site_codon_position = event_site % block_size;
+			cerr << "event_site_codon_position: " << event_site_codon_position << endl;
+			from_codon[event_site_codon_position] = stateCharacters.find(event.at(0));
+			cerr << "codon 1: ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
+			cerr << endl << "codon 2: ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
+			cerr << " --> ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
+			cerr << endl;
+			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it) {
+				new_indices.push_back((*it).return_lookup_table_sequence_index());
+			}
+			// Populate vector with older indices.
+			vector<int> new_indices;
+			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it) {
+				new_indices.push_back((*it).return_lookup_table_sequence_index());
+			}
+			int codon1_index = codon1[0]*16+codon1[1]*4+codon1[2];
+			int codon2_index = codon2[0]*16+codon2[1]*4+codon2[2];
+			int codon3_index = codon3[0]*16+codon3[1]*4+codon3[2];
+			int from_codon_index = from_codon[0]*16+from_codon[1]*4+from_codon[2];
+			nt = new_indices.begin();
+			int index_change_base = codon2_index - from_codon_index;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			// No multiply by 64 here, since ne'er does more codon cometh into th' picture.
+			// E.g. only 6 multipliers are used between the codons:
+			// 1024 256 64 16 4 1
+			// If one of the last three change, the same multiplier is used for both (codon1 and codon2) index modifications.
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			for (nt = new_indices.begin(); nt != new_indices.end(); ++nt) cerr << (*nt) << endl;
+
+			nt = new_indices.begin();
+			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it, ++nt) 
+				(*it).set_lookup_table_sequence_index(*nt);
+
+			//for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it) 
+			//	cerr << (*it).return_lookup_table_sequence_index() << " ";
+			//cerr << endl;
+		} else {
+			// Middle of the sequence.
+			for (int i = 0; i < block_size; ++i) codon1[i] = node->seq_evo.at(start+i).returnState();
+			for (int i = 0; i < block_size; ++i) codon2[i] = node->seq_evo.at(start+block_size+i).returnState();
+			for (int i = 0; i < block_size; ++i) codon3[i] = node->seq_evo.at(start+2*block_size+i).returnState();
+
+			from_codon[0] = codon2[0];
+			from_codon[1] = codon2[1];
+			from_codon[2] = codon2[2];
+			int event_site_codon_position = event_site % block_size;
+			cerr << "event_site_codon_position: " << event_site_codon_position << endl;
+			from_codon[event_site_codon_position] = stateCharacters.find(event.at(0));
+
+			cerr << "codon 1: ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
+			cerr << endl << "codon 2: ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
+			cerr << " --> ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
+			cerr << endl << "codon 3: ";
+			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon3[i]); 
+			cerr << endl;
+
+			// Populate vector with older indices.
+			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it) {
+				new_indices.push_back((*it).return_lookup_table_sequence_index());
+			}
+
+			int codon1_index = codon1[0]*16+codon1[1]*4+codon1[2];
+			int codon2_index = codon2[0]*16+codon2[1]*4+codon2[2];
+			int codon3_index = codon3[0]*16+codon3[1]*4+codon3[2];
+			int from_codon_index = from_codon[0]*16+from_codon[1]*4+from_codon[2];
+			nt = new_indices.begin();
+			int index_change_base = codon2_index - from_codon_index;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			index_change_base *= 64;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			if (end != node->seq_evo.size()) index_change_base *= 64;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+			(*nt) += index_change_base; nt++;
+
+			for (nt = new_indices.begin(); nt != new_indices.end(); ++nt) cerr << (*nt) << endl;
+
+			nt = new_indices.begin();
+			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it, ++nt) 
+				(*it).set_lookup_table_sequence_index(*nt);
+
+			//for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it) 
+			//	cerr << (*it).return_lookup_table_sequence_index() << " ";
+			//cerr << endl;
+		}
+	} else {
+		// MIDDLE: If in the middle of the sequence, the index position will change by the nature of the event 
+		// (e.g., T->A is a 3 to a 0 in the stateCharacters array), multiplied by the index_position_multiplier,
+		// i.e., if we are changing the index at the beginning of the string in order-3, the index will be
+		// old_index+4^6*(-3)
+		// END:    If at the end of the sequence, still start at ipm beginning, but the nature of the change
+		// to the sequence indices is different in that after entering the last order+1 sites, the value removed
+		// from the previous indices will remain constant. The Nth site will always have the multiplier 4^0, 
+		// the (N-1)st site will always have the multiplier 4^1, and so on.
+		// BEGINNING: If in the beginning of the sequence, the ipm index will have to start a little ways into the
+		// ipm array, since a change to first site will have a specific multiplier > 1 (actually, it will be 
+		// 4^order), and so on...
+		bt = index_position_multiplier.begin();
+		if (node->seq_evo.at(event_site).return_lookup_table_environment_index() < order) {
+			bt += order-node->seq_evo.at(event_site).return_lookup_table_environment_index();
+		}
+
+		int mult;
+		int at_site = start;
+		for (vector<Site>::iterator it = node->seq_evo.begin()+start; at_site < end && it != node->seq_evo.end(); ++it, ++bt, ++at_site) {
+			if (at_site >= node->seq_evo.size()-(order+1)) {
+				for (; at_site < end && it != node->seq_evo.end(); ++it, ++at_site)
+					(*it).set_lookup_table_sequence_index((*it).return_lookup_table_sequence_index()+(*bt)*event_offset);
+				--it;
+				continue;
+			} else (*it).set_lookup_table_sequence_index((*it).return_lookup_table_sequence_index()+(*bt)*event_offset);
+		}
 	}
 
-	int mult;
-	int at_site = start;
-	for (vector<Site>::iterator it = node->seq_evo.begin()+start; at_site < end && it != node->seq_evo.end(); ++it, ++bt, ++at_site) {
-		if (at_site >= node->seq_evo.size()-(order+1)) {
-			for (; at_site < end && it != node->seq_evo.end(); ++it, ++at_site)
-				(*it).set_lookup_table_sequence_index((*it).return_lookup_table_sequence_index()+(*bt)*event_offset);
-			--it;
-			continue;
-		} else (*it).set_lookup_table_sequence_index((*it).return_lookup_table_sequence_index()+(*bt)*event_offset);
-	}
-
-//	cerr << "New indices: " << endl;
-//	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
-//		cerr << (*it).return_lookup_table_sequence_index() << " ";
-//	cerr << endl;
+	cerr << "New indices: " << endl;
+	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
+		cerr << (*it).return_lookup_table_sequence_index() << " ";
+	cerr << endl;
 }
 
 void contextDependence::set_sequence_indices(
