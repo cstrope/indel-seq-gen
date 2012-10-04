@@ -812,7 +812,7 @@ Site::forward_rate_away_from_site(
 	forward_rate_away.assign(numStates, 0);
 	for (int j = 0; j < numStates; j++) {
 		Qij = 0;
-		if (order_3_markov) Qij = site_rate_away.at(j); 
+		if (order_3_markov || Human_Data_simulation) Qij = site_rate_away.at(j); 
 		else Qij = branch->rates->Qij.at(from(i)+to(j));
 		Qij *= branch->rates->catRate.at(returnCategory());
 		if ( j != i ) {

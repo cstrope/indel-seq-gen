@@ -65,7 +65,7 @@ my (@codons, @codon_index);
 ## Create this to keep track of rates away per position.
 my (@rate_away);
 for my $i (0 .. @sequence-1) { $rate_away[$i] = [ @array ];	for my $j (0 .. 3) { $rate_away[$i][$j] = 0; } }
-my @nucleotides = { "A", "C", "G", "T" };
+my @nucleotides = ( "A", "C", "G", "T" );
 my ($j_codon, $i_codon);
 
 
@@ -84,68 +84,141 @@ for my $i (0 .. @sequence-1) {
 
 
 ## See if we can make the rates match with iSG...
+my ($codon_minus1, $codon_plus1);
 for (my $i = 3; $i < @sequence; $i+= 3) {
 	$i_codon = $sequence[$i] . $sequence[$i+1] . $sequence[$i+2];
+	$codon_minus1 = $sequence[$i-3] . $sequence[$i-2] . $sequence[$i-1];
+	if ($i+4 < @sequence) { $codon_plus1 = $sequence[$i+3] . $sequence[$i+4] . $sequence[$i+5]; }
+	else { $codon_plus1 = ""; }
 	for my $j (0 .. 3) {
 		if ($nucleotides[$j] ne $sequence[$i]) {
 			$j_codon = $nucleotides[$j] . $sequence[$i+1] . $sequence[$i+2];
-			$rate_away[$i][$j] = 0.25 * &tau_ij_eq($env[$i], $i_codon, $j_codon);
+			if (!&stop_codon($j_codon)) {
+				$rate_away[$i][$j] = 0.25 * &tau_ij_eq($env[$i], $i_codon, $j_codon, $codon_minus1, $codon_plus1, $env[$i]);
+			}
 		}
+	}
 
-exit(0);
-
+	for my $j (0 .. 3) {
 		if ($nucleotides[$j] ne $sequence[$i+1]) {
 			$j_codon = $sequence[$i] . $nucleotides[$j] .  $sequence[$i+2];
+			if (!&stop_codon($j_codon)) {
+				$rate_away[$i+1][$j] = 0.25 * &tau_ij_eq($env[$i], $i_codon, $j_codon, $codon_minus1, $codon_plus1, $env[$i]);
+			}
 		}
-#		$rate_away[$i+1][$j] =
-
-		if ($nucleotides[$j] ne $sequence[$i+2]) {
-			$j_codon = $sequence[$i+2] . $sequence[$i+1] . $nucleotides[$j] ;
-		}
-#		$rate_away[$i+2][$j] =
 	}
+
+	for my $j (0 .. 3) {
+		if ($nucleotides[$j] ne $sequence[$i+2]) {
+			$j_codon = $sequence[$i] . $sequence[$i+1] . $nucleotides[$j] ;
+			if (!&stop_codon($j_codon)) {
+				$rate_away[$i+2][$j] = 0.25 * &tau_ij_eq($env[$i], $i_codon, $j_codon, $codon_minus1, $codon_plus1, $env[$i]);
+			}
+		}
+	}
+
+	print "|$codon_minus1|*$i_codon*|$codon_plus1|\n";
+	print "$sequence[$i]: ";
+	for my $j (1 .. 3) {
+		$rate_away[$i][$j] += $rate_away[$i][$j-1];
+		$rate_away[$i+1][$j] += $rate_away[$i+1][$j-1];
+		$rate_away[$i+2][$j] += $rate_away[$i+2][$j-1];
+	}
+	for my $j (0 .. 3) {
+		print " $rate_away[$i][$j]";
+	}
+	print "\n";
+	print "$sequence[$i+1]: ";
+	for my $j (0 .. 3) {
+		print " $rate_away[$i+1][$j]";
+	}
+	print "\n";
+	print "$sequence[$i+2]: ";
+	for my $j (0 .. 3) {
+		print " $rate_away[$i+2][$j]";
+	}
+	print "\n";
+
 }
+
+my $sequence_rate_away = 0;
+for my $i (0 .. @sequence-1) {
+	$sequence_rate_away += $rate_away[$i][3];
+}
+print "SEQ_RATE_AWAY: $sequence_rate_away\n";
 
 exit(0);
 
+sub stop_codon
+{
+	my ($seq) = @_;
+	
+	if ($seq eq "TAG") { return 1; }
+	if ($seq eq "TGA") { return 1; }
+	if ($seq eq "TAA") { return 1; }
+	return 0;
+}
 
 sub tau_ij_eq
 {
-	my ($env, $i_codon, $j_codon) = @_;
+	my ($env, $i_codon, $j_codon, $codon_left, $codon_right) = @_;
 	my $tau_ij;
 	my $diffPji;
 	my $diffP0ji;
 
-### NEED THE SEQUENCE INDICES!!!!!!!!!!!!!!!!!!!!!!!!!!! Pass them into here. ###
+	my ($idx_codon_i, $idx_codon_j, $idx_codon_left, $idx_codon_right);
+	$idx_codon_i = &get_index($i_codon);
+	$idx_codon_j = &get_index($j_codon);
+	$idx_codon_left = &get_index($codon_left);
+	$idx_codon_right = &get_index($codon_right);
 
-	$diffPji = markov_ratio($env, $i, $j);
+#	print "Pij\n";
+#	print " i-1 i   |$codon_left|$i_codon| = $CCDS[$idx_codon_left][$idx_codon_i]\n";
+#	if($env == 1) { print " i   i+1 |$i_codon|$codon_right| = $CCDS[$idx_codon_i][$idx_codon_right]\n"; }
+#	print " j-1 j   |$codon_left|$j_codon| = $CCDS[$idx_codon_left][$idx_codon_j]\n";
+#	if($env == 1) { print " j   j+1 |$j_codon|$codon_right| = $CCDS[$idx_codon_j][$idx_codon_right]\n"; }
+
+#	print "P0ij\n";
+#	print " i-1 i   |$codon_left|$i_codon| = $GRCh37[$idx_codon_left][$idx_codon_i]\n";
+#	if($env == 1) { print " i   i+1 |$i_codon|$codon_right| = $GRCh37[$idx_codon_i][$idx_codon_right]\n"; }
+#	print " j-1 j   |$codon_left|$j_codon| = $GRCh37[$idx_codon_left][$idx_codon_j]\n";
+#	if($env == 1) { print " j   j+1 |$j_codon|$codon_right| = $GRCh37[$idx_codon_j][$idx_codon_right]\n"; }
 	
-	return (log(tau_ij) / (1-1/$tau_ij));
+	$diffPji = markov_ratio($env, $idx_codon_left, $idx_codon_right, $idx_codon_i, $idx_codon_j, \@CCDS);
+	$diffP0ji = markov_ratio($env, $idx_codon_left, $idx_codon_right, $idx_codon_i, $idx_codon_j, \@GRCh37);
+
+#	print "diffPji:  $diffPji\n";
+#	print "diffP0ji: $diffP0ji\n";
+
+	$tau_ij = $diffPji / $diffP0ji;
+
+#	print "tau_ij = diffPji/diffP0ji = $tau_ij\n";
+	
+	return (log($tau_ij) / (1-1/$tau_ij));
 }
+
+
 
 for my $i (1 .. @codons-1) {
 	print "doublet: $codons[$i-1]|$codons[$i] ----> $codon_index[$i-1]*64+$codon_index[$i]\n";
 	print "P($codons[$i-1]|$codons[$i]) = $CCDS[$codon_index[$i-1]][$codon_index[$i]]";
 	print "  $GRCh37[$codon_index[$i-1]][$codon_index[$i]]\n";
+}
 
+sub markov_ratio
+{
+	my ($env, $left, $right, $i, $j, $matrix_ref) = @_;
+	my $ratio;
 	
+	if ($env == 1) {
+		$ratio = ( $matrix_ref->[$left][$j] * $matrix_ref->[$j][$right] ) / ( $matrix_ref->[$left][$i] * $matrix_ref->[$i][$right] );
+	} else {
+		## This is environment at end of the sequence. We assumed that beginning of sequence is all 0 rates away, so
+		## this is safe.
+		$ratio = $matrix_ref->[$left][$j] / $matrix_ref->[$left][$i];
+	}
+	return $ratio;
 }
-
-### Calculate the rate away for each sequence chunk.
-my $tau_ij = 0;
-for my $i (1 .. @codons-1) {
-	$tau_ij += 
-		  	   ( $GRCh37[$codon_index[$i-1]][$codon_index[$i]] 
-			     * $GRCh37[$codon_index[$i-1]][$codon_index[$i]] 
-			   ) /
-	 		   (
-	 		     $CCDS[$codon_index[$i-1]][$codon_index[$i]] 
-	 		     * $CCDS[$codon_index[$i-1]][$codon_index[$i]]
-	 		   );
-}
-
-my $Rij = 0.25 * (log($tau_ij)/(1-1/$tau_ij));
-print "$Rij\n";
 
 sub get_index
 {
@@ -162,5 +235,4 @@ sub nucl_val
 	if ($nucl eq "C") { return 1; }
 	if ($nucl eq "G") { return 2; }
 	if ($nucl eq "T") { return 3; }
-
 }
