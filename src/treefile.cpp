@@ -775,12 +775,14 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	// Resetting Qidot... Not sure where I did it before, so I am brute-forcing it here.
 	// I know that this is done correctly in the EPC portion, though. I am starting to think
 	// that maybe there was an issue in the previous forward runs???
-	evolvingSequence->Qidot = 0;
-	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it) {
-		evolvingSequence->Qidot += (*it).forward_rate_away.at(0);
-		evolvingSequence->Qidot += (*it).forward_rate_away.at(1);
-		evolvingSequence->Qidot += (*it).forward_rate_away.at(2);
-		evolvingSequence->Qidot += (*it).forward_rate_away.at(3);
+	if (Human_Data_simulation) {
+		evolvingSequence->Qidot = 0;
+		for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it) {
+			evolvingSequence->Qidot += (*it).forward_rate_away.at(0);
+			evolvingSequence->Qidot += (*it).forward_rate_away.at(1);
+			evolvingSequence->Qidot += (*it).forward_rate_away.at(2);
+			evolvingSequence->Qidot += (*it).forward_rate_away.at(3);
+		}
 	}
 
 	if (Human_Data_simulation) {
