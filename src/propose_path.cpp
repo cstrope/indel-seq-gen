@@ -508,8 +508,6 @@ PathProposal::EvolveStep(
 	else i_z->evolvingSequence->Qidot = k_0->seq_evo.size();
 	num_diff = k_0->evolvingSequence->compare_sequence(i_z->evolvingSequence);
 
-	cerr << "Number of differenced between sequences: " << num_diff << endl;
-
 	// For independent sites, branch needs to be scaled from substitutions per site to an approximation
 	// of the dependent number of substitutions per site. S is the value that we use.
 	if (!Pc && !nij) i_z->branch->S = i_z_rate_away / i_z->seq_evo.size();
@@ -528,8 +526,6 @@ PathProposal::EvolveStep(
 			(*it)+=(*pk);
 		}
 	}
-
-	cerr << "Point-> PathProposal::EvolveStep() preprocessing done." << endl;
 
 	lambda_T = i_z->calculateEndpointRateAwayFromSequence(tree, k_0, T, t_0, -1);
 	begin_event = branch_terminal_event(k_0->mytipNo, BRANCH_BEGIN, k_0->DistanceFromRoot, k_0->bipartition, t_0, T); 

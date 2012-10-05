@@ -135,11 +135,7 @@ iQdPc(
 	/// affected by a change for subsequent calculation of the site-specific transition matrices.
 	//////////
 	i_z->set_site_window(tree->dep.front()->context.return_order(), &event_site, &end_site);
-	cerr << "Point-> iQdPc()  event_site " << event_site << " end_site " << end_site << endl;
 	i_z->site_specific_Qmat(tree, event_site, end_site);
-	cerr << "Point-> iQdPc() returning rate matrix." << endl;
-
-	exit(0);
 
 	return initial_rates;
 }

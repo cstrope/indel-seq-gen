@@ -145,26 +145,10 @@ Sequence::zeroStopCodons (
 	// If we end up zeroing some possible transition, this needs to be reflected in the overall sequence probability.
 	// For this, we return the amount that the sequence needs to be adjusted by.
 	double probability_adjustment = 0;
-/*	// First, set the event site to the nearest codon boundary.
-	cerr << "???event_site(" << event_site << ") -= 3 + " << (event_site%3) << endl;
-	event_site -= 3 + (event_site%3);
-	if (event_site < 0) event_site = 0;
-
-	// and the end site similarly.
-	cerr << "???end_site(" << end_site << ") += 3 + " << (3-(end_site%3)) << " ----> ";
-	end_site += 3 + (3-(end_site%3));		// ? End site at the end of a codon should be a 2... but if less than end site?
-
-//	cerr << "???now event_site=" << event_site << " and end_site=" << end_site << endl;
-*/
-
 	vector<Site>::iterator end;
-	if (end_site > evolutionaryAttributes.size()) {
-		end = evolutionaryAttributes.end(); 
-		cerr << "end" << endl;
-	} else {
-		end = evolutionaryAttributes.begin()+end_site; 
-		cerr << end_site << endl;
-	}
+
+	if (end_site > evolutionaryAttributes.size()) end = evolutionaryAttributes.end(); 
+	else end = evolutionaryAttributes.begin()+end_site; 
 
 	event_site = 0;
 	end = evolutionaryAttributes.end();
@@ -175,7 +159,7 @@ Sequence::zeroStopCodons (
 		codon[1] = (*(it+1)).returnState();
 		codon[2] = (*(it+2)).returnState();
 
-		cerr << "site " << i << ": " << stateCharacters.at(codon[0]) << stateCharacters.at(codon[1]) << stateCharacters.at(codon[2]) << "  ";
+		//cerr << "site " << i << ": " << stateCharacters.at(codon[0]) << stateCharacters.at(codon[1]) << stateCharacters.at(codon[2]) << "  ";
 		
 		// All stop codons start with T, this checks for that.
 		if (codon[0] == 3) {		// T
@@ -185,39 +169,39 @@ Sequence::zeroStopCodons (
 			if (codon[1] == 0) {  // TAX
 				probability_adjustment += (*(it+2)).site_rate_away.at(0);
 				(*(it+2)).site_rate_away.at(0) = 0;
-				cerr << "G2->0 ";
+				//cerr << "G2->0 ";
 			} else if (codon[1] == 2) { // TGX
 				probability_adjustment += (*(it+2)).site_rate_away.at(2);
 				(*(it+2)).site_rate_away.at(2) = 0;
-				cerr << "A2->0 ";
+				//cerr << "A2->0 ";
 			} else if (codon[2] == 0) { // TXA -> can change to TAA or TGA
 				probability_adjustment 
 				+= (*(it+1)).site_rate_away.at(0)
 				 + (*(it+1)).site_rate_away.at(2);
 				(*(it+1)).site_rate_away.at(0) = (*(it+1)).site_rate_away.at(2) = 0;
-				cerr << "{A1,G1}->0 ";
+				//cerr << "{A1,G1}->0 ";
 			} else if (codon[2] == 2) { // TXG
 				probability_adjustment += (*(it+1)).site_rate_away.at(2);
 				(*(it+1)).site_rate_away.at(2) = 0;
-				cerr << "A1->0 ";
+				//cerr << "A1->0 ";
 			} // else this codon is fine.
 			// Now check to see if second and third codon positions are stoppers.
 		} else if (codon[1] == 0) {
 			if (codon[2] == 2 || codon[2] == 0) {
 				probability_adjustment += (*it).site_rate_away.at(3);
 				(*it).site_rate_away.at(3) = 0;
-				cerr << "T0->0 ";
+				//cerr << "T0->0 ";
 			}
 		} else if (codon[1] == 2) {
 			if (codon[2] == 0) {
 				probability_adjustment += (*it).site_rate_away.at(3);
 				(*it).site_rate_away.at(3) = 0;
-				cerr << "T0->0 ";
+				//cerr << "T0->0 ";
 			}
 		}
-		cerr << endl;
+		//cerr << endl;
 	}
-	cerr << "EXITING ZEROSTOPCODONS" << endl;
+	//cerr << "EXITING ZEROSTOPCODONS" << endl;
 	return probability_adjustment;
 }
 

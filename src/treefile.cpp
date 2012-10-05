@@ -726,7 +726,7 @@ TNode::set_site_window(
 		}
 	}
 
-	cerr << "Point-> TNode::set_site_window(order, *start, *end) EXIT" << endl;
+	//cerr << "Point-> TNode::set_site_window(order, *start, *end) EXIT" << endl;
 }
 
 double 
@@ -775,18 +775,18 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 		}
 	}
 
-	if (Human_Data_simulation) {
-		evolvingSequence->printSequenceRateAway();
-		cerr << "Rate away from sequence: " << R_D << endl;
+	//if (Human_Data_simulation) {
+		//evolvingSequence->printSequenceRateAway();
+		//cerr << "Rate away from sequence: " << R_D << endl;
 		
-		int i = 0;
-		for (vector<Site>::iterator seqi = seq_evo.begin(); seqi != seq_evo.end(); ++seqi, i++) {
-			cerr << i << " " << stateCharacters.at((*seqi).returnState()) << " " 
-			<< (*seqi).return_lookup_table_environment_index() << " "
-			<< (*seqi).return_lookup_table_sequence_index() << endl;
-		}
+		//int i = 0;
+		//for (vector<Site>::iterator seqi = seq_evo.begin(); seqi != seq_evo.end(); ++seqi, i++) {
+		//	cerr << i << " " << stateCharacters.at((*seqi).returnState()) << " " 
+		//	<< (*seqi).return_lookup_table_environment_index() << " "
+		//	<< (*seqi).return_lookup_table_sequence_index() << endl;
+		//}
 		//exit(0);
-	}
+	//}
 
 	//cerr << "Point-> TNode::calculateForwardRateAwayFromSequence__order3Markov(tree, event_site) RATE AWAY = " << R_D << endl;
 	return R_D;
@@ -1165,20 +1165,22 @@ TNode::calculateEndpointRateAwayFromSequence(
 	unsigned int end_site;
 	vector<Site>::iterator target_it = k_0->seq_evo.begin();
 
-	//RateMatrix temp_rates = initialize_rate_matrices(tree, k_0, T, at_dt, event_site);
-//cerr << "Temp_rates being made: " << endl;
+	//cerr << "Temp_rates being made: " << endl;
+	// This makes temporary rates (set to global model of rates), but more importantly, allocates
+	// e_QijDt (from setRatesAway) and sets each position in the sequence to the appropriate, context
+	// dependent, e_QijDt matrix (ONLY 4x4, even when using codons; why? only one site changes at a time,
+	// and each nucleotide in the codon stores the proper rate away according to the entirety of the codon).
 	RateMatrix temp_rates = (*ptr2init)(tree, this, k_0, T, at_dt, event_site);
-//cerr << "Temp rates done." << endl;
-//	cerr << "XXXXXXX" << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
+	//cerr << "Temp rates done." << endl;
+	//	cerr << "XXXXXXX" << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
 
 	// Checking the cumulative sum with Pij versus Nij.
 	int seq_pos = 0;
 	for (vector<Site>::iterator it = seq_evo.begin(); it != seq_evo.end(); ++it, ++target_it, ++seq_pos) {
-		//update_rate_matrices(&temp_rates, it, T, at_dt);
-		(*ptr2update)(&temp_rates, this, it, T, at_dt);		// Points to rate matrices in rate_type.cpp. //
-
-//		cerr << "pos " << seq_pos << ": " << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
-
+		// Sets rate matrix; exponentiates e_QijDt for the site to make the transition probabilities for the site.
+		// ptr2update points to rate matrix updates (uXxXx) in rate_type.cpp
+		(*ptr2update)(&temp_rates, this, it, T, at_dt);
+		//cerr << "pos " << seq_pos << ": " << temp_rates.Pij.at(0).at(0) << " " << temp_rates.Pij.at(0).at(1) << endl;
 		calculateEndpointRateAwayFromSite(it, target_it, &cumulative_site_sum_away, &forward_site_sum_away, &temp_rates);
 	}
 
@@ -1312,7 +1314,6 @@ TNode::site_specific_Qmat(
 						  unsigned int end	// End position
 						 )
 {
-	cerr << "Point-> TNode::site_specific_Qmat(tree, start, end) ENTERED" << endl;
 	int seq_pos = 0;
 	int i,j;
 	vector<unsigned int> power_1 (numStates, 0);
@@ -1391,13 +1392,13 @@ TNode::site_specific_Qmat(
 		// ATGCCCAAGGGGGAT (0.268073 -0.832671 0.344024 0.220574 --> 0.268072779911734 0.268072779911734 0.612096796818472 0.832671112727411 )
 		// ATGGCCAAGGGGGAT (0.189035 0.174901 -0.516156 0.15222 --> 0.189035482893738 0.363936077856475 0.363936077856475 0.516156453888057 )
 		// ATGTCCAAGGGGGAT (0.301444 0.281933 0.382703 -0.96608 --> 0.301444108560112 0.583377210066327 0.966079793639185 0.966079793639185)
-		cerr << "Position " << seq_pos << " Qmat: " << endl;
-		int endline = 0;
-		for (jt = (*it).e_QijDt.begin(); jt != (*it).e_QijDt.end(); ++jt, ++endline) {
-			if (endline == 4) { cerr << endl; endline = 0; }
-			cerr << (*jt) << " ";
-		}
-		cerr << endl;
+		//cerr << "Position " << seq_pos << " Qmat: " << endl;
+		//int endline = 0;
+		//for (jt = (*it).e_QijDt.begin(); jt != (*it).e_QijDt.end(); ++jt, ++endline) {
+		//	if (endline == 4) { cerr << endl; endline = 0; }
+		//	cerr << (*jt) << " ";
+		//}
+		//cerr << endl;
 	}
 }
 

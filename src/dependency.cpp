@@ -930,21 +930,21 @@ contextDependence::setOffset()
 		}
 	}
 
-	cerr << "Offset setup: " << endl;
-	int p = 0;
-	for (at = index_offset.begin(); at != index_offset.end(); ++at, ++p) {
-		cerr << "Level " << p << ": " << endl;
-		for (vector<int>::iterator bt = (*at).begin(); bt != (*at).end(); ++bt) {
-			cerr << (*bt) << " ";
-		}
-		cerr << endl;
+	//cerr << "Offset setup: " << endl;
+	//int p = 0;
+	//for (at = index_offset.begin(); at != index_offset.end(); ++at, ++p) {
+	//	cerr << "Level " << p << ": " << endl;
+	//	for (vector<int>::iterator bt = (*at).begin(); bt != (*at).end(); ++bt) {
+	//		cerr << (*bt) << " ";
+	//	}
+	//	cerr << endl;
 //		for (int j = 0; j < numStates; ++j) {		// current == sequence i
 //			for (int k = 0; k < numStates; ++k) {		// proposed	== sequence j
 //				cerr << (*at).at(j*numStates+k) << " ";
 //			}
 //			cerr << endl;
 //		}
-	}
+	//}
 	//exit(0);
 }
 
