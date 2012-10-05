@@ -76,11 +76,16 @@ if ($INDEPENDENT_SITES) {
 	print OUT "$return_val_fwd\n";
 	close OUT;
 
-	exit(0);	## While testing new dependency model. ##
+	#exit(0);	## While testing new dependency model. ##
 
 	print STDERR "----- END-POINT CONDITIONED RUN -------------\n";
 	my $epc_command = "";
-	$epc_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -e $filename -O $order -D $filename.sim.dep -E $filename.sim.ma ";
+	$epc_command .= "-m JC69 -z $RANDOM_SEED,2001,3001,4001 -e $filename -D $filename.sim.dep -E $filename.sim.ma ";
+	if ($dependence_superscript ge 0) {
+		$epc_command .= " -O $order ";
+	} else {
+		$epc_command .= " -2 CCDS_nucleotide-1OMm.current.dep.norm -3 GRCh37_non-coding-1OMm.dep.norm ";
+	}
 	if ($EMULATE) {
 		$epc_command .= " -M $filename.sim.trace ";
 	} else {

@@ -568,7 +568,7 @@ TTree::sample_root_sequence()
 			if (RND < sum) break;
 		}
 
-		if (state == 4) {
+		if (state == numStates) {
 			cerr << "TTree::sample_root_sequence(): probably did not use option \"-o f\" in forward simulation, or input file is not in fasta format." << endl;
 			exit(EXIT_FAILURE);
 		} else {
@@ -787,8 +787,8 @@ TNode::calculateForwardRateAwayFromSequence__order3Markov(
 	}
 
 	if (Human_Data_simulation) {
-		cerr << "Rate away from sequence: " << R_D << endl;
 		evolvingSequence->printSequenceRateAway();
+		cerr << "Rate away from sequence: " << R_D << endl;
 		
 		int i = 0;
 		for (vector<Site>::iterator seqi = seq_evo.begin(); seqi != seq_evo.end(); ++seqi, i++) {

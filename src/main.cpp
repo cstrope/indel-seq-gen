@@ -494,9 +494,16 @@ void Simulate(
 			/// Check to see if there are dependencies specified.
 			//////////
 			if ( !options->dependency_file.empty() || order_3_markov || Human_Data_simulation ) {
-				if (options->path_proposal) {
+				if (options->path_proposal && order_3_markov) {
 					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, options->dependence_superscript));	// Current: hard-coded 3rd-order Markov.
 					(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, global_environment));
+				} else if (options->path_proposal && Human_Data_simulation) {
+					cerr << "Human Data simulation (Simulate()) 1" << endl;
+					(*it)->my_tree->dep.push_back(new Dependency(options->context_order, 3, options->dependence_model_counts));
+					cerr << "Human Data simulation (Simulate()) 2" << endl;
+					(*it)->my_tree->neutral_dep.push_back(new Dependency(options->context_order, 3, options->neutral_model_counts));
+					cerr << "Human Data simulation (Simulate()) 3" << endl;
+					//CheckMarkovCodonLikelihoods((*it)->my_tree->dep.front(), (*it)->my_tree->neutral_dep.front());
 				} else {
 					cerr << "Not path proposal (Simulate())" << endl;
 					if (order_3_markov) {
@@ -522,6 +529,7 @@ void Simulate(
 		cerr << "Point-> Simulate() entering Path_Proposal/Forward_Simulation" << endl;
 
 		if (options->path_proposal) {
+			cerr << "Point-> Simulate()::Path_Proposal() Beginning proposals." << endl;
 			Path_Proposal(
 						  inputTrees, 
 						  &stats,
@@ -748,6 +756,65 @@ void CheckMarkovCodonLikelihoods(
 	cerr << "AAACAAAAA->AAAAAAAAA: " << selective->context.getOffset(1, 2, 1, 0) << endl;
 	cerr << endl;
 
+	//////// EXPECTED RESULTS: /////////
+	// ATGTCC    949    0.014904 (2.22507e-308)    0.0124591 (2.22507e-308)
+	// TCCAAG    3394    0.0382163 (2.22507e-308)    0.0226075 (2.22507e-308)
+	// AAGGGG    170    0.0110397 (2.22507e-308)    0.0135833 (2.22507e-308)
+	// GGGGAT    2723    0.0218779 (2.22507e-308)    0.0149823 (2.22507e-308)
+	// ATGTCCAAG    60738    0.000569577    0.000281669
+	// TCCAAGGGG    217258    0.000421894    0.000307085
+	// AAGGGGGAT    10915    0.000241524    0.000203509
+	// AAAAAAAAA    0    0.000647527    0.000818621
+	// AAACAAAAA    1024    0.000499676    0.000879169
+	// AAAGAAAAA    2048    0.00184391    0.00136016
+	// AAATAAAAA    3072    2.22507e-308    2.22507e-308
+	// AAAAAAAAA    0    0.000647527    0.000818621
+	// AAAACAAAA    256    0.000464923    0.00110707
+	// AAAAGAAAA    512    0.000663984    0.00146663
+	// AAAATAAAA    768    0.000598752    0.00229929
+	// AAAAAAAAA    0    0.000647527    0.000818621
+	// AAAAACAAA    64    0.000506982    0.00100077
+	// AAAAAGAAA    128    0.00138302    0.00133026
+	// AAAAATAAA    192    0.000649944    0.00185264
+	// AAAAAA    0    0.0254466 (2.22507e-308)    0.0286116 (2.22507e-308)
+	// CAAAAA    1024    0.0286319 (2.22507e-308)    0.0383718 (2.22507e-308)
+	// GAAAAA    2048    0.0339722 (2.22507e-308)    0.0456416 (2.22507e-308)
+	// TAAAAA    3072    1.49167e-154 (2.22507e-308)    1.49167e-154 (2.22507e-308)
+	// ACAAAA    256    0.0237039 (2.22507e-308)    0.0401694 (2.22507e-308)
+	// AGAAAA    512    0.0394968 (2.22507e-308)    0.0576099 (2.22507e-308)
+	// ATAAAA    768    0.0423519 (2.22507e-308)    0.0547958 (2.22507e-308)
+	// AACAAA    64    0.0303911 (2.22507e-308)    0.0553332 (2.22507e-308)
+	// AAGAAA    128    0.0430214 (2.22507e-308)    0.0566645 (2.22507e-308)
+	// AATAAA    192    0.0283248 (2.22507e-308)    0.046191 (2.22507e-308)
+	// AAACAA    16    0.0174517 (2.22507e-308)    0.0229118 (2.22507e-308)
+	// AAAGAA    32    0.054277 (2.22507e-308)    0.0298008 (2.22507e-308)
+	// AAATAA    48    1.49167e-154 (2.22507e-308)    1.49167e-154 (2.22507e-308)
+	// AAAACA    4    0.0196138 (2.22507e-308)    0.0275601 (2.22507e-308)
+	// AAAAGA    8    0.0168111 (2.22507e-308)    0.025458 (2.22507e-308)
+	// AAAATA    12    0.0141376 (2.22507e-308)    0.041961 (2.22507e-308)
+	// AAAAAC    1    0.016682 (2.22507e-308)    0.0180863 (2.22507e-308)
+	// AAAAAG    2    0.0321472 (2.22507e-308)    0.0234761 (2.22507e-308)
+	// AAAAAT    3    0.0229461 (2.22507e-308)    0.0401082 (2.22507e-308)
+	//     0    0.000647527    0.000818621
+	// CATGATGTA->CATTATGTA: 0.000376667   0.000196572   OFFSET_DIFF: 1024  VAL: 0.000196572
+	// 
+	// CATTATGTA->CATGATGTA: 0.000196572   0.000376667   OFFSET_DIFF: -1024  VAL: 0.000376667
+	// 
+	// AAAAAAAAA->AAACAAAAA: 1024
+	//      VALUES:  0.000647527   0.000499676   OFFSET_DIFF: 1024  VAL: 0.000499676
+	// AAAAAAAAA->AAAGAAAAA: 2048
+	// AAAAAAAAA->AAATAAAAA: 3072
+	// AAACAAAAA->AAAAAAAAA: -1024
+	// 
+	// AAAAAAAAA->AAAACAAAA: 256
+	// AAAAAAAAA->AAAAGAAAA: 512
+	// AAAAAAAAA->AAAATAAAA: 768
+	// AAACAAAAA->AAAAAAAAA: -256
+	// 
+	// AAAAAAAAA->AAAAACAAA: 64
+	// AAAAAAAAA->AAAAAGAAA: 128
+	// AAAAAAAAA->AAAAATAAA: 192
+	// AAACAAAAA->AAAAAAAAA: -64
 	exit(0);
 }
 
@@ -779,7 +846,7 @@ void Path_Proposal(
 				   list<eventTrack*> *events
 				  )
 {
-	vector<string> OTU_names;
+	vector<string> OTU_names;		// Unnecessary?
 
 	forward_simulation = false;
 	for (list<inTree*>::iterator it = inputTrees.begin(); it != inputTrees.end(); ++it) {
@@ -793,12 +860,14 @@ void Path_Proposal(
 		/// Propose paths. If we are emulating a forward run, then fill the event histories.
 		//////////
 		Create_Global_Arrays((*it)->my_tree, (*it)->my_tree->root->seq_evo.size());
+
 		if (options->epc_emulate_forward_simulation) {
 			(*it)->path->setEventHistory(events, options->forward_sim_event_file_to_emulate);
 			(*it)->path->emulateForwardSimulation((*it)->my_tree, events);
 			return;
 		} else {
 			// Set "current" path (for MCMC; otherwise, this is the only path).
+			cerr << "Point-> Path_Proposal(......) Entering Evolve(). " << endl;
 			(*it)->path->Evolve((*it)->my_tree, events);
 			for (list<eventTrack*>::iterator it2 = (*events).begin(); it2 != (*events).end(); ++it2) 
 				(*it2)->Compute_MSA_Positions((*it)->my_tree, 0);

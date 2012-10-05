@@ -17,17 +17,17 @@ Dependency::Dependency(
 					  )
 	: context(dep_order)
 {
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) IN" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) IN" << endl;
 	context.allocate_lookup_context_vector();
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) LOOKUP CONTEXT VECTOR" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) LOOKUP CONTEXT VECTOR" << endl;
 	context.generateDependencies(dependence_superscript);
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) GENERATE DEPENDENCIES" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) GENERATE DEPENDENCIES" << endl;
 	context.set_lookup_table();
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) SET LOOKUP TABLE " << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) SET LOOKUP TABLE " << endl;
 	context.setOffset();
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) SET OFFSET " << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) SET OFFSET " << endl;
 	context.outputDependencies(outfile_name_root);
-	cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) OUT" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, dependence_superscript, &file) OUT" << endl;
 }
 
 // EPC Third-order Markov Model.
@@ -46,6 +46,7 @@ Dependency::Dependency(
 	cerr << "Point-> Dependency::Dependency(dep_order, &file) set_lookup_table" << endl;
 	context.setOffset();
 	cerr << "Point-> Dependency::Dependency(dep_order, &file) OUT" << endl;
+	exit(0);
 }
 
 // Neutral model setting for 3MM.
@@ -66,11 +67,11 @@ Dependency::Dependency(
 					  )
 	: context(dep_order)
 {
-	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 1" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 1" << endl;
 	context.allocate_lookup_context_vector();
-	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 2" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 2" << endl;
 	context.readDependencies(file);
-	cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 3" << endl;
+	//cerr << "Point-> Dependency::Dependency(dep_order, block_size, file) 3" << endl;
 	context.set_lookup_table();
 	context.setOffset();
 	//exit(0);
@@ -481,14 +482,14 @@ contextDependence::reset_sequence_indices(
 	int event_offset = stateCharacters.find_first_of(event.at(1)) - stateCharacters.find_first_of(event.at(0));
 	vector<int>::iterator bt;
 
-	cerr << "Changed site " << event_site << "->" << event << endl;
-	cerr << node->printSequence() << endl;
-	cerr << "Modifying sites " << start << "->" << end << endl;
+	//cerr << "Changed site " << event_site << "->" << event << endl;
+	//cerr << node->printSequence() << endl;
+	//cerr << "Modifying sites " << start << "->" << end << endl;
 
-	cerr << "Previous indices: " << endl;
-	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
-		cerr << (*it).return_lookup_table_sequence_index() << " ";
-	cerr << endl;
+	//cerr << "Previous indices: " << endl;
+	//for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
+	//	cerr << (*it).return_lookup_table_sequence_index() << " ";
+	//cerr << endl;
 
 	if (Human_Data_simulation) {
 		int block_size = 3;
@@ -499,22 +500,20 @@ contextDependence::reset_sequence_indices(
 		// Again, assuming that a change cannot occur in the first 3 sites of the sequence.
 		if (end - start == order*2*block_size) {
 			// At the end of the sequence.
-cerr << "ENTERED END OF SEQUENCE LOOP" << endl;
 			for (int i = 0; i < block_size; ++i) codon1[i] = node->seq_evo.at(start+i).returnState();
 			for (int i = 0; i < block_size; ++i) codon2[i] = node->seq_evo.at(start+block_size+i).returnState();
 			from_codon[0] = codon2[0];
 			from_codon[1] = codon2[1];
 			from_codon[2] = codon2[2];
 			int event_site_codon_position = event_site % block_size;
-			cerr << "event_site_codon_position: " << event_site_codon_position << endl;
 			from_codon[event_site_codon_position] = stateCharacters.find(event.at(0));
-			cerr << "codon 1: ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
-			cerr << endl << "codon 2: ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
-			cerr << " --> ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
-			cerr << endl;
+			//cerr << "codon 1: ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
+			//cerr << endl << "codon 2: ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
+			//cerr << " --> ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
+			//cerr << endl;
 			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it) {
 				new_indices.push_back((*it).return_lookup_table_sequence_index());
 			}
@@ -558,18 +557,18 @@ cerr << "ENTERED END OF SEQUENCE LOOP" << endl;
 			from_codon[1] = codon2[1];
 			from_codon[2] = codon2[2];
 			int event_site_codon_position = event_site % block_size;
-			cerr << "event_site_codon_position: " << event_site_codon_position << endl;
+			//cerr << "event_site_codon_position: " << event_site_codon_position << endl;
 			from_codon[event_site_codon_position] = stateCharacters.find(event.at(0));
 
-			cerr << "codon 1: ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
-			cerr << endl << "codon 2: ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
-			cerr << " --> ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
-			cerr << endl << "codon 3: ";
-			for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon3[i]); 
-			cerr << endl;
+			//cerr << "codon 1: ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon1[i]);
+			//cerr << endl << "codon 2: ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(from_codon[i]);
+			//cerr << " --> ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon2[i]);
+			//cerr << endl << "codon 3: ";
+			//for (int i = 0; i < block_size; ++i) cerr << stateCharacters.at(codon3[i]); 
+			//cerr << endl;
 
 			// Populate vector with older indices.
 			for (vector<Site>::iterator it = node->seq_evo.begin()+start; it != node->seq_evo.begin()+end; ++it) {
@@ -633,10 +632,10 @@ cerr << "ENTERED END OF SEQUENCE LOOP" << endl;
 		}
 	}
 
-	cerr << "New indices: " << endl;
-	for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
-		cerr << (*it).return_lookup_table_sequence_index() << " ";
-	cerr << endl;
+	//cerr << "New indices: " << endl;
+	//for (vector<Site>::iterator it = node->seq_evo.begin(); it != node->seq_evo.end(); ++it)
+	//	cerr << (*it).return_lookup_table_sequence_index() << " ";
+	//cerr << endl;
 }
 
 void contextDependence::set_sequence_indices(
@@ -688,9 +687,9 @@ void contextDependence::set_sequence_indices(
 		for (i = 0; i < order*block_size+block_size; ++i) 
 			seq.push_back((*(it+i)).returnState());
 
-		for (vector<short>::iterator q = seq.begin(); q != seq.end(); ++q)
-			cerr << stateCharacters.at(*q);
-		cerr << endl;
+		//for (vector<short>::iterator q = seq.begin(); q != seq.end(); ++q)
+		//	cerr << stateCharacters.at(*q);
+		//cerr << endl;
 
 		site = 0;
 		for (it = node->seq_evo.begin(); it != node->seq_evo.begin()+block_size; ++it, ++site) {

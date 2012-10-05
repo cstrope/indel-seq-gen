@@ -66,9 +66,9 @@ PathProposal::setNodeSequences(
 
 void 
 PathProposal::setUnspecifiedNodeSequences(
-											   TTree *tree,
-											   int sequence_length
-											  )
+										  TTree *tree,
+										  int sequence_length
+										 )
 {
 	string sequence;
 	sequence.assign(sequence_length, 0);	/// All A's
@@ -180,9 +180,9 @@ PathProposal::parseFastaFile(
 
 void 
 PathProposal::Evolve(
-						  TTree *tree,
-						  list<eventTrack*> *events
-						 )
+					 TTree *tree,
+					 list<eventTrack*> *events
+					)
 {
 	if (tree->root->nodeEnv->rateHetero == DiscreteGammaRates) {
 		//tree->calculateJCLikelihoods();
@@ -206,8 +206,14 @@ PathProposal::Evolve(
 	/// the sequence will simply be copied.
 	//////////
 	tree->sample_root_sequence();
-	//exit(0);
-
+	
+	cerr << "********************************************************************************" << endl;
+	cerr << "Evolving sequence: " << endl;
+	cerr << tree->root->printSequence() << " to " << endl;
+	cerr << tree->root->branch1->printSequence() << endl;
+	cerr << "********************************************************************************" << endl;
+	
+	cerr << "Point-> PathProposal::Evolve(tree, *events) Entering EvolveToEndPoint." << endl;
 	//////////
 	/// Evolve both branches.
 	//////////
@@ -217,7 +223,6 @@ PathProposal::Evolve(
 	for (vector<Taxon*>::iterator it = taxa.begin(); it != taxa.end(); ++it) 
 		delete (*it);
 
-//	cout << "EVENTS:" << eventNo << endl;	//XOUT
 	cerr << "EVENTS:" << eventNo << endl;	//XOUT
 }
 
@@ -247,9 +252,12 @@ PathProposal::EvolveToEndPoint(
 	if (rasmus_independent_proposals) {
 		EvolveIndependentStep(tree, work, des, 0, des->branch->length0, events); // NEED TO WATCH... OPTIONS MAY CONFLICT WITH DEPENDENT SITES STUFF
 	} else {
+		cerr << "Point-> PathProposal::EvolveToEndPoint() Going into EvolveStep" << endl;
 		EvolveStep(tree, work, des, 0, des->branch->length0, events);
 	}
 	des->updateSequence(work);
+
+	cerr << "Point-> PathProposal::EvolveToEndPoint(....) Recursing EvolveToEndPoint()" << endl;
     if (des->tipNo==-1) { 
 	    EvolveToEndPoint(tree, des, des->branch1, events);
 	   	EvolveToEndPoint(tree, des, des->branch2, events);
@@ -491,12 +499,18 @@ PathProposal::EvolveStep(
 	//////////
 	if (order_3_markov) tree->dep.front()->context.set_sequence_indices(i_z, 1);
 	if (Human_Data_simulation) tree->dep.front()->context.set_sequence_indices(i_z, 3);
+
 	//////////
 	/// Quick calculation of evolvingSequence->Qidot (forward rate away);
 	//////////
-	if (order_3_markov) i_z_rate_away = i_z->calculateForwardRateAwayFromSequence__order3Markov(tree, -1);
+	if (order_3_markov || Human_Data_simulation) 
+		i_z_rate_away = i_z->calculateForwardRateAwayFromSequence__order3Markov(tree, -1);
 	else i_z->evolvingSequence->Qidot = k_0->seq_evo.size();
 	num_diff = k_0->evolvingSequence->compare_sequence(i_z->evolvingSequence);
+
+	cerr << "Number of differenced between sequences: " << num_diff << endl;
+	cerr << "Done setting indices." << endl;
+	exit(0);
 
 	// For independent sites, branch needs to be scaled from substitutions per site to an approximation
 	// of the dependent number of substitutions per site. S is the value that we use.
