@@ -701,43 +701,32 @@ TNode::set_site_window(
 
 		} else {
 
-			cerr << "     event_site(" << event_site << ") -= 3 + " << (event_site%3);
-			event_site -= 3 + (event_site%3);
-			if (event_site < 0) event_site = 0;
-			cerr << " = " << event_site << endl;
+			//cerr << "     event_site(" << event_site << ") -= 3 + " << (event_site%3);
+			//event_site -= 3 + (event_site%3);
+			//if (event_site < 0) event_site = 0;
+			//cerr << " = " << event_site << endl;
 
 			*start_site -= 3 + ((*start_site)%3);
+			if (*start_site < 0) *start_site = 0;
 
 			// Ordinarily, the range covered by a 1st order markov codon model is 3 codons, and the
 			// block size is 3, thus, the two 3's below.
-			last_site = event_site + (3*order * 3);
+			//last_site = event_site + (3*order * 3);
 
 			*end_site = *start_site + 3*order*3;
 			if (*end_site > seq_evo.size()) *end_site = seq_evo.size();
 
 			// and the end site similarly.
-			cerr << "     end_site(" << last_site << ") ----> ";
-			if (last_site > seq_evo.size()) {
-				cerr << "end" << endl;
-			} else {
-				cerr << last_site << endl;
-			}
+			//cerr << "     end_site(" << *end_site << ") ----> ";
+			//if (*end_site > seq_evo.size()) {
+			//	cerr << "end" << endl;
+			//} else {
+			//	cerr << *end_site << endl;
+			//}
 		}
 	}
 
-/// TEMPORARY
-/*		if (*start_site == -1) { 
-			*start_site = 0; 
-			*end_site = seq_evo.size(); 
-		} else if ( *start_site > seq_evo.size() - (order+1) ) {
-			*end_site = seq_evo.size();
-			*start_site -= order;
-		} else {
-			*end_site = *start_site + order+1;
-			*start_site -= order;
-			if (*start_site < 0) *start_site = 0;
-		}
-*/
+	cerr << "Point-> TNode::set_site_window(order, *start, *end) EXIT" << endl;
 }
 
 double 
@@ -1323,6 +1312,7 @@ TNode::site_specific_Qmat(
 						  unsigned int end	// End position
 						 )
 {
+	cerr << "Point-> TNode::site_specific_Qmat(tree, start, end) ENTERED" << endl;
 	int seq_pos = 0;
 	int i,j;
 	vector<unsigned int> power_1 (numStates, 0);
@@ -1332,9 +1322,12 @@ TNode::site_specific_Qmat(
 	short actual_state;
 	string event = "XX";
 	double tau_ij;
+ 	double row_total = 0;
+
+	if (Human_Data_simulation && start < 3) start = 3;
 
 	seq_pos = start;
- 	double row_total = 0;
+
 	for (it = seq_evo.begin()+start; it != seq_evo.begin()+end; ++it, ++seq_pos) {
 		actual_state = (*it).returnState();  // keep track of real state.
 		event.at(0) = stateCharacters.at(actual_state);
@@ -1373,6 +1366,9 @@ TNode::site_specific_Qmat(
 
 		//////////
 		/// Qij now holds the appropriate values for the site rate away for the position. Set it here.
+		/// NOTE: For human data, when dealing with codons, it is still fine to do 4 x 4 matrix concentrating
+		/// only on the site within the codon (not 64 x 64). This is because the codon position and all
+		/// related issues are incorporated into our representation of the codon.
 		//////////
 		j = 0;
 		for (jt = (*it).site_rate_away.begin(); jt < (*it).site_rate_away.end(); ++jt, ++j) {
@@ -1382,10 +1378,26 @@ TNode::site_specific_Qmat(
 		// Make CDF
 		for (jt = (*it).site_rate_away.begin()+1; jt < (*it).site_rate_away.end(); ++jt, ++j) (*jt) += (*(jt-1));
 
-//		cerr << "Position " << seq_pos << " Qmat: ";
-//		for (jt = (*it).e_QijDt.begin(); jt != (*it).e_QijDt.end(); ++jt)
-//			cerr << (*jt) << " ";
-//		cerr << endl;
+		// If there are any doubts, the above can be checked with check_string_tau-ij.pl.
+		// For the positions in the transition probability row that are the same as the sequence state,
+		// the first number should match (except when the state at the sequence position is A, then the
+		// second number should match). Also, the full rate away should be negated and on the diagonal.
+		// The only difference between this report and that from the perl script is that this is a pdf,
+		// and the perl script reports a CDF. We can verify the entire transition probability matrix by
+		// varying the position of interest and giving the perl script the same string at each other
+		// position. For example, if we wanted to check position 3 of the string ATGTCCAAGGGGGAT, we would
+		// check the strings (actual values are in parentheses after sequence, for verification purposes):
+		// ATGACCAAGGGGGAT (-0.760374 0.232758 0.322844 0.204771 --> 0 0.232758349712078 0.555602824350161 0.76037371711334 )
+		// ATGCCCAAGGGGGAT (0.268073 -0.832671 0.344024 0.220574 --> 0.268072779911734 0.268072779911734 0.612096796818472 0.832671112727411 )
+		// ATGGCCAAGGGGGAT (0.189035 0.174901 -0.516156 0.15222 --> 0.189035482893738 0.363936077856475 0.363936077856475 0.516156453888057 )
+		// ATGTCCAAGGGGGAT (0.301444 0.281933 0.382703 -0.96608 --> 0.301444108560112 0.583377210066327 0.966079793639185 0.966079793639185)
+		cerr << "Position " << seq_pos << " Qmat: " << endl;
+		int endline = 0;
+		for (jt = (*it).e_QijDt.begin(); jt != (*it).e_QijDt.end(); ++jt, ++endline) {
+			if (endline == 4) { cerr << endl; endline = 0; }
+			cerr << (*jt) << " ";
+		}
+		cerr << endl;
 	}
 }
 
