@@ -219,14 +219,14 @@ Statistics::MCMC_run(
 		cerr << "***********************************************************************************" << endl;
 
 		accepted = false;
-		//cout << i << "  ";
+		cout << i << "  ";
 		if (rasmus_independent_proposals) 
 			mcmc_chain_forward.push_back( mcmc.rasmus_resample(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back()) );
 		else {
 			// Output the forward probability of the ith sample from the MCMC chain. //
 			mcmc_chain_forward.push_back( mcmc.resample_subpath(tree, i_0, k_0, t_0, T, mcmc_chain_forward.back(), &accepted) );
 		}
-		//cout << "  " << mcmc_chain_forward.back() << endl;
+		cout << "  " << mcmc_chain_forward.back() << endl;
 
 		if (accepted) {
 			mcmc.current->write_path(*mcmc_out, i);
@@ -587,7 +587,7 @@ Statistics::MCMC::rasmus_resample(
 	delete work->evolvingSequence;
 	delete work;
 
-	//cout << "  " << current->epc_events.size()-2;
+	//cout << "  " << current->epc_events.size()-2 << ;
 
 	return return_probability;
 }

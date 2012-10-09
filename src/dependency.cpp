@@ -46,7 +46,6 @@ Dependency::Dependency(
 	cerr << "Point-> Dependency::Dependency(dep_order, &file) set_lookup_table" << endl;
 	context.setOffset();
 	cerr << "Point-> Dependency::Dependency(dep_order, &file) OUT" << endl;
-	exit(0);
 }
 
 // Neutral model setting for 3MM.

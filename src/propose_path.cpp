@@ -1143,6 +1143,7 @@ PathProbability::IndependentForwardProbability (
 	double i_z_Qidot;
 	double Qij, Qidot;
 	size_t from, to;
+	double subpath_length;
 
 	//cerr << "Events coming into IFP: " << endl;
 	//for (list<eventTrack*>::iterator it = events.begin(); it != events.end(); ++it)
@@ -1150,6 +1151,7 @@ PathProbability::IndependentForwardProbability (
 
 	t_0 = events.front()->eventTime;
 	T = events.back()->eventTime;
+	subpath_length = T - t_0;
 	
 	if (events.size() > 2) {
 		it = events.begin();
@@ -1158,6 +1160,7 @@ PathProbability::IndependentForwardProbability (
 		++it;
 		t_z = t_0;
 
+		bool first_event_processed = false;
 		for (; it != end_event; ++it, ++prev2it) {
 			from = stateCharacters.find_first_of((*it)->size.at(0));	// NOTE: size, for a substitution, is the nature of the event.
 			to = stateCharacters.find_first_of((*it)->size.at(1));	
@@ -1165,6 +1168,14 @@ PathProbability::IndependentForwardProbability (
 			Qidot = -rates->Qij.at(from*numStates + from);	// -Qii
 			dt = (*it)->eventTime - (*prev2it)->eventTime;
 			log_sum_forward += Forward_Step(Qij, Qidot, dt);
+
+			if (from != to && !first_event_processed) {	// Special Rasmus equation for choosing time step here:
+				// Qi. * exp(-Qi. * t_1)   <--------------Taken care of above,
+				//-----------------------              BUT, we need to...
+				//   1 - exp(Qi. * T)     <---------- Subtract this puppy out. (Note: calc for entire BL.)
+				log_sum_forward -= log(1-exp(-Qidot*subpath_length));
+				first_event_processed = true;
+			}
 		}
 		t_z = (*prev2it)->eventTime;
 		from = stateCharacters.find_first_of((*prev2it)->size.at(1));
