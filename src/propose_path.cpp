@@ -537,7 +537,7 @@ PathProposal::EvolveStep(
 	// Indel routine	
 	//  * Should codonRates affect the probability of an indel occurring?
 	//////////
-	cout << lambda_T << endl << flush;	///TESTING_ONLY: FOR HEAT MAP.pl    isg-test-one
+	//cout << lambda_T << endl << flush;	///TESTING_ONLY: FOR HEAT MAP.pl    isg-test-one
 	cerr << lambda_T << endl;	
 
 	/// TESTING ONLY: Proportion of rate away that is contained in differing positions.
