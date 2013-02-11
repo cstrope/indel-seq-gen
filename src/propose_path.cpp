@@ -31,8 +31,8 @@ vector<double> exp_mean_draws;
 ////////////////////
 void 
 PathProposal::setNodeSequences( 
-									TTree *tree
-							   	   )
+							   TTree *tree
+							  )
 {
 	vector<Taxon*>::iterator jt;
 	bool found_taxon;
@@ -133,6 +133,9 @@ PathProposal::parseEndpointInfile(
 		//////////
 		trim(in_buffer);
 		taxa = parseFastaFile(in_buffer);
+		for (vector<Taxon*>::iterator it = taxa.begin(); it != taxa.end(); ++it) {
+			(*it)->Taxon_Dump();
+		}
 	} else {
 		cerr << "Unable to open file \"" << filename << "\"." << endl;
 		exit(EXIT_FAILURE);
@@ -141,8 +144,8 @@ PathProposal::parseEndpointInfile(
 
 vector<Taxon*> 
 PathProposal::parseFastaFile(
-											string& fasta_data
-										   )
+							 string& fasta_data
+							)
 {
 	vector<Taxon*> return_taxa;
 	string sequence_build;
@@ -178,6 +181,13 @@ PathProposal::parseFastaFile(
 	return return_taxa;
 }
 
+void Taxon::Taxon_Dump()
+{
+	cerr << "+++++++++TAXON_DUMP()++++++++++" << endl;
+	cerr << "Name: " << taxon_name << endl << "Sequence: " << taxon_sequence << endl;
+	cerr << "+++++++++++++++++++++++++++++++" << endl;
+}
+
 void 
 PathProposal::Evolve(
 					 TTree *tree,
@@ -210,7 +220,8 @@ PathProposal::Evolve(
 	cerr << "********************************************************************************" << endl;
 	cerr << "Evolving sequence: " << endl;
 	cerr << tree->root->printSequence() << " to " << endl;
-	cerr << tree->root->branch1->printSequence() << endl;
+	cerr << tree->root->branch1->printSequence() << " and" << endl;
+	cerr << tree->root->branch2->printSequence() << endl;
 	cerr << "********************************************************************************" << endl;
 	
 	cerr << "Point-> PathProposal::Evolve(tree, *events) Entering EvolveToEndPoint." << endl;

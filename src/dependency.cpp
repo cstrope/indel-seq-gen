@@ -441,9 +441,9 @@ void contextDependence::allocate_lookup_context_vector()
 		// Beginning of sequence change probability:
 		// i_h^1 i_h^2 i_h^3   i_{4}^1 i_{5}^2 i_{6}^3
 		// We will assume that this is always ATG
-		lookup_table.at(0).assign(pow(numStates, 6), dummy);
-		lookup_table.at(1).assign(pow(numStates, 9), dummy);
-		lookup_table.at(2).assign(pow(numStates, 6), dummy);
+		lookup_table.at(0).assign(pow((double)numStates, 6.), dummy);
+		lookup_table.at(1).assign(pow((double)numStates, 9.), dummy);
+		lookup_table.at(2).assign(pow((double)numStates, 6.), dummy);
 		
 		cerr << "Sizes of each lookup table element:" << endl;
 		cerr << "  0: " << lookup_table.at(0).size() << endl;
@@ -899,8 +899,8 @@ contextDependence::setOffset()
 										  + seqj
 										 ) 
 										 =  (seqj-seqi)	// Nature of change
-										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
-										  * pow(numStates, block_size)		// size of codons before current.;
+										  * pow((double)numStates,(double)(block_size-(bs+1)))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										  * pow((double)numStates,(double)(block_size))		// size of codons before current.;
 										 ;
 					// Interestingly, the begin environment is the SAME as middle. Makes sense... if you think about it.
 					// To be explicit, mid, we change AAAXXXAAA the X's, so, the positions with 4^4, 4^5, and 4^6.
@@ -911,8 +911,8 @@ contextDependence::setOffset()
 										  + seqj
 										 ) 
 										 =  (seqj-seqi)	// Nature of change
-										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
-										  * pow(numStates, block_size)		// size of codons before current.;
+										  * pow((double)numStates,(double)(block_size-(bs+1)))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										  * pow((double)numStates,(double)block_size)		// size of codons before current.;
 										 ;
 					// The end of the sequence, however, we need to do differently.
 					// We change AAAXXX, so codon position 0 is 4^2, codon pos 1 is 4^1, and codon pos 2 is 4^0.
@@ -922,7 +922,7 @@ contextDependence::setOffset()
 										  + seqj
 										 ) 
 										 =  (seqj-seqi)	// Nature of change
-										  * pow(numStates,block_size-(bs+1))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
+										  * pow((double)numStates,(double)(block_size-(bs+1)))	// codon position (0, 1, or 2) needs to be (1, 2, 3)... Conceptually, which is why bs+1
 										 ;
 				}
 			}

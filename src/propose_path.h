@@ -87,6 +87,8 @@ public:
 	string taxon_name;
 	string taxon_sequence;
 
+	void   Taxon_Dump();
+
 	Taxon() 
 		: taxon_name (""),
 		  taxon_sequence ("")

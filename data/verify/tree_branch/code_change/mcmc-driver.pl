@@ -2,7 +2,7 @@
 use strict;
 
 if (@ARGV != 7) {
-	print "Usage: perl one_round_fwd-epc.pl <dependence_superscript> <num_mcmc_cycles> <sequence_length> <branch_length> <XXX> <sample_evenly> <random_seed>.\n";
+	print "Usage: perl mcmc-driver.pl <dependence_superscript> <num_mcmc_cycles> <sequence_length> <branch_length> <XXX> <sample_evenly> <random_seed>.\n";
 	die "XXX:\nrasmus=0\nQdPc=1\nQdP=2\nQPc=3\nQP=4\n";
 }
 
@@ -44,8 +44,14 @@ my @ret_split;
 my $filename = "results_dir/mcmc$MCMC-bl$branch_length-ds$dependence_superscript-$EPC_SAMPLE_TYPE$EVEN_SAMPLING-$RANDOM_SEED";
 my $indel_seq_gen = "isg-test-one";
 
+my $twoBL = $branch_length/2.0;
+my $guide_tree = 
+#	"[$seq_size](T_1:$branch_length, T_2:0);\n";		### Standard previous: 1 branch only.
+	"[$seq_size](T_1:$twoBL, T_2:$twoBL);\n";	### 2 branches, each with length. Same as prev, but minor improvement.
+
 open OUTt, ">$filename.tree";
-print OUTt "[$seq_size](T_1:$branch_length,T_2:0);\n";
+print OUTt "$guide_tree";
+#print OUTt "[$seq_size](T_1:$branch_length,T_2:0);\n";
 close OUTt;
 
 if ($INDEPENDENT_SITES) {

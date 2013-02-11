@@ -1,16 +1,16 @@
 #include "forward_simulation.h"
 #include "dependency.h"
 
-void ForwardSimulation::EvolveNode(
-								   inTree *iTree, 
-								   TNode *anc, 	// Currently set in this function.
-								   TNode *des, 
-								   int inNumSites, 
-								   list<eventTrack*> *events, 
-								   seqGenOptions *options
-			   					  )
+void 
+ForwardSimulation::EvolveNode(
+							  inTree *iTree, 
+							  TNode *anc, 	// Currently set in this function.
+							  TNode *des, 
+							  int inNumSites, 
+							  list<eventTrack*> *events, 
+							  seqGenOptions *options
+			   				 )
 { 
-	cerr << "Point-> ForwardSimulation::EvolveNode IN" << endl;
 	bool chang_and_benner = false;
 	ofstream step_out;
 	string trs_outfile;
@@ -43,27 +43,26 @@ void ForwardSimulation::EvolveNode(
 	/// If not a leaf, proceed down both subtrees.
 	//////////
     if (des->tipNo==-1) { 
-    	//des->setSitePointers("EvolveNode");
         EvolveNode(iTree, des, des->branch1, inNumSites, events, options);
     	EvolveNode(iTree, des, des->branch2, inNumSites, events, options);
     }
 	des->Remove_Objects();
 } 
 
-void ForwardSimulation::EvolveSequences(
-					 					inTree *iTree, 
-					 					list<eventTrack*> *events, 
-					 					seqGenOptions *options
-									   )
+void 
+ForwardSimulation::EvolveSequences(
+					 			   inTree *iTree, 
+					 			   list<eventTrack*> *events, 
+					 			   seqGenOptions *options
+								  )
 {
-	cerr << "Point-> ForwardSimulation::EvolveSequences IN" << endl;
-
 	num_subst = 0;
+	string me = "FSim::EvolveSequences: ";
 
 	//////////
 	/// FORWARD SIMULATION SPECIFIC SETUP
 	//////////
-	cerr << "Forward Category breakdown: " << endl;	//XOUT
+	cerr << me << "Forward Category breakdown: " << endl;	//XOUT
 	vector<short> cats (4,0);
 	vector<Site>::iterator root_it;
 	for (root_it = iTree->my_tree->root->seq_evo.begin(); root_it != iTree->my_tree->root->seq_evo.end(); ++root_it) 
@@ -72,14 +71,11 @@ void ForwardSimulation::EvolveSequences(
 	double overall_rate_multiplier = 0;
 	for (int i = 0; i < 4; i++) {
 		overall_rate_multiplier += cats.at(i) * iTree->my_tree->root->nodeEnv->catRate[i];
-		cerr << "cat" << i+1 << " occupancy: " << cats.at(i) << endl;//XOUT
+		cerr << me << "cat" << i+1 << " occupancy: " << cats.at(i) << endl;//XOUT
 	}
 
 	overall_rate_multiplier /= iTree->my_tree->root->seq_evo.size();
-	cerr << "Overall multiplier: " << overall_rate_multiplier << endl;	//XOUT
-	//cout << overall_rate_multiplier;		//XOUT
-
-	cerr << "Cutoff: ForwardSimulation::EvolveSequences" << endl;
+	cerr << me << "Overall multiplier: " << overall_rate_multiplier << endl;	//XOUT
 
 	if ( order_3_markov || Human_Data_simulation) {
 		int block_size = 1;
@@ -92,16 +88,18 @@ void ForwardSimulation::EvolveSequences(
 			// we evolve the chosen sequence over a long branch (in this case, BL=10) using the 
 			// dependent sites model, and the sequence at the end of the branch will be assumed to be
 			// at stationarity for the dependent sites model.
-			cerr << "EVOLVING TO EQUILIBRIUM>>>>>" << endl;
+			cerr << me << "EVOLVING TO EQUILIBRIUM>>>>>" << endl;
 			evolve2Equilibrium(iTree, events, options);
-			cerr << "EVOLVED TO EQUILIBRIUM>>>>>" << endl;
+			cerr << me << "EVOLVED TO EQUILIBRIUM>>>>>" << endl;
 		}
 	}
 	
+	cerr << me << "Evolving branch 1" << endl;
 	EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch1, iTree->partitionLength, events, options);
+	cerr << me << "Evolving branch 2" << endl;
     EvolveNode(iTree, iTree->my_tree->root, iTree->my_tree->root->branch2, iTree->partitionLength, events, options);
     if (!iTree->my_tree->rooted) {
-		cerr << "Unrooted tree??" << endl; 
+		cerr << me << "Unrooted tree??" << endl; 
 		exit(EXIT_FAILURE);
 	}
 
@@ -119,7 +117,7 @@ void ForwardSimulation::EvolveSequences(
 	//
 	//////////
 	
-	cerr << "EVENTS:" << eventNo << endl;
+	cerr << me << "EVENTS:" << eventNo << endl;
 	PathProposal *path = new PathProposal();
 //	cout << path->P_path.ForwardProbability(*events, true) << endl;
 
@@ -140,6 +138,7 @@ double ForwardSimulation::calcGillespieLambda(
 	double del_freq_by_size=0, del_freq=0, u_del=0;
 	int ins_L, del_L;
 	int i = 0;
+	string me = "FSim::calcGillespieLambda(): ";
 
 	if (simulation_type == UNIFORMIZATION) {
 		for (vector<double>::iterator it = des->nodeEnv->delete_lengthDistribution.begin(); it != des->nodeEnv->delete_lengthDistribution.end(); ++it, i++) {
@@ -194,6 +193,7 @@ void ForwardSimulation::gillespie(
 			 				 	  bool evolving_to_equilibrium
 			  )
 {
+	string me = "FSim::gillespie(): ";
 	double lambda_T, exp_mean, I=0, D=0, S=0;
 	bool success;
 	int event_size = 0, action = INSERT;
@@ -211,7 +211,7 @@ void ForwardSimulation::gillespie(
 	//  * Should codonRates affect the probability of an indel occurring?
 	//////////
 	lambda_T = calcGillespieLambda(iTree->my_tree, des, &I, &D, &S, simulation_type, -1);
-	cerr << "lambda_T(sim): " << lambda_T << endl;		//XOUT
+	cerr << me << "lambda_T(sim): " << lambda_T << endl;		//XOUT
 	exp_mean = 1.0/lambda_T;
 	if (!evolving_to_equilibrium) {
 		// Forward simulation, tree & branches fully made, thus, begin and end events do not need to know the branch lengths (last variable = 0).
@@ -262,7 +262,7 @@ void ForwardSimulation::gillespie(
 		}
 		if (success /*&& trackEvent*/) {
 			eventTrack *new_event;
-			cerr << "FWD subst pos: " << event_site << ":  "; //XOUT
+			cerr << me << "FWD subst pos: " << event_site << ":  "; //XOUT
 			if (!evolving_to_equilibrium) {
 				//////////
 				/// Calculate the relative time that the event occurs at.
@@ -295,7 +295,7 @@ void ForwardSimulation::gillespie(
 //			else 
 				iTree->my_tree->dep.front()->context.reset_sequence_indices(des, event_site, event);
 			lambda_T = calcGillespieLambda(iTree->my_tree, des, &I, &D, &S, simulation_type, event_site);
-cerr << "lambda_T, post_change = " << lambda_T << endl; 
+			cerr << "lambda_T, post_change = " << lambda_T << endl; 
 			if (!evolving_to_equilibrium) {
 				new_event->Q.idot = lambda_T;
 				(*events).push_back(new_event);
@@ -304,7 +304,7 @@ cerr << "lambda_T, post_change = " << lambda_T << endl;
 			}
 		}
 		if (!evolving_to_equilibrium) {	//XOUT
-			cerr << event_site << " " << (*events).back()->size << " ";
+			cerr << me << event_site << " " << (*events).back()->size << " ";
 			cerr << "---------- Time left: " << branch_len-dt << "/" << branch_len << "----------"; //XOUT
 			cerr << "Qi.: " << des->evolvingSequence->Qidot; //XOUT
 //			cout << dt << " " << des->evolvingSequence->Qidot << endl;
@@ -314,7 +314,7 @@ cerr << "lambda_T, post_change = " << lambda_T << endl;
 //			cout << "Qi.|k:" << des->evolvingSequence->Qidot_k__T__ << endl;	//XOUT
 //			cout << "SITE_RATE_AWAY:" << des->seq_evo.at(changed_site).site_rate_away.back() << endl; //XOUT
 		} else {	//XOUT
-			cerr << "---------- E2E->Time left: " << branch_len-dt << "/" << branch_len << "----------"; //XOUT
+			cerr << me << "---------- E2E->Time left: " << branch_len-dt << "/" << branch_len << "----------"; //XOUT
 			cerr << "Qi.: " << des->evolvingSequence->Qidot; //XOUT
 			cerr << endl;
 		}
@@ -335,12 +335,14 @@ cerr << "lambda_T, post_change = " << lambda_T << endl;
 	}
 }
 
-void ForwardSimulation::evolve2Equilibrium(
-						inTree *iTree,
-					 	list<eventTrack*> *events, 
-					 	seqGenOptions *options
-					   )
+void 
+ForwardSimulation::evolve2Equilibrium(
+									  inTree *iTree,
+					 				  list<eventTrack*> *events, 
+					 				  seqGenOptions *options
+					   				 )
 {
+	string me = "FSim::evolve2Equilibrium: ";
 	double lead_in_branch_length = 10;
 
 	iTree->my_tree->root->evolvingSequence->print_sequence();
@@ -353,9 +355,9 @@ void ForwardSimulation::evolve2Equilibrium(
 		(*it).interactions.clear();
 	}
 
-	cerr << "evolve2Equilibrium::Number of substitutions: " << num_subst << endl;
-	cerr << "                    Number of recorded events: " << (*events).size() << " " << eventNo << endl;
-	cerr << "evolve2Equilibrium::sequence: " << iTree->my_tree->root->printSequence() << endl;
+	cerr << me << "evolve2Equilibrium::Number of substitutions: " << num_subst << endl;
+	cerr << me << "                    Number of recorded events: " << (*events).size() << " " << eventNo << endl;
+	cerr << me << "evolve2Equilibrium::sequence: " << iTree->my_tree->root->printSequence() << endl;
 }
 
 template <class T> string to_string (
